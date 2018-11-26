@@ -5,16 +5,13 @@ import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.transport.Transport;
 import net.named_data.jndn.util.Blob;
 
-
 public class Ponger implements OnInterest {
 
-  private int version = 1;
   private final KeyChain keyChain;
   private final Face face;
   private final Name certificateName;
 
   public static void main(String[] args) throws Exception {
-
     Ponger ponger = new Ponger();
     ponger.processEvents();
   }
@@ -27,7 +24,7 @@ public class Ponger implements OnInterest {
     face.setCommandSigningInfo(keyChain, certificateName);
 
     Name prefix = new Name("ndn:/com/stefanolupo/lupos");
-    face.registerPrefix(prefix, this,  failedPrefix -> System.out.println("Failed to register prefix " + failedPrefix.toUri()));
+    face.registerPrefix(prefix, this,  this::handleFailureToRegisterName);
   }
 
   public void processEvents() throws Exception {
@@ -51,5 +48,9 @@ public class Ponger implements OnInterest {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  private void handleFailureToRegisterName(Name failedPrefix) {
+    System.err.println("Failed to register prefix " + failedPrefix.toUri());
   }
 }
