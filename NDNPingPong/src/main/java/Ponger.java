@@ -10,7 +10,7 @@ public class Ponger implements OnInterestCallback {
     private final Face face;
     private final Name certificateName;
 
-    private final String entityName = "ndn:/com/stefanolupo/desktop";
+    private final String entityName = "ndngateway:/com/stefanolupo/desktop";
 
     public static void main(String[] args) throws Exception {
         Ponger ponger = new Ponger();
