@@ -1,4 +1,4 @@
-package com.stefanolupo.ndntesting;
+package com.stefanolupo.ndn.pingpong;
 
 import net.named_data.jndn.*;
 import net.named_data.jndn.security.KeyChain;
