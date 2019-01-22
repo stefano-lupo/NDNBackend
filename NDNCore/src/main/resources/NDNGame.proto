@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+option java_outer_classname = "NDNGameProtos";
+option java_package = "com.stefanolupo.ndn";
+
+message Position {
+    int32 x = 1;
+    int32 y = 2;
+}

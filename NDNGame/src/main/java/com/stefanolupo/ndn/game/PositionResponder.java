@@ -1,33 +1,34 @@
-package com.stefanolupo.ndn.pingpong;
+package com.stefanolupo.ndn.game;
 
+import com.stefanolupo.ndn.NDNGameProtos;
 import net.named_data.jndn.*;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.util.Blob;
 
-public class Ponger implements OnInterestCallback {
+import java.util.concurrent.ThreadLocalRandom;
+
+public class PositionResponder implements OnInterestCallback {
+
+    private final String prefix = "ndn:/com/stefanolupo/ndngame/player-position";
 
     private final KeyChain keyChain;
     private final Face face;
     private final Name certificateName;
+    private final String playerName;
 
-    private final String entityName = "ndn:/com/stefanolupo/desktop";
 
-    public static void main(String[] args) throws Exception {
-        Ponger ponger = new Ponger();
-        ponger.processEvents();
-    }
-
-    public Ponger() throws Exception {
+    public PositionResponder(String playerName) throws Exception {
         keyChain = new KeyChain();
         certificateName = keyChain.getDefaultCertificateName();
         face = new Face();
+        this.playerName = playerName;
 
-        Name prefix = new Name(entityName);
+        Name prefix = new Name(String.format("%s/%s", this.prefix, this.playerName));
         face.setCommandSigningInfo(keyChain, certificateName);
-        face.registerPrefix(prefix, this,  this::handleFailureToRegisterName);
+        face.registerPrefix(prefix, this, this::handleFailureToRegisterName);
     }
 
-    public void processEvents() throws Exception {
+    void processEvents() throws Exception {
         while (true) {
             face.processEvents();
             Thread.sleep(100);
@@ -39,7 +40,10 @@ public class Ponger implements OnInterestCallback {
         System.out.println("Got interest for: " + name.toUri() + " - " + interest.getName().toUri());
 
         Name dataName = new Name(interest.getName());
-        Data data = new Data(dataName).setContent(new Blob("derp"));
+        NDNGameProtos.Position position = NDNGameProtos.Position.newBuilder()
+                .setX(ThreadLocalRandom.current().nextInt(0, 100))
+                .setY(ThreadLocalRandom.current().nextInt(0, 100)).build();
+        Data data = new Data(dataName).setContent(new Blob(position.toByteArray()));
 
         try {
             keyChain.sign(data, certificateName);
