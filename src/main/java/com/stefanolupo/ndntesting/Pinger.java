@@ -81,7 +81,7 @@ public class Pinger implements OnData, OnTimeout {
 
   public static void main(String[] args) throws Exception {
     System.out.println("Starting pinger!");
-    Pinger pinger = new Pinger("ndn:/com/stefanolupo/lupos/ping");
+    Pinger pinger = new Pinger("ndn:/com/stefanolupo/desktop/ping");
     pinger.endlessPing(5000);
   }
 
