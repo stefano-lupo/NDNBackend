@@ -7,9 +7,9 @@ import net.named_data.jndn.util.Blob;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class PositionResponder implements OnInterestCallback {
+public class StatusResponder implements OnInterestCallback {
 
-    private final String prefix = "ndn:/com/stefanolupo/ndngame/player-position";
+    private final String prefix = "ndn:/com/stefanolupo/ndngame/player-status";
 
     private final KeyChain keyChain;
     private final Face face;
@@ -17,7 +17,7 @@ public class PositionResponder implements OnInterestCallback {
     private final String playerName;
 
 
-    public PositionResponder(String playerName) throws Exception {
+    public StatusResponder(String playerName) throws Exception {
         keyChain = new KeyChain();
         certificateName = keyChain.getDefaultCertificateName();
         face = new Face();
@@ -37,10 +37,10 @@ public class PositionResponder implements OnInterestCallback {
 
     @Override
     public void onInterest(Name name, Interest interest, Face face, long l, InterestFilter interestFilter) {
-        System.out.println("Got interest for: " + name.toUri() + " - " + interest.getName().toUri());
+//        System.out.println("Got interest for: " + name.toUri() + " - " + interest.getName().toUri());
 
         Name dataName = new Name(interest.getName());
-        NDNGameProtos.Position position = NDNGameProtos.Position.newBuilder()
+        NDNGameProtos.PlayerStatus position = NDNGameProtos.PlayerStatus.newBuilder()
                 .setX(ThreadLocalRandom.current().nextInt(0, 100))
                 .setY(ThreadLocalRandom.current().nextInt(0, 100)).build();
         Data data = new Data(dataName).setContent(new Blob(position.toByteArray()));
@@ -48,7 +48,7 @@ public class PositionResponder implements OnInterestCallback {
         try {
             keyChain.sign(data, certificateName);
             face.send(data.getDefaultWireEncoding().buf());
-            System.out.println("Sent: " + data.getName().toUri() + "\n");
+//            System.out.println("Sent: " + data.getName().toUri() + "\n");
         } catch (Exception e) {
             e.printStackTrace();
         }

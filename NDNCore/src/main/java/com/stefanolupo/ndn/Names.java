@@ -4,7 +4,7 @@ import net.named_data.jndn.Name;
 
 public enum Names {
     REGISTER("register"),
-    PLAYER_POSITION("player-position");
+    PLAYER_STATUS("player-status");
 
     private final static String PREFIX = "/com/stefanolupo/ndngame";
 

@@ -58,7 +58,7 @@ public class SyncrhonizedGamePlayer implements OnData, OnTimeout {
         System.out.println("Got data for: " + interest.toUri());
         outstandingRequest.set(false);
         try {
-            NDNGameProtos.Position position = NDNGameProtos.Position.parseFrom(data.getContent().getImmutableArray());
+            NDNGameProtos.PlayerStatus position = NDNGameProtos.PlayerStatus.parseFrom(data.getContent().getImmutableArray());
             gamePlayer.update(position);
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();

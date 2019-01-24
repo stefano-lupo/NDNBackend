@@ -13,32 +13,27 @@ public class GameState {
 
     public GameState() {
         syncrhonizedGamePlayers = new ArrayList<>();
-        executorService.scheduleAtFixedRate(this::printPositions, 0, 3, TimeUnit.SECONDS);
-        CompletableFuture.runAsync(() -> {
-            try {
-                new PositionResponder("desktop").processEvents();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        executorService.scheduleAtFixedRate(this::printPlayerStatus, 0, 3, TimeUnit.SECONDS);
     }
 
     public void registerNewPlayer(String playerName) {
         syncrhonizedGamePlayers.add(new SyncrhonizedGamePlayer(playerName));
     }
 
-    private void printPositions() {
-        System.out.println("Tick " + tick++);
+    private void printPlayerStatus() {
+        System.out.println("\n\nTick " + tick++);
         syncrhonizedGamePlayers.forEach(p -> System.out.println(getPlayerPositionString(p.getGamePlayer())));
         System.out.println();
     }
 
     private String getPlayerPositionString(GamePlayer player) {
-        return String.format("%s - x:%d, y:%d", player.getPlayerName(), player.getPosition().getX(), player.getPosition().getY());
+        return String.format("%s - x:%d, y:%d, hp:%d, mana:%d, score:%d",
+                player.getPlayerName(),
+                player.getPlayerStatus().getX(),
+                player.getPlayerStatus().getY(),
+                player.getPlayerStatus().getHp(),
+                player.getPlayerStatus().getMana(),
+                player.getPlayerStatus().getScore());
     }
 
-    public static void main(String[] args) {
-        GameState gameState = new GameState();
-        gameState.registerNewPlayer("desktop");
-    }
 }
