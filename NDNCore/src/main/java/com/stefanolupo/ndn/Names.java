@@ -14,7 +14,7 @@ public enum Names {
         this.value = value;
     }
 
-    public Name getName() {
-        return new Name(String.format("%s/%s", PREFIX, value));
+    public Name getName(String nodeName) {
+        return new Name(String.format("%s/%s/%s", PREFIX, nodeName, value));
     }
 }

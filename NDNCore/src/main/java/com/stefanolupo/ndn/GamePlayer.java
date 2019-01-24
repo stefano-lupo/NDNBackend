@@ -21,7 +21,7 @@ public class GamePlayer {
     }
 
     public Name getInterestName() {
-        return new Name(String.format("%s/%s/ping", Names.PLAYER_STATUS.getName(), playerName));
+        return new Name(Names.PLAYER_STATUS.getName(playerName));
     }
 
     public String getPlayerName() {
