@@ -15,7 +15,7 @@ public class Game extends PApplet {
 
     @Override
     public void settings() {
-        Backend.BackendBuilder builder = new CommandLineHelper().getBackendBuilder(this.args);
+        Backend.Builder builder = new CommandLineHelper().getBackendBuilder(this.args);
         backend = builder.build();
         size(500, 500);
     }

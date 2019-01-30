@@ -1,7 +1,6 @@
 package com.stefanolupo.ndngame.names;
 
 import com.google.common.base.Preconditions;
-import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
 import java.util.regex.Pattern;
@@ -15,20 +14,20 @@ public class BaseName {
     protected final Name fullName;
     protected final Name tailName;
 
-    protected BaseName(Interest interest) {
-        this(interest, BASE_REGEX);
+    protected BaseName(String name) {
+        this(new Name(name));
     }
 
-    protected BaseName(Interest interest, Pattern regex) {
-        Preconditions.checkArgument(regex.matcher(interest.getName().toUri()).find(),
-                "Encountered interest which didn't match provided regex '%s': %s", regex, interest.getName().toUri());
-        fullName = interest.getName();
-        tailName = getTailName(fullName);
+    protected BaseName(Name name) {
+        checkMatchesRegex(name, BASE_REGEX);
+        fullName = new Name(name);
+        tailName = getTailNameFromFullName(fullName);
     }
 
     protected BaseName(String... args) {
         tailName = buildFromComponents(args);
         fullName = new Name(GAME_BASE_NAME).append(tailName);
+        checkMatchesRegex(fullName, BASE_REGEX);
     }
 
     protected Name buildFromComponents(String... args) {
@@ -39,16 +38,21 @@ public class BaseName {
         return name;
     }
 
-    private Name getTailName(Name fullName) {
-        return fullName.getSubName(GAME_BASE_NAME.size());
-    }
-
-    public Name getTailName() {
+    protected Name getTailName() {
         return tailName;
     }
 
-    public Name getFullName() {
+    protected Name getFullName() {
         return fullName;
+    }
+
+    protected void checkMatchesRegex(Name name, Pattern regex) {
+        Preconditions.checkArgument(regex.matcher(name.toUri()).find(),
+                "Encountered interest which didn't match provided regex '%s': %s", regex, name);
+    }
+
+    private Name getTailNameFromFullName(Name fullName) {
+        return fullName.getSubName(GAME_BASE_NAME.size());
     }
 
     public static void main(String[] args) {

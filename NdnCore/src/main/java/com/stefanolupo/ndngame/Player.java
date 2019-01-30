@@ -1,7 +1,6 @@
 package com.stefanolupo.ndngame;
 
 import com.stefanolupo.ndngame.protos.PlayerStatus;
-import net.named_data.jndn.Name;
 
 public class Player {
 
@@ -20,10 +19,6 @@ public class Player {
 
     public void update(PlayerStatus position) {
         this.playerStatus = position.toBuilder().build();
-    }
-
-    public Name getNdnName() {
-        return new Name(Names.PLAYER_STATUS.getName(playerName));
     }
 
     public String getPlayerName() {

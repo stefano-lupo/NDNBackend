@@ -22,7 +22,7 @@ public class CommandLineHelper {
         options.addOption(AUTOMATED_MODE);
     }
 
-    public Backend.BackendBuilder getBackendBuilder(String[] args) {
+    public Backend.Builder getBackendBuilder(String[] args) {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -30,7 +30,7 @@ public class CommandLineHelper {
         try {
             cmd = parser.parse(options, args);
 
-            Backend.BackendBuilder builder = new Backend.BackendBuilder();
+            Backend.Builder builder = new Backend.Builder();
             String playerName = cmd.getOptionValue(NAME_OF_PLAYER.getLongOpt());
             boolean automate = cmd.hasOption(AUTOMATED_MODE.getOpt());
 

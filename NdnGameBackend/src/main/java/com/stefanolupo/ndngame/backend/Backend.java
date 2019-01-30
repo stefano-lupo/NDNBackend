@@ -47,23 +47,23 @@ public class Backend {
         return gameState;
     }
 
-    public static class BackendBuilder {
+    public static class Builder {
 
         private String playerName;
         private boolean automatePlayer = false;
         private long gameId = 0;
 
-        public BackendBuilder playerName(String playerName) {
+        public Builder playerName(String playerName) {
             this.playerName = playerName;
             return this;
         }
 
-        public BackendBuilder automatePlayer(boolean automatePlayer) {
+        public Builder automatePlayer(boolean automatePlayer) {
             this.automatePlayer = automatePlayer;
             return this;
         }
 
-        public BackendBuilder gameId(long gameId) {
+        public Builder gameId(long gameId) {
             this.gameId = gameId;
             return this;
         }
