@@ -9,11 +9,11 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>NDNGateway</module>
-        <module>NDNPingPong</module>
-        <module>NDNCore</module>
-        <module>NDNGameBackend</module>
-        <module>NDNGameFrontend</module>
+        <module>NdnGateway</module>
+        <module>NdnPingPong</module>
+        <module>NdnCore</module>
+        <module>NdnGameBackend</module>
+        <module>NdnGameFrontend</module>
     </modules>
 
     <dependencies>

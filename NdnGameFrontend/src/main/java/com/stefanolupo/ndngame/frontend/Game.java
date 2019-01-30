@@ -17,7 +17,6 @@ public class Game extends PApplet {
     public void settings() {
         Backend.BackendBuilder builder = new CommandLineHelper().getBackendBuilder(this.args);
         backend = builder.build();
-        backend.launch();
         size(500, 500);
     }
 

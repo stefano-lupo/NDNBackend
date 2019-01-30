@@ -22,7 +22,7 @@ public class Player {
         this.playerStatus = position.toBuilder().build();
     }
 
-    public Name getInterestName() {
+    public Name getNdnName() {
         return new Name(Names.PLAYER_STATUS.getName(playerName));
     }
 
