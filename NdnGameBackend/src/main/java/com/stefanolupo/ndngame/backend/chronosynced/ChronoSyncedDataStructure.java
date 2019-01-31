@@ -27,6 +27,7 @@ public abstract class ChronoSyncedDataStructure implements
     private static final Logger LOG = LoggerFactory.getLogger(ChronoSyncedDataStructure.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 5L;
     private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 2000L;
+    private static final Long DEFAULT_SYNC_LIFETIME_MS = 100000L;
 
     private final ChronoSync2013 chronoSync;
     private final Face face;
@@ -58,17 +59,18 @@ public abstract class ChronoSyncedDataStructure implements
                     face,
                     keyChain,
                     certificateName,
-                    1000.0,
+                    DEFAULT_SYNC_LIFETIME_MS,
                     this::registerPrefixFailure
             );
 
+            face.registerPrefix(dataListenPrefix, this, this::registerPrefixFailure);
             Executors.newSingleThreadScheduledExecutor()
                     .scheduleAtFixedRate(this::pollFace,
                             DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
                             DEFAULT_FACE_POLL_TIME_MS,
                             TimeUnit.MILLISECONDS);
         } catch (SecurityException | KeyChain.Error | PibImpl.Error | IOException e) {
-            String errorMessage = String.format("Could not initialize chrono synced map (Broadcast: %s, Listen: %s",
+            String errorMessage = String.format("Could not initialize chrono synced map (Broadcast: %s, Listen: %s)",
                     broadcastPrefix, dataListenPrefix);
             throw new RuntimeException(errorMessage, e);
         }
@@ -80,11 +82,12 @@ public abstract class ChronoSyncedDataStructure implements
 
     @Override
     public void onInitialized() {
-        LOG.debug("Initialized ChronoSyncedMap for %s", dataListenPrefix.toUri());
+        LOG.info("Initialized ChronoSyncedMap for {}", dataListenPrefix.toUri());
     }
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+//        LOG.debug("Received interest: {}", interest.toUri());
         Data data = new Data(interest.getName())
                 .setContent(localToBlob(interest));
         try {
@@ -102,7 +105,6 @@ public abstract class ChronoSyncedDataStructure implements
 
     @Override
     public void onReceivedSyncState(List syncStates, boolean isRecovery) {
-
         /**
          * This is totally safe - jNDN only uses generic Lists to support older JDKs
          * Casting here handles a necessary cast that would otherwise need to be done by the client
@@ -114,6 +116,8 @@ public abstract class ChronoSyncedDataStructure implements
         if (!maybeInterest.isPresent()) {
             return;
         }
+
+//        LOG.debug("Received syncstate - expressing interest: {}/{}", maybeInterest.get().toUri());
 
         try {
             face.expressInterest(maybeInterest.get(), this, this);
@@ -137,7 +141,7 @@ public abstract class ChronoSyncedDataStructure implements
 
     private void pollFace() {
         try {
-            LOG.info("polling face");
+            LOG.trace("polling face");
             face.processEvents();
         } catch (IOException | EncodingException e) {
             throw new RuntimeException(e);

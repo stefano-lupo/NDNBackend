@@ -2,6 +2,7 @@ package com.stefanolupo.ndngame.backend;
 
 import com.stefanolupo.ndngame.Player;
 import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
+import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.players.RemotePlayer;
 import org.slf4j.Logger;
@@ -37,6 +38,11 @@ public class GameState {
     public List<RemotePlayer> getRemotePlayers() {
         return new ArrayList<>(playerStatusManager.getMap().values());
     }
+
+    public void moveLocalPlayer(Command command) {
+        localPlayer.move(command);
+    }
+
 
     private void printPlayerStatus() {
         System.out.println();

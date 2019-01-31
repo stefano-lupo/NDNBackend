@@ -2,14 +2,18 @@ package com.stefanolupo.ndngame.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.config.Config;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 public class Backend {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Backend.class);
     private static final String CONFIG_FILE = "config.json";
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
@@ -22,6 +26,18 @@ public class Backend {
 
     public GameState getGameState() {
         return gameState;
+    }
+
+    public void handleCommand(Command command) {
+        switch (command.getCommandType()) {
+            case MOVE:
+                gameState.moveLocalPlayer(command);
+                break;
+            case INTERACT:
+                break;
+            default:
+                LOG.error("Got unexpected command: ");
+        }
     }
 
     private GameState createGameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
