@@ -103,6 +103,11 @@ public abstract class ChronoSyncedDataStructure implements
     @Override
     public void onReceivedSyncState(List syncStates, boolean isRecovery) {
 
+        /**
+         * This is totally safe - jNDN only uses generic Lists to support older JDKs
+         * Casting here handles a necessary cast that would otherwise need to be done by the client
+         */
+        @SuppressWarnings("unchecked")
         List<ChronoSync2013.SyncState> castedSyncStates = (List<ChronoSync2013.SyncState>) syncStates;
 
         Optional<Interest> maybeInterest = syncStatesToMaybeInterest(castedSyncStates, isRecovery);
