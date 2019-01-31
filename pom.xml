@@ -9,11 +9,11 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>NDNGateway</module>
-        <module>NDNPingPong</module>
-        <module>NDNCore</module>
-        <module>NDNGameBackend</module>
-        <module>NDNGameFrontend</module>
+        <module>NdnGateway</module>
+        <module>NdnPingPong</module>
+        <module>NdnCore</module>
+        <module>NdnGameBackend</module>
+        <module>NdnGameFrontend</module>
     </modules>
 
     <dependencies>
@@ -68,7 +68,21 @@
             <artifactId>commons-cli</artifactId>
             <version>1.3.1</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
     </dependencies>
 
 

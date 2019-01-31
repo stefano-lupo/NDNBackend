@@ -1,12 +1,14 @@
 package com.stefanolupo.ndngame;
 
 import com.stefanolupo.ndngame.protos.PlayerStatus;
-import net.named_data.jndn.Name;
 
 public class Player {
 
+    protected static final int DEFAULT_SPEED = 5;
+
     protected final String playerName;
 
+    // TODO: This is all sorts of not thread safe right now
     protected PlayerStatus playerStatus;
 
     public Player(String playerName) {
@@ -22,15 +24,18 @@ public class Player {
         this.playerStatus = position.toBuilder().build();
     }
 
-    public Name getInterestName() {
-        return new Name(Names.PLAYER_STATUS.getName(playerName));
-    }
-
     public String getPlayerName() {
         return playerName;
     }
 
     public PlayerStatus getPlayerStatus() {
         return this.playerStatus;
+    }
+
+    protected void setXAndY(int x, int y) {
+        playerStatus = playerStatus.toBuilder()
+            .setX(x)
+            .setY(y)
+            .build();
     }
 }

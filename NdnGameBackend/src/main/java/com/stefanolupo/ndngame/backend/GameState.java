@@ -1,45 +1,52 @@
 package com.stefanolupo.ndngame.backend;
 
 import com.stefanolupo.ndngame.Player;
+import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
+import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.players.RemotePlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class GameState {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GameState.class);
+
     private final LocalPlayer localPlayer;
     private final boolean automatePlayer;
-    private final List<RemotePlayer> remotePlayers;
+    private final long gameId;
 
-    private int tick = 0;
+    private final PlayerStatusManager playerStatusManager;
 
-    public GameState(LocalPlayer localPlayer, boolean automatePlayer) {
+    public GameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
         this.localPlayer = localPlayer;
         this.automatePlayer = automatePlayer;
-
-        remotePlayers = new ArrayList<>();
+        this.gameId = gameId;
+        this.playerStatusManager = new PlayerStatusManager(localPlayer, gameId);
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 0, 5, TimeUnit.SECONDS);
     }
 
-    public void registerNewPlayer(String playerName) {
-        remotePlayers.add(new RemotePlayer(playerName));
+    public LocalPlayer getLocalPlayer() {
+        return localPlayer;
     }
 
     public List<RemotePlayer> getRemotePlayers() {
-        return Collections.unmodifiableList(remotePlayers);
+        return new ArrayList<>(playerStatusManager.getMap().values());
     }
 
-    public LocalPlayer getLocalPlayer() {
-        return this.localPlayer;
+    public void moveLocalPlayer(Command command) {
+        localPlayer.move(command);
     }
+
 
     private void printPlayerStatus() {
-        System.out.println("\n\nTick " + tick++);
-        remotePlayers.forEach(p -> System.out.println(getPlayerPositionString(p)));
+        System.out.println();
+        playerStatusManager.getMap().values().forEach(p -> System.out.println(getPlayerPositionString(p)));
         System.out.println();
     }
 
@@ -52,5 +59,4 @@ public class GameState {
                 player.getPlayerStatus().getMana(),
                 player.getPlayerStatus().getScore());
     }
-
 }

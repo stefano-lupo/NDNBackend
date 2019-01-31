@@ -2,48 +2,45 @@ package com.stefanolupo.ndngame.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.exceptions.NdnException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 
 public class Backend {
 
+    private static final Logger LOG = LoggerFactory.getLogger(Backend.class);
     private static final String CONFIG_FILE = "config.json";
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
-    private static final List<String> IGNORE_NAMES = Arrays.asList(
-      "ndnbox",
-      "laptop"
-    );
 
     private final GameState gameState;
-    private final StatusResponder playerStatusResponder;
 
-    private Backend(String playerName, boolean automatePlayer) {
+    private Backend(String playerName, boolean automatePlayer, long gameId) {
         LocalPlayer localPlayer = new LocalPlayer(playerName);
-        try {
-            playerStatusResponder = new StatusResponder(localPlayer);
-        } catch (NdnException ne) {
-            throw new RuntimeException("Unable to construct PlayerStatusResponder", ne);
-        }
-
-        gameState = createGameState(localPlayer, automatePlayer);
-    }
-
-
-    public void launch() {
-        playerStatusResponder.launch();
+        gameState = createGameState(localPlayer, automatePlayer, gameId);
     }
 
     public GameState getGameState() {
         return gameState;
     }
 
-    private GameState createGameState(LocalPlayer localPlayer, boolean automatePlayer) {
+    public void handleCommand(Command command) {
+        switch (command.getCommandType()) {
+            case MOVE:
+                gameState.moveLocalPlayer(command);
+                break;
+            case INTERACT:
+                break;
+            default:
+                LOG.error("Got unexpected command: ");
+        }
+    }
+
+    private GameState createGameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIG_FILE);
         Config config;
         try {
@@ -52,30 +49,33 @@ public class Backend {
             throw new RuntimeException("Unable to parse config file " + CONFIG_FILE, e);
         }
 
-        GameState gameState = new GameState(localPlayer, automatePlayer);
-        config.getNodeConfigs().stream()
-                .filter(n -> !IGNORE_NAMES.contains(n.getName()) && !n.getName().equals(localPlayer.getPlayerName()))
-                .forEach(n -> gameState.registerNewPlayer(n.getName()));
-        return gameState;
+
+        return new GameState(localPlayer, automatePlayer, gameId);
     }
 
-    public static class BackendBuilder {
+    public static class Builder {
 
         private String playerName;
         private boolean automatePlayer = false;
+        private long gameId = 0;
 
-        public BackendBuilder playerName(String playerName) {
+        public Builder playerName(String playerName) {
             this.playerName = playerName;
             return this;
         }
 
-        public BackendBuilder automatePlayer(boolean automatePlayer) {
+        public Builder automatePlayer(boolean automatePlayer) {
             this.automatePlayer = automatePlayer;
             return this;
         }
 
+        public Builder gameId(long gameId) {
+            this.gameId = gameId;
+            return this;
+        }
+
         public Backend build() {
-            return new Backend(playerName, automatePlayer);
+            return new Backend(playerName, automatePlayer, gameId);
         }
     }
 }
