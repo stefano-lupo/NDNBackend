@@ -7,23 +7,16 @@ import com.stefanolupo.ndngame.config.Config;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
 
 public class Backend {
 
     private static final String CONFIG_FILE = "config.json";
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
-    private static final List<String> IGNORE_NAMES = Arrays.asList(
-      "ndnbox"
-//      "laptop"
-    );
 
     private final GameState gameState;
 
     private Backend(String playerName, boolean automatePlayer, long gameId) {
         LocalPlayer localPlayer = new LocalPlayer(playerName);
-
         gameState = createGameState(localPlayer, automatePlayer, gameId);
     }
 
@@ -40,11 +33,8 @@ public class Backend {
             throw new RuntimeException("Unable to parse config file " + CONFIG_FILE, e);
         }
 
-        GameState gameState = new GameState(localPlayer, automatePlayer, gameId);
-//        config.getNodeConfigs().stream()
-//                .filter(n -> !IGNORE_NAMES.contains(n.getName()) && !n.getName().equals(localPlayer.getPlayerName()))
-//                .forEach(n -> gameState.registerNewPlayer(n.getName()));
-        return gameState;
+
+        return new GameState(localPlayer, automatePlayer, gameId);
     }
 
     public static class Builder {

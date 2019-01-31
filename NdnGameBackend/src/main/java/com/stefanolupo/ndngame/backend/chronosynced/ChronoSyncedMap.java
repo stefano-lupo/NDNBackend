@@ -2,6 +2,7 @@ package com.stefanolupo.ndngame.backend.chronosynced;
 
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import net.named_data.jndn.*;
+import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.security.SecurityException;
 import net.named_data.jndn.security.pib.PibImpl;
@@ -144,14 +145,11 @@ public abstract class ChronoSyncedMap<K, V> implements
     }
 
     private void pollFace() {
-        while (true) {
-            try {
-                LOG.info("polling face");
-                face.processEvents();
-                Thread.sleep(5);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            LOG.info("polling face");
+            face.processEvents();
+        } catch (IOException | EncodingException e) {
+            throw new RuntimeException(e);
         }
     }
 }
