@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class PlayerStatuses extends ChronoSyncedMap<PlayerStatusName, RemotePlayer> {
+public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, RemotePlayer> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PlayerStatuses.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusManager.class);
     private static final String BROADCAST_PREFIX = "com/stefanolupo/ndngame/%d/status/broadcast";
     private static final Long LOCAL_PLAYER_PUBLISH_RATE_MS = 20L;
 
@@ -25,8 +25,8 @@ public class PlayerStatuses extends ChronoSyncedMap<PlayerStatusName, RemotePlay
 //    private final boolean automatePlayer;
     private final long gameId;
 
-    public PlayerStatuses(LocalPlayer localPlayer,
-                          long gameId) {
+    public PlayerStatusManager(LocalPlayer localPlayer,
+                               long gameId) {
         super(new Name(String.format(BROADCAST_PREFIX, gameId)),
                 new PlayerStatusName(gameId, localPlayer.getPlayerName()).getListenName());
         this.localPlayer = localPlayer;

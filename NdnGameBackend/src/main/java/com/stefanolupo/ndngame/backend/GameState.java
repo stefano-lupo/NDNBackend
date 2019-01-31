@@ -1,7 +1,7 @@
 package com.stefanolupo.ndngame.backend;
 
 import com.stefanolupo.ndngame.Player;
-import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatuses;
+import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
 import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.players.RemotePlayer;
 import org.slf4j.Logger;
@@ -20,13 +20,13 @@ public class GameState {
     private final boolean automatePlayer;
     private final long gameId;
 
-    private final PlayerStatuses playerStatuses;
+    private final PlayerStatusManager playerStatusManager;
 
     public GameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
         this.localPlayer = localPlayer;
         this.automatePlayer = automatePlayer;
         this.gameId = gameId;
-        this.playerStatuses = new PlayerStatuses(localPlayer, gameId);
+        this.playerStatusManager = new PlayerStatusManager(localPlayer, gameId);
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 0, 5, TimeUnit.SECONDS);
     }
 
@@ -35,12 +35,12 @@ public class GameState {
     }
 
     public List<RemotePlayer> getRemotePlayers() {
-        return new ArrayList<>(playerStatuses.getMap().values());
+        return new ArrayList<>(playerStatusManager.getMap().values());
     }
 
     private void printPlayerStatus() {
         System.out.println();
-        playerStatuses.getMap().values().forEach(p -> System.out.println(getPlayerPositionString(p)));
+        playerStatusManager.getMap().values().forEach(p -> System.out.println(getPlayerPositionString(p)));
         System.out.println();
     }
 
