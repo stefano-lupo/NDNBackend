@@ -25,8 +25,8 @@ public abstract class ChronoSyncedDataStructure implements
 {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChronoSyncedDataStructure.class);
-    private static final Long DEFAULT_FACE_POLL_TIME_MS = 5L;
-    private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 2000L;
+    private static final Long DEFAULT_FACE_POLL_TIME_MS = 10L;
+    private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 5000L;
     private static final Long DEFAULT_SYNC_LIFETIME_MS = 100000L;
 
     private final ChronoSync2013 chronoSync;
@@ -76,7 +76,7 @@ public abstract class ChronoSyncedDataStructure implements
         }
     }
 
-    protected abstract Blob localToBlob(Interest interest);
+    protected abstract Optional<Blob> localToBlob(Interest interest);
 
     protected abstract Optional<Interest> syncStatesToMaybeInterest(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery);
 
@@ -88,8 +88,12 @@ public abstract class ChronoSyncedDataStructure implements
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
 //        LOG.debug("Received interest: {}", interest.toUri());
-        Data data = new Data(interest.getName())
-                .setContent(localToBlob(interest));
+        Optional<Blob> maybeBlob = localToBlob(interest);
+        if (!maybeBlob.isPresent()) {
+            return;
+        }
+
+        Data data = new Data(interest.getName()).setContent(maybeBlob.get());
         try {
             keyChain.sign(data, certificateName);
             face.send(data.wireEncode());

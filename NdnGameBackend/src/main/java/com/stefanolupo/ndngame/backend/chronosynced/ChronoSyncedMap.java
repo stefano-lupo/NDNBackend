@@ -3,7 +3,6 @@ package com.stefanolupo.ndngame.backend.chronosynced;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +30,7 @@ public abstract class ChronoSyncedMap<K, V> extends ChronoSyncedDataStructure
 
     protected abstract K interestToKey(Interest interest);
     protected abstract V dataToVal(Data data, K key, V oldVal);
-    protected abstract Blob localToBlob(Interest interest);
+//    protected abstract Optional<Blob> localToBlob(Interest interest);
 
     @Override
     public void onData(Interest interest, Data data) {

@@ -2,8 +2,8 @@ package com.stefanolupo.ndngame.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
-import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +34,7 @@ public class Backend {
                 gameState.moveLocalPlayer(command);
                 break;
             case INTERACT:
+                gameState.interact(command);
                 break;
             default:
                 LOG.error("Got unexpected command: ");

@@ -51,11 +51,11 @@ public class BaseName {
                 "Encountered interest which didn't match provided regex '%s': %s", regex, name);
     }
 
-    private Name getTailNameFromFullName(Name fullName) {
-        return fullName.getSubName(GAME_BASE_NAME.size());
+    protected long getLongFromComponent(Name.Component component) {
+        return Long.valueOf(component.toEscapedString());
     }
 
-    public static void main(String[] args) {
-        System.out.println(GAME_BASE_NAME.size());
+    private Name getTailNameFromFullName(Name fullName) {
+        return fullName.getSubName(GAME_BASE_NAME.size());
     }
 }

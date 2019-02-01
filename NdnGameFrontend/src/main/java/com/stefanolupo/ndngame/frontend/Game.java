@@ -3,8 +3,8 @@ package com.stefanolupo.ndngame.frontend;
 
 import com.stefanolupo.ndngame.backend.Backend;
 import com.stefanolupo.ndngame.backend.GameState;
+import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
-import com.stefanolupo.ndngame.backend.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.setup.CommandLineHelper;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;

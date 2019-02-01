@@ -1,8 +1,8 @@
 package com.stefanolupo.ndngame.backend.chronosynced;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.stefanolupo.ndngame.backend.players.LocalPlayer;
-import com.stefanolupo.ndngame.backend.players.RemotePlayer;
+import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
+import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import net.named_data.jndn.Data;
@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -25,7 +24,9 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
     private static final String BROADCAST_PREFIX = "com/stefanolupo/ndngame/%d/status/broadcast";
     private static final Long LOCAL_PLAYER_PUBLISH_RATE_MS = 30L;
 
-    private final ConcurrentHashMap<String, Long> analyticsMap = new ConcurrentHashMap<>();
+    private int numRecoveries = 0;
+    private int numSyncs = 0;
+
     private final LocalPlayer localPlayer;
     private final long gameId;
 
@@ -36,6 +37,7 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
         this.localPlayer = localPlayer;
         this.gameId = gameId;
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::publishPlayerPosition, 5000, LOCAL_PLAYER_PUBLISH_RATE_MS, TimeUnit.MILLISECONDS);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> LOG.info("Recoveries: {}", (numRecoveries + 0.0) / numSyncs), 2, 4, TimeUnit.SECONDS);
     }
 
     @Override
@@ -60,7 +62,9 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
 
     @Override
     protected Optional<Interest> syncStatesToMaybeInterest(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
+        numSyncs ++;
         if (isRecovery) {
+            numRecoveries++;
             return Optional.empty();
         }
 
@@ -70,8 +74,8 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
     }
 
     @Override
-    protected Blob localToBlob(Interest interest) {
-        return new Blob(localPlayer.getPlayerStatus().toByteArray());
+    protected Optional<Blob> localToBlob(Interest interest) {
+        return Optional.of(new Blob(localPlayer.getPlayerStatus().toByteArray()));
     }
 
     private void publishPlayerPosition() {

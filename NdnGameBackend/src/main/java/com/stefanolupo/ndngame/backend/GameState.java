@@ -2,9 +2,9 @@ package com.stefanolupo.ndngame.backend;
 
 import com.stefanolupo.ndngame.Player;
 import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
+import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
+import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
-import com.stefanolupo.ndngame.backend.players.LocalPlayer;
-import com.stefanolupo.ndngame.backend.players.RemotePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +43,9 @@ public class GameState {
         localPlayer.move(command);
     }
 
+    public void interact(Command command) {
+
+    }
 
     private void printPlayerStatus() {
         System.out.println();

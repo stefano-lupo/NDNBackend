@@ -11,3 +11,12 @@ message PlayerStatus {
     int32 mana = 4;
     int32 score = 5;
 }
+
+message BulletStatus {
+    int64 id = 1;
+    int32 x = 2;
+    int32 y = 3;
+    int32 velX = 4;
+    int32 velY = 5;
+    int32 damage = 6;
+}
