@@ -7,9 +7,11 @@ option java_package = "com.stefanolupo.ndngame.protos";
 message PlayerStatus {
     int32 x = 1;
     int32 y = 2;
-    int32 hp = 3;
-    int32 mana = 4;
-    int32 score = 5;
+    int32 velX = 3;
+    int32 velY =4;
+    int32 hp = 5;
+    int32 mana = 6;
+    int32 score = 7;
 }
 
 message BulletStatus {

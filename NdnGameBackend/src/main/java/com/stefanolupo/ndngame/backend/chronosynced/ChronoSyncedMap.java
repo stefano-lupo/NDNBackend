@@ -30,7 +30,6 @@ public abstract class ChronoSyncedMap<K, V> extends ChronoSyncedDataStructure
 
     protected abstract K interestToKey(Interest interest);
     protected abstract V dataToVal(Data data, K key, V oldVal);
-//    protected abstract Optional<Blob> localToBlob(Interest interest);
 
     @Override
     public void onData(Interest interest, Data data) {

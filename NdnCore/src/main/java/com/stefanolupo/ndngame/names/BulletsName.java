@@ -36,6 +36,11 @@ public class BulletsName extends BaseName {
                 .append(String.valueOf(bulletId));
     }
 
+    @Override
+    public Interest toInterest() {
+        return null;
+    }
+
     public Name getExpressInterestName() {
         return getListenName()
                 .append(String.valueOf(sequenceNumber));

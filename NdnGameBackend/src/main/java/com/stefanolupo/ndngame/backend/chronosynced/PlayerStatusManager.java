@@ -15,17 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, RemotePlayer> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusManager.class);
-    private static final String BROADCAST_PREFIX = "com/stefanolupo/ndngame/%d/status/broadcast";
+    private static final String BROADCAST_PREFIX = "/com/stefanolupo/ndngame/%d/status/broadcast";
     private static final Long LOCAL_PLAYER_PUBLISH_RATE_MS = 30L;
-
-    private int numRecoveries = 0;
-    private int numSyncs = 0;
 
     private final LocalPlayer localPlayer;
     private final long gameId;
@@ -36,8 +31,7 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
                 new PlayerStatusName(gameId, localPlayer.getPlayerName()).getListenName());
         this.localPlayer = localPlayer;
         this.gameId = gameId;
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::publishPlayerPosition, 5000, LOCAL_PLAYER_PUBLISH_RATE_MS, TimeUnit.MILLISECONDS);
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(() -> LOG.info("Recoveries: {}", (numRecoveries + 0.0) / numSyncs), 2, 4, TimeUnit.SECONDS);
+//        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::publishPlayerStatusChange, 5000, LOCAL_PLAYER_PUBLISH_RATE_MS, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -53,6 +47,7 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
                 oldVal.update(status);
                 return oldVal;
             } else {
+                LOG.info("First appearance of {}, creating..", key.getPlayerName());
                 return new RemotePlayer(key.getPlayerName(), status);
             }
         } catch (InvalidProtocolBufferException e) {
@@ -62,15 +57,11 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
 
     @Override
     protected Optional<Interest> syncStatesToMaybeInterest(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
-        numSyncs ++;
-        if (isRecovery) {
-            numRecoveries++;
-            return Optional.empty();
-        }
-
-        ChronoSync2013.SyncState state = syncStates.get(syncStates.size() - 1);
-        PlayerStatusName statusName = new PlayerStatusName(state);
-        return Optional.of(new Interest(statusName.getExpressInterestName()));
+        return syncStates.stream()
+                .map(PlayerStatusName::new)
+                .filter(psn -> !psn.getPlayerName().equals(localPlayer.getPlayerName()))
+                .findFirst()
+                .map(PlayerStatusName::toInterest);
     }
 
     @Override
@@ -78,7 +69,7 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
         return Optional.of(new Blob(localPlayer.getPlayerStatus().toByteArray()));
     }
 
-    private void publishPlayerPosition() {
+    public void publishPlayerStatusChange() {
         publishUpdate();
     }
 }

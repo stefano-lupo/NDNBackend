@@ -27,7 +27,7 @@ public abstract class ChronoSyncedDataStructure implements
     private static final Logger LOG = LoggerFactory.getLogger(ChronoSyncedDataStructure.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 10L;
     private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 5000L;
-    private static final Long DEFAULT_SYNC_LIFETIME_MS = 100000L;
+    private static final Long DEFAULT_SYNC_LIFETIME_MS = 1000L;
 
     private final ChronoSync2013 chronoSync;
     private final Face face;
@@ -37,12 +37,14 @@ public abstract class ChronoSyncedDataStructure implements
     private final long session;
     private final Name broadcastPrefix;
     private final Name dataListenPrefix;
+    private final Statistics statistics;
 
     public ChronoSyncedDataStructure(Name broadcastPrefix,
                                      Name dataListenPrefix) {
         this.broadcastPrefix = broadcastPrefix;
         this.dataListenPrefix = dataListenPrefix;
         session = System.currentTimeMillis() / 1000;
+        statistics = new Statistics();
 
         try {
             keyChain = new KeyChain();
@@ -87,7 +89,7 @@ public abstract class ChronoSyncedDataStructure implements
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-//        LOG.debug("Received interest: {}", interest.toUri());
+        LOG.trace("Received interest: {}", interest.toUri());
         Optional<Blob> maybeBlob = localToBlob(interest);
         if (!maybeBlob.isPresent()) {
             return;
@@ -96,7 +98,7 @@ public abstract class ChronoSyncedDataStructure implements
         Data data = new Data(interest.getName()).setContent(maybeBlob.get());
         try {
             keyChain.sign(data, certificateName);
-            face.send(data.wireEncode());
+            face.putData(data);
         } catch (Exception e) {
             throw new RuntimeException("Unable to send data to satisfy interest " + interest.toUri(), e);
         }
@@ -104,11 +106,17 @@ public abstract class ChronoSyncedDataStructure implements
 
     @Override
     public void onTimeout(Interest interest) {
-        LOG.debug("Timeout for interest: %s", interest.toUri());
+        LOG.error("Timeout for interest: {}", interest.toUri());
     }
 
     @Override
     public void onReceivedSyncState(List syncStates, boolean isRecovery) {
+        statistics.numSyncs ++;
+        statistics.totalNumSyncStates += syncStates.size();
+        if (isRecovery) {
+            statistics.numRecoveries ++;
+        }
+
         /**
          * This is totally safe - jNDN only uses generic Lists to support older JDKs
          * Casting here handles a necessary cast that would otherwise need to be done by the client
@@ -121,12 +129,10 @@ public abstract class ChronoSyncedDataStructure implements
             return;
         }
 
-//        LOG.debug("Received syncstate - expressing interest: {}/{}", maybeInterest.get().toUri());
-
         try {
             face.expressInterest(maybeInterest.get(), this, this);
         } catch (IOException e) {
-            LOG.error("Unable to express interest for %s", maybeInterest.get().toUri(), e);
+            LOG.error("Unable to express interest for {}", maybeInterest.get().toUri(), e);
         }
     }
 
@@ -162,5 +168,23 @@ public abstract class ChronoSyncedDataStructure implements
 
     public Name getDataListenPrefix() {
         return dataListenPrefix;
+    }
+
+    private final class Statistics {
+        long numSyncs = 0;
+        long numRecoveries = 0;
+        long totalNumSyncStates = 0;
+
+        Statistics() {
+            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printStats, 7L, 7L, TimeUnit.SECONDS);
+        }
+
+        void printStats() {
+            LOG.info("{} sync updates ({}% recovery) - average num sync states = {}",
+                    numSyncs,
+                    (numRecoveries + 0.0) / numSyncs,
+                    (totalNumSyncStates + 0.0) / numSyncs
+            );
+        }
     }
 }

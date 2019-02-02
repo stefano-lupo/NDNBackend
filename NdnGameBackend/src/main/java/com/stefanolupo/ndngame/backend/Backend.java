@@ -2,7 +2,6 @@ package com.stefanolupo.ndngame.backend;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
@@ -10,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 public class Backend {
 
@@ -20,8 +20,8 @@ public class Backend {
     private final GameState gameState;
 
     private Backend(String playerName, boolean automatePlayer, long gameId) {
-        LocalPlayer localPlayer = new LocalPlayer(playerName);
-        gameState = createGameState(localPlayer, automatePlayer, gameId);
+
+        gameState = createGameState(playerName + randomString(), automatePlayer, gameId);
     }
 
     public GameState getGameState() {
@@ -37,11 +37,15 @@ public class Backend {
                 gameState.interact(command);
                 break;
             default:
-                LOG.error("Got unexpected command: ");
+                LOG.error("Got unexpected command: {}", command);
         }
     }
 
-    private GameState createGameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
+    public void handleNoCommand() {
+        gameState.stopLocalPlayer();
+    }
+
+    private GameState createGameState(String playerName, boolean automatePlayer, long gameId) {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIG_FILE);
         Config config;
         try {
@@ -51,7 +55,7 @@ public class Backend {
         }
 
 
-        return new GameState(localPlayer, automatePlayer, gameId);
+        return new GameState(playerName, automatePlayer, gameId);
     }
 
     public static class Builder {
@@ -78,5 +82,22 @@ public class Backend {
         public Backend build() {
             return new Backend(playerName, automatePlayer, gameId);
         }
+    }
+
+    private String randomString() {
+
+        int leftLimit = 97; // letter 'a'
+        int rightLimit = 122; // letter 'z'
+        int targetStringLength = 5;
+        Random random = new Random();
+        StringBuilder buffer = new StringBuilder(targetStringLength);
+        for (int i = 0; i < targetStringLength; i++) {
+            int randomLimitedInt = leftLimit + (int)
+                    (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        String generatedString = buffer.toString();
+
+        return generatedString;
     }
 }

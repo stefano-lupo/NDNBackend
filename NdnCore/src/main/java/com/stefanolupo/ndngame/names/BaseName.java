@@ -1,11 +1,12 @@
 package com.stefanolupo.ndngame.names;
 
 import com.google.common.base.Preconditions;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
 import java.util.regex.Pattern;
 
-public class BaseName {
+public abstract class BaseName {
 
     public static final Name GAME_BASE_NAME = new Name("/com/stefanolupo/ndngame");
 
@@ -37,6 +38,8 @@ public class BaseName {
         }
         return name;
     }
+    
+    public abstract Interest toInterest();
 
     protected Name getTailName() {
         return tailName;

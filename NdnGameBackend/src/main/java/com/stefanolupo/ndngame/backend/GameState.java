@@ -5,12 +5,14 @@ import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
 import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
+import com.stefanolupo.ndngame.backend.events.CommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class GameState {
@@ -23,11 +25,17 @@ public class GameState {
 
     private final PlayerStatusManager playerStatusManager;
 
-    public GameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
-        this.localPlayer = localPlayer;
+    public GameState(String playerName, boolean automatePlayer, long gameId) {
+        this.localPlayer = new LocalPlayer(playerName, automatePlayer);
         this.automatePlayer = automatePlayer;
         this.gameId = gameId;
         this.playerStatusManager = new PlayerStatusManager(localPlayer, gameId);
+
+        if (automatePlayer) {
+            LOG.info("Automating player: {}", playerName);
+            Executors.newSingleThreadScheduledExecutor()
+                    .scheduleAtFixedRate(() -> moveLocalPlayer(getRandomMoveCommand()), 5000, 150, TimeUnit.MILLISECONDS);
+        }
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 0, 5, TimeUnit.SECONDS);
     }
 
@@ -40,7 +48,19 @@ public class GameState {
     }
 
     public void moveLocalPlayer(Command command) {
-        localPlayer.move(command);
+        boolean hasUpdatedVel = localPlayer.move(command);
+
+        if (hasUpdatedVel) {
+            playerStatusManager.publishPlayerStatusChange();
+        }
+    }
+
+    public void stopLocalPlayer() {
+        boolean hasUpdatedVel = localPlayer.stop();
+
+        if (hasUpdatedVel) {
+            playerStatusManager.publishPlayerStatusChange();
+        }
     }
 
     public void interact(Command command) {
@@ -61,5 +81,10 @@ public class GameState {
                 player.getPlayerStatus().getHp(),
                 player.getPlayerStatus().getMana(),
                 player.getPlayerStatus().getScore());
+    }
+
+    private Command getRandomMoveCommand() {
+        List<Command> moveCommands = Command.getCommandsOfType(CommandType.MOVE);
+        return moveCommands.get(ThreadLocalRandom.current().nextInt(moveCommands.size()));
     }
 }
