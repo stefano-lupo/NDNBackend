@@ -1,11 +1,12 @@
 package com.stefanolupo.ndngame.names;
 
 import com.google.common.base.Preconditions;
+import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
 import java.util.regex.Pattern;
 
-public class BaseName {
+public abstract class BaseName {
 
     public static final Name GAME_BASE_NAME = new Name("/com/stefanolupo/ndngame");
 
@@ -37,6 +38,8 @@ public class BaseName {
         }
         return name;
     }
+    
+    public abstract Interest toInterest();
 
     protected Name getTailName() {
         return tailName;
@@ -51,11 +54,11 @@ public class BaseName {
                 "Encountered interest which didn't match provided regex '%s': %s", regex, name);
     }
 
-    private Name getTailNameFromFullName(Name fullName) {
-        return fullName.getSubName(GAME_BASE_NAME.size());
+    protected long getLongFromComponent(Name.Component component) {
+        return Long.valueOf(component.toEscapedString());
     }
 
-    public static void main(String[] args) {
-        System.out.println(GAME_BASE_NAME.size());
+    private Name getTailNameFromFullName(Name fullName) {
+        return fullName.getSubName(GAME_BASE_NAME.size());
     }
 }

@@ -1,6 +1,8 @@
 package com.stefanolupo.ndngame.backend.events;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public enum Command {
     MOVE_RIGHT('d', CommandType.MOVE),
@@ -33,6 +35,11 @@ public enum Command {
             .orElse(Command.UNSUPPORTED);
     }
 
+    public static List<Command> getCommandsOfType(CommandType ct) {
+        return Arrays.stream(Command.values())
+                .filter(c -> c.getCommandType() == ct)
+                .collect(Collectors.toList());
+    }
 
     @Override
     public String toString() {

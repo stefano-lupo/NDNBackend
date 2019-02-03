@@ -2,9 +2,9 @@ package com.stefanolupo.ndngame.backend;
 
 import com.stefanolupo.ndngame.Player;
 import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
+import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
+import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
-import com.stefanolupo.ndngame.backend.players.LocalPlayer;
-import com.stefanolupo.ndngame.backend.players.RemotePlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +23,38 @@ public class GameState {
 
     private final PlayerStatusManager playerStatusManager;
 
-    public GameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
-        this.localPlayer = localPlayer;
-        this.automatePlayer = automatePlayer;
+    public GameState(String playerName, boolean automatedPlayer, long gameId) {
+        this.localPlayer = new LocalPlayer(playerName, automatedPlayer);
+        this.automatePlayer = automatedPlayer;
         this.gameId = gameId;
         this.playerStatusManager = new PlayerStatusManager(localPlayer, gameId);
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 0, 5, TimeUnit.SECONDS);
+
+        if (automatedPlayer) {
+            LOG.info("Automating player: {}", playerName);
+        }
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 5, 5, TimeUnit.SECONDS);
+    }
+
+    public void moveLocalPlayer(Command command) {
+        boolean hasUpdatedVel = localPlayer.move(command);
+
+        if (hasUpdatedVel) {
+            LOG.debug("Player moved and had updated vel");
+            playerStatusManager.publishPlayerStatusChange();
+        }
+    }
+
+    public void stopLocalPlayer() {
+        boolean hasUpdatedVel = localPlayer.stop();
+
+        if (hasUpdatedVel) {
+            LOG.debug("Player stopped and had updated vel");
+            playerStatusManager.publishPlayerStatusChange();
+        }
+    }
+
+    public void interact(Command command) {
+
     }
 
     public LocalPlayer getLocalPlayer() {
@@ -39,14 +65,14 @@ public class GameState {
         return new ArrayList<>(playerStatusManager.getMap().values());
     }
 
-    public void moveLocalPlayer(Command command) {
-        localPlayer.move(command);
+    public boolean isAutomatedPlayer() {
+        return automatePlayer;
     }
-
 
     private void printPlayerStatus() {
         System.out.println();
-        playerStatusManager.getMap().values().forEach(p -> System.out.println(getPlayerPositionString(p)));
+        LOG.info("{}", getPlayerPositionString(localPlayer));
+        playerStatusManager.getMap().values().forEach(p -> LOG.info(getPlayerPositionString(p)));
         System.out.println();
     }
 

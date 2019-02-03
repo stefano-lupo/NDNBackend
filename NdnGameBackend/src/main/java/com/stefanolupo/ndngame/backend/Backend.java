@@ -3,13 +3,13 @@ package com.stefanolupo.ndngame.backend;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.stefanolupo.ndngame.backend.events.Command;
-import com.stefanolupo.ndngame.backend.players.LocalPlayer;
 import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 
 public class Backend {
 
@@ -18,14 +18,13 @@ public class Backend {
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
     private final GameState gameState;
+    private final int gameWidth;
+    private final int gameHeight;
 
-    private Backend(String playerName, boolean automatePlayer, long gameId) {
-        LocalPlayer localPlayer = new LocalPlayer(playerName);
-        gameState = createGameState(localPlayer, automatePlayer, gameId);
-    }
-
-    public GameState getGameState() {
-        return gameState;
+    private Backend(String playerName, boolean automatePlayer, long gameId, int gameWidth, int gameHeight) {
+        this.gameWidth = gameWidth;
+        this.gameHeight = gameHeight;
+        gameState = createGameState(playerName + randomString(), automatePlayer, gameId);
     }
 
     public void handleCommand(Command command) {
@@ -34,13 +33,30 @@ public class Backend {
                 gameState.moveLocalPlayer(command);
                 break;
             case INTERACT:
+                gameState.interact(command);
                 break;
             default:
-                LOG.error("Got unexpected command: ");
+                LOG.error("Got unexpected command: {}", command);
         }
     }
 
-    private GameState createGameState(LocalPlayer localPlayer, boolean automatePlayer, long gameId) {
+    public void handleNoCommand() {
+        gameState.stopLocalPlayer();
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public int getGameWidth() {
+        return gameWidth;
+    }
+
+    public int getGameHeight() {
+        return gameHeight;
+    }
+
+    private GameState createGameState(String playerName, boolean automatePlayer, long gameId) {
         InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(CONFIG_FILE);
         Config config;
         try {
@@ -50,7 +66,7 @@ public class Backend {
         }
 
 
-        return new GameState(localPlayer, automatePlayer, gameId);
+        return new GameState(playerName, automatePlayer, gameId);
     }
 
     public static class Builder {
@@ -58,6 +74,8 @@ public class Backend {
         private String playerName;
         private boolean automatePlayer = false;
         private long gameId = 0;
+        private int gameWidth = 500;
+        private int gameHeight = 500;
 
         public Builder playerName(String playerName) {
             this.playerName = playerName;
@@ -74,8 +92,35 @@ public class Backend {
             return this;
         }
 
-        public Backend build() {
-            return new Backend(playerName, automatePlayer, gameId);
+        public Builder gameWidth(int gameWidth) {
+            this.gameWidth = gameWidth;
+            return this;
         }
+
+        public Builder gameHeight(int gameHeight) {
+            this.gameHeight = gameHeight;
+            return this;
+        }
+
+        public Backend build() {
+            return new Backend(playerName, automatePlayer, gameId, gameWidth, gameHeight);
+        }
+    }
+
+    private String randomString() {
+
+        int leftLimit = 97; // letter 'a'
+        int rightLimit = 122; // letter 'z'
+        int targetStringLength = 5;
+        Random random = new Random();
+        StringBuilder buffer = new StringBuilder(targetStringLength);
+        for (int i = 0; i < targetStringLength; i++) {
+            int randomLimitedInt = leftLimit + (int)
+                    (random.nextFloat() * (rightLimit - leftLimit + 1));
+            buffer.append((char) randomLimitedInt);
+        }
+        String generatedString = buffer.toString();
+
+        return generatedString;
     }
 }

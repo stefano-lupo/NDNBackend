@@ -50,6 +50,11 @@ public class PlayerStatusName extends BaseName {
                 .append("status");
     }
 
+    @Override
+    public Interest toInterest() {
+        return new Interest(getExpressInterestName());
+    }
+
     public Name getExpressInterestName() {
         return getListenName()
                 .append(String.valueOf(sequenceNumber));
