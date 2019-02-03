@@ -1,6 +1,6 @@
 package com.stefanolupo.ndngame.backend.setup;
 
-import com.stefanolupo.ndngame.backend.Backend;
+import com.stefanolupo.ndngame.config.Config;
 import org.apache.commons.cli.*;
 
 public class CommandLineHelper {
@@ -29,7 +29,7 @@ public class CommandLineHelper {
         options.addOption(GAME_ID);
     }
 
-    public Backend.Builder getBackendBuilder(String[] args) {
+    public Config getConfig(String[] args) {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -37,17 +37,17 @@ public class CommandLineHelper {
         try {
             cmd = parser.parse(options, args);
 
-            Backend.Builder builder = new Backend.Builder();
             String playerName = cmd.getOptionValue(NAME_OF_PLAYER.getLongOpt());
-            boolean automate = cmd.hasOption(AUTOMATED_MODE.getOpt());
-            long gameId = cmd.hasOption(GAME_ID.getLongOpt()) ?
-                    Long.valueOf(cmd.getOptionValue(GAME_ID.getLongOpt()))
-                    : 0;
 
-            return builder
-                    .playerName(playerName)
-                    .automatePlayer(automate)
-                    .gameId(gameId);
+            Config.Builder builder = Config.builder()
+                    .setPlayerName(playerName)
+                    .setIsAutomated(cmd.hasOption(AUTOMATED_MODE.getOpt()));
+
+            if (cmd.hasOption(GAME_ID.getLongOpt())) {
+                builder.setGameId(Long.valueOf(cmd.getOptionValue(GAME_ID.getLongOpt())));
+            }
+
+            return builder.build();
         } catch (ParseException e) {
             System.out.println(e.getMessage());
             formatter.printHelp("ndngame", options);

@@ -1,11 +1,15 @@
 package com.stefanolupo.ndngame.frontend;
 
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.Backend;
 import com.stefanolupo.ndngame.backend.GameState;
 import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.backend.setup.CommandLineHelper;
+import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.frontend.guice.NdnGameModule;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +21,9 @@ import java.util.List;
 
 public class Game extends PApplet {
 
-    public static final Logger LOG = LoggerFactory.getLogger(Game.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Game.class);
+
+    private final CommandLineHelper commandLineHelper;
 
     private Backend backend;
     private long frameCount = 0;
@@ -25,10 +31,17 @@ public class Game extends PApplet {
     private final List<Command> circleCommands = Arrays.asList(Command.MOVE_RIGHT, Command.MOVE_DOWN, Command.MOVE_LEFT, Command.MOVE_UP);
     private Command automatedCommand = getNextCommand();
 
+    @Inject
+    public Game(CommandLineHelper commandLineHelper,
+                Backend backend) {
+        this.commandLineHelper = commandLineHelper;
+        this.backend = backend;
+//        PApplet.main(args);
+//        PApplet.main("com.stefanolupo.ndngame.frontend.Game", args);
+    }
+
     @Override
     public void settings() {
-        Backend.Builder builder = new CommandLineHelper().getBackendBuilder(this.args);
-        backend = builder.build();
         size(backend.getGameWidth(), backend.getGameHeight());
     }
 
@@ -47,8 +60,8 @@ public class Game extends PApplet {
 
     private void handleCommands() {
         frameCount = (frameCount + 1) % 100;
-        // Quick ha
-        if (backend.getGameState().isAutomatedPlayer()) {
+        // Quick hack for automation
+        if (backend.getGameState().getLocalPlayer().isAutomated()) {
             if (frameCount == 0) {
                 automatedCommand = getNextCommand();
             }
@@ -94,6 +107,9 @@ public class Game extends PApplet {
     }
 
     public static void main(String[] args) {
-        PApplet.main("com.stefanolupo.ndngame.frontend.Game", args);
+        Config config = new CommandLineHelper().getConfig(args);
+        Guice.createInjector(new NdnGameModule(config)).getInstance(Game.class).runSketch();
+
+        //PApplet.main("com.stefanolupo.ndngame.frontend.Game", args);
     }
 }

@@ -1,7 +1,9 @@
 package com.stefanolupo.ndngame.backend.entities.players;
 
+import com.google.inject.Inject;
 import com.stefanolupo.ndngame.Player;
 import com.stefanolupo.ndngame.backend.events.Command;
+import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,16 +11,12 @@ public class LocalPlayer extends Player {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayer.class);
 
-    private final boolean automatePlayer;
+    private final boolean isAutomated;
 
-    public LocalPlayer(String playerName) {
-        super(playerName);
-        this.automatePlayer = false;
-    }
-
-    public LocalPlayer(String playerName, boolean automatePlayer) {
-        super(playerName);
-        this.automatePlayer = automatePlayer;
+    @Inject
+    public LocalPlayer(Config config) {
+        super(config.getPlayerName());
+        this.isAutomated = config.getIsAutomated();
     }
 
     public boolean move(Command command) {
@@ -53,5 +51,9 @@ public class LocalPlayer extends Player {
 
         move(0, 0);
         return oldVelX != 0 || oldVelY != 0;
+    }
+
+    public boolean isAutomated() {
+        return isAutomated;
     }
 }

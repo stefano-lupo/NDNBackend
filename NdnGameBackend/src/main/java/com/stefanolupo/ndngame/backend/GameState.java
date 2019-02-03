@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend;
 
+import com.google.inject.Inject;
 import com.stefanolupo.ndngame.Player;
 import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
 import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
@@ -18,24 +19,21 @@ public class GameState {
     private static final Logger LOG = LoggerFactory.getLogger(GameState.class);
 
     private final LocalPlayer localPlayer;
-    private final boolean automatePlayer;
-    private final long gameId;
-
     private final PlayerStatusManager playerStatusManager;
 
-    public GameState(String playerName, boolean automatedPlayer, long gameId) {
-        this.localPlayer = new LocalPlayer(playerName, automatedPlayer);
-        this.automatePlayer = automatedPlayer;
-        this.gameId = gameId;
-        this.playerStatusManager = new PlayerStatusManager(localPlayer, gameId);
+    @Inject
+    public GameState(LocalPlayer localPlayer,
+                     PlayerStatusManager playerStatusManager) {
+        this.localPlayer = localPlayer;
+        this.playerStatusManager = playerStatusManager;
 
-        if (automatedPlayer) {
-            LOG.info("Automating player: {}", playerName);
+        if (localPlayer.isAutomated()) {
+            LOG.info("Automating player: {}", localPlayer.getPlayerName());
         }
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 5, 5, TimeUnit.SECONDS);
     }
 
-    public void moveLocalPlayer(Command command) {
+    void moveLocalPlayer(Command command) {
         boolean hasUpdatedVel = localPlayer.move(command);
 
         if (hasUpdatedVel) {
@@ -44,7 +42,7 @@ public class GameState {
         }
     }
 
-    public void stopLocalPlayer() {
+    void stopLocalPlayer() {
         boolean hasUpdatedVel = localPlayer.stop();
 
         if (hasUpdatedVel) {
@@ -53,7 +51,7 @@ public class GameState {
         }
     }
 
-    public void interact(Command command) {
+    void interact(Command command) {
 
     }
 
@@ -63,10 +61,6 @@ public class GameState {
 
     public List<RemotePlayer> getRemotePlayers() {
         return new ArrayList<>(playerStatusManager.getMap().values());
-    }
-
-    public boolean isAutomatedPlayer() {
-        return automatePlayer;
     }
 
     private void printPlayerStatus() {

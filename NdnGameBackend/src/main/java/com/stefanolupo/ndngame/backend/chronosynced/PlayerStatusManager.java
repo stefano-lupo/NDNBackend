@@ -2,9 +2,11 @@ package com.stefanolupo.ndngame.backend.chronosynced;
 
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
+import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
+import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import net.named_data.jndn.Data;
@@ -27,14 +29,12 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
     private static final String BROADCAST_PREFIX = "/com/stefanolupo/ndngame/%d/status/broadcast";
 
     private final LocalPlayer localPlayer;
-    private final long gameId;
 
-    public PlayerStatusManager(LocalPlayer localPlayer,
-                               long gameId) {
-        super(new Name(String.format(BROADCAST_PREFIX, gameId)),
-                new PlayerStatusName(gameId, localPlayer.getPlayerName()).getListenName());
+    @Inject
+    public PlayerStatusManager(LocalPlayer localPlayer, Config config) {
+        super(new Name(String.format(BROADCAST_PREFIX, config.getGameId())),
+                new PlayerStatusName(config.getGameId(), localPlayer.getPlayerName()).getListenName());
         this.localPlayer = localPlayer;
-        this.gameId = gameId;
     }
 
     @Override
