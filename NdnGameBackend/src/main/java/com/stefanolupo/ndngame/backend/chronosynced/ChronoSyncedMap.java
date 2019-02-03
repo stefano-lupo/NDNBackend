@@ -33,6 +33,7 @@ public abstract class ChronoSyncedMap<K, V> extends ChronoSyncedDataStructure
 
     @Override
     public void onData(Interest interest, Data data) {
+        LOG.debug("Got data: {}", interest.toUri());
         K key = interestToKey(interest);
         V oldVal = map.get(key);
         oldVal = dataToVal(data, key, oldVal);

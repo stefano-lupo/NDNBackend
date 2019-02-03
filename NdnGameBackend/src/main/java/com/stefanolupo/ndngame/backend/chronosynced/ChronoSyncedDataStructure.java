@@ -140,7 +140,7 @@ public abstract class ChronoSyncedDataStructure implements
 
     protected void publishUpdate() {
         try {
-            LOG.debug("Publishing update: {}", chronoSync.getSequenceNo());
+            LOG.trace("Publishing update: {}", chronoSync.getSequenceNo());
             chronoSync.publishNextSequenceNo();
         } catch (IOException | SecurityException e) {
             throw new RuntimeException(e);

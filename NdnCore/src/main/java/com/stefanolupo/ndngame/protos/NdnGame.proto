@@ -21,4 +21,9 @@ message BulletStatus {
     int32 velX = 4;
     int32 velY = 5;
     int32 damage = 6;
+    string shooterName = 7;
+}
+
+message BulletsList {
+    repeated BulletStatus bulletStatuses = 1;
 }

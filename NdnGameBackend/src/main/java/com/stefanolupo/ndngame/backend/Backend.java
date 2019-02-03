@@ -1,11 +1,13 @@
 package com.stefanolupo.ndngame.backend;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 public class Backend {
 
     private static final Logger LOG = LoggerFactory.getLogger(Backend.class);

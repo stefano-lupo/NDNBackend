@@ -1,12 +1,14 @@
 package com.stefanolupo.ndngame.backend.entities.players;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.Player;
 import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Singleton
 public class LocalPlayer extends Player {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayer.class);
