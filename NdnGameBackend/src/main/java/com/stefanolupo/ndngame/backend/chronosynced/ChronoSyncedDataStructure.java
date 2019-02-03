@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
@@ -80,7 +81,7 @@ public abstract class ChronoSyncedDataStructure implements
 
     protected abstract Optional<Blob> localToBlob(Interest interest);
 
-    protected abstract Optional<Interest> syncStatesToMaybeInterest(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery);
+    protected abstract Collection<Interest> syncStatesToInterests(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery);
 
     @Override
     public void onInitialized() {
@@ -117,7 +118,6 @@ public abstract class ChronoSyncedDataStructure implements
             statistics.numRecoveries ++;
         }
 
-        LOG.debug("Got sync state");
         /**
          * This is totally safe - jNDN only uses generic Lists to support older JDKs
          * Casting here handles a necessary cast that would otherwise need to be done by the client
@@ -125,15 +125,15 @@ public abstract class ChronoSyncedDataStructure implements
         @SuppressWarnings("unchecked")
         List<ChronoSync2013.SyncState> castedSyncStates = (List<ChronoSync2013.SyncState>) syncStates;
 
-        Optional<Interest> maybeInterest = syncStatesToMaybeInterest(castedSyncStates, isRecovery);
-        if (!maybeInterest.isPresent()) {
-            return;
-        }
+        Collection<Interest> interests = syncStatesToInterests(castedSyncStates, isRecovery);
+        interests.forEach(this::expressInterestSafe);
+    }
 
+    private void expressInterestSafe(Interest i) {
         try {
-            face.expressInterest(maybeInterest.get(), this, this);
+            face.expressInterest(i, this, this);
         } catch (IOException e) {
-            LOG.error("Unable to express interest for {}", maybeInterest.get().toUri(), e);
+            LOG.error("Unable to express interest for {}", i.toUri(), e);
         }
     }
 

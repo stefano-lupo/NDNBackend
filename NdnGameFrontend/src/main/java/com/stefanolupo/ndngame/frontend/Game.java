@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import processing.core.PApplet;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Game extends PApplet {
@@ -18,13 +20,16 @@ public class Game extends PApplet {
     public static final Logger LOG = LoggerFactory.getLogger(Game.class);
 
     private Backend backend;
+    private long frameCount = 0;
+
+    private final List<Command> circleCommands = Arrays.asList(Command.MOVE_RIGHT, Command.MOVE_DOWN, Command.MOVE_LEFT, Command.MOVE_UP);
+    private Command automatedCommand = getNextCommand();
 
     @Override
     public void settings() {
-
         Backend.Builder builder = new CommandLineHelper().getBackendBuilder(this.args);
         backend = builder.build();
-        size(500, 500);
+        size(backend.getGameWidth(), backend.getGameHeight());
     }
 
     @Override
@@ -35,11 +40,22 @@ public class Game extends PApplet {
 
     @Override
     public void draw() {
-        tickObjects();
+        handleCommands();
+        tickRemotes();
         drawObjects();
     }
 
-    private void tickObjects() {
+    private void handleCommands() {
+        frameCount = (frameCount + 1) % 100;
+        // Quick ha
+        if (backend.getGameState().isAutomatedPlayer()) {
+            if (frameCount == 0) {
+                automatedCommand = getNextCommand();
+            }
+            backend.handleCommand(automatedCommand);
+            return;
+        }
+
         if (keyPressed) {
             Command command = Command.fromChar(key);
             LOG.trace("{}", command);
@@ -50,7 +66,9 @@ public class Game extends PApplet {
             LOG.trace("no command");
             backend.handleNoCommand();
         }
+    }
 
+    private void tickRemotes() {
         List<RemotePlayer> remotePlayers = backend.getGameState().getRemotePlayers();
         remotePlayers.forEach(RemotePlayer::tick);
     }
@@ -68,6 +86,11 @@ public class Game extends PApplet {
         PlayerStatus status = gameState.getLocalPlayer().getPlayerStatus();
         fill(255,0,0);
         ellipse(status.getX(), status.getY(), 10, 10);
+    }
+
+    private Command getNextCommand() {
+        Collections.rotate(circleCommands, 1);
+        return circleCommands.get(0);
     }
 
     public static void main(String[] args) {

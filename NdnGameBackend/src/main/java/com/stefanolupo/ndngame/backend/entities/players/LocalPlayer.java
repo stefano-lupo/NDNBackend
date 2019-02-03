@@ -42,7 +42,7 @@ public class LocalPlayer extends Player {
                 break;
         }
 
-        updateVelocities(newVelX, newVelY);
+        move(newVelX, newVelY);
 
         return oldVelX != newVelX || oldVelY != newVelY;
     }
@@ -51,7 +51,7 @@ public class LocalPlayer extends Player {
         int oldVelX = playerStatus.getVelX();
         int oldVelY = playerStatus.getVelY();
 
-        updateVelocities(0, 0);
+        move(0, 0);
         return oldVelX != 0 || oldVelY != 0;
     }
 }

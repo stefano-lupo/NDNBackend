@@ -11,11 +11,6 @@ public class RemotePlayer extends Player {
     }
 
     public void tick() {
-        int x = playerStatus.getX() + (DEFAULT_SPEED * playerStatus.getVelX());
-        int y = playerStatus.getY() + (DEFAULT_SPEED * playerStatus.getVelY());
-        playerStatus = playerStatus.toBuilder()
-                .setX(x)
-                .setY(y)
-                .build();
+        move();
     }
 }

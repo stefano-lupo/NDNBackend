@@ -5,14 +5,12 @@ import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
 import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
-import com.stefanolupo.ndngame.backend.events.CommandType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 public class GameState {
@@ -25,26 +23,16 @@ public class GameState {
 
     private final PlayerStatusManager playerStatusManager;
 
-    public GameState(String playerName, boolean automatePlayer, long gameId) {
-        this.localPlayer = new LocalPlayer(playerName, automatePlayer);
-        this.automatePlayer = automatePlayer;
+    public GameState(String playerName, boolean automatedPlayer, long gameId) {
+        this.localPlayer = new LocalPlayer(playerName, automatedPlayer);
+        this.automatePlayer = automatedPlayer;
         this.gameId = gameId;
         this.playerStatusManager = new PlayerStatusManager(localPlayer, gameId);
 
-        if (automatePlayer) {
+        if (automatedPlayer) {
             LOG.info("Automating player: {}", playerName);
-            Executors.newSingleThreadScheduledExecutor()
-                    .scheduleAtFixedRate(() -> moveLocalPlayer(getRandomMoveCommand()), 5000, 150, TimeUnit.MILLISECONDS);
         }
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 0, 5, TimeUnit.SECONDS);
-    }
-
-    public LocalPlayer getLocalPlayer() {
-        return localPlayer;
-    }
-
-    public List<RemotePlayer> getRemotePlayers() {
-        return new ArrayList<>(playerStatusManager.getMap().values());
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printPlayerStatus, 5, 5, TimeUnit.SECONDS);
     }
 
     public void moveLocalPlayer(Command command) {
@@ -69,9 +57,22 @@ public class GameState {
 
     }
 
+    public LocalPlayer getLocalPlayer() {
+        return localPlayer;
+    }
+
+    public List<RemotePlayer> getRemotePlayers() {
+        return new ArrayList<>(playerStatusManager.getMap().values());
+    }
+
+    public boolean isAutomatedPlayer() {
+        return automatePlayer;
+    }
+
     private void printPlayerStatus() {
         System.out.println();
-        playerStatusManager.getMap().values().forEach(p -> System.out.println(getPlayerPositionString(p)));
+        LOG.info("{}", getPlayerPositionString(localPlayer));
+        playerStatusManager.getMap().values().forEach(p -> LOG.info(getPlayerPositionString(p)));
         System.out.println();
     }
 
@@ -83,10 +84,5 @@ public class GameState {
                 player.getPlayerStatus().getHp(),
                 player.getPlayerStatus().getMana(),
                 player.getPlayerStatus().getScore());
-    }
-
-    private Command getRandomMoveCommand() {
-        List<Command> moveCommands = Command.getCommandsOfType(CommandType.MOVE);
-        return moveCommands.get(ThreadLocalRandom.current().nextInt(moveCommands.size()));
     }
 }

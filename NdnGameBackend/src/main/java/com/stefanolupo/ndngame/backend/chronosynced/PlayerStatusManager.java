@@ -1,5 +1,7 @@
 package com.stefanolupo.ndngame.backend.chronosynced;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
 import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
@@ -13,14 +15,16 @@ import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, RemotePlayer> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusManager.class);
     private static final String BROADCAST_PREFIX = "/com/stefanolupo/ndngame/%d/status/broadcast";
-    private static final Long LOCAL_PLAYER_PUBLISH_RATE_MS = 30L;
 
     private final LocalPlayer localPlayer;
     private final long gameId;
@@ -31,7 +35,6 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
                 new PlayerStatusName(gameId, localPlayer.getPlayerName()).getListenName());
         this.localPlayer = localPlayer;
         this.gameId = gameId;
-//        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::publishPlayerStatusChange, 5000, LOCAL_PLAYER_PUBLISH_RATE_MS, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -56,12 +59,28 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
     }
 
     @Override
-    protected Optional<Interest> syncStatesToMaybeInterest(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
-        return syncStates.stream()
+    protected Collection<Interest> syncStatesToInterests(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
+        if (syncStates.size() > 1) {
+            LOG.debug("Got more than 1 sync state");
+        }
+
+        // TODO: I'm not sure if get 1 sync state per user or whether we can get multiple sync states for the same user
+        List<PlayerStatusName> filteredSyncStates = syncStates.stream()
                 .map(PlayerStatusName::new)
                 .filter(psn -> !psn.getPlayerName().equals(localPlayer.getPlayerName()))
-                .findFirst()
-                .map(PlayerStatusName::toInterest);
+                .collect(Collectors.toList());
+
+        if (filteredSyncStates.size() > getMap().keySet().size() + 1) {
+            LOG.error("Got more sync states than remote players and me");
+        }
+        Multimap<String, PlayerStatusName> multimap = Multimaps.index(filteredSyncStates, PlayerStatusName::getPlayerName);
+
+        return multimap.asMap().entrySet().stream()
+                .map(e -> e.getValue().stream().max(Comparator.comparing(PlayerStatusName::getSequenceNumber)))
+                .filter(Optional::isPresent)
+                .map(opt -> opt.get().toInterest())
+                .collect(Collectors.toList());
+
     }
 
     @Override

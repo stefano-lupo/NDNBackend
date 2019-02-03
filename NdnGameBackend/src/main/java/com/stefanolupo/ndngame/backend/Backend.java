@@ -18,14 +18,13 @@ public class Backend {
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new Jdk8Module());
 
     private final GameState gameState;
+    private final int gameWidth;
+    private final int gameHeight;
 
-    private Backend(String playerName, boolean automatePlayer, long gameId) {
-
+    private Backend(String playerName, boolean automatePlayer, long gameId, int gameWidth, int gameHeight) {
+        this.gameWidth = gameWidth;
+        this.gameHeight = gameHeight;
         gameState = createGameState(playerName + randomString(), automatePlayer, gameId);
-    }
-
-    public GameState getGameState() {
-        return gameState;
     }
 
     public void handleCommand(Command command) {
@@ -43,6 +42,18 @@ public class Backend {
 
     public void handleNoCommand() {
         gameState.stopLocalPlayer();
+    }
+
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public int getGameWidth() {
+        return gameWidth;
+    }
+
+    public int getGameHeight() {
+        return gameHeight;
     }
 
     private GameState createGameState(String playerName, boolean automatePlayer, long gameId) {
@@ -63,6 +74,8 @@ public class Backend {
         private String playerName;
         private boolean automatePlayer = false;
         private long gameId = 0;
+        private int gameWidth = 500;
+        private int gameHeight = 500;
 
         public Builder playerName(String playerName) {
             this.playerName = playerName;
@@ -79,8 +92,18 @@ public class Backend {
             return this;
         }
 
+        public Builder gameWidth(int gameWidth) {
+            this.gameWidth = gameWidth;
+            return this;
+        }
+
+        public Builder gameHeight(int gameHeight) {
+            this.gameHeight = gameHeight;
+            return this;
+        }
+
         public Backend build() {
-            return new Backend(playerName, automatePlayer, gameId);
+            return new Backend(playerName, automatePlayer, gameId, gameWidth, gameHeight);
         }
     }
 

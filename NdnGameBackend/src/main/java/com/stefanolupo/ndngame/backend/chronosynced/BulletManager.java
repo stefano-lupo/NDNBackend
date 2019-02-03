@@ -54,7 +54,7 @@
 //    }
 //
 //    @Override
-//    protected Optional<Interest> syncStatesToMaybeInterest(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
+//    protected Optional<Interest> syncStatesToInterests(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
 //        if (isRecovery) {
 //            return Optional.empty();
 //        }
