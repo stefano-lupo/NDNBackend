@@ -117,6 +117,7 @@ public abstract class ChronoSyncedDataStructure implements
             statistics.numRecoveries ++;
         }
 
+        LOG.debug("Got sync state");
         /**
          * This is totally safe - jNDN only uses generic Lists to support older JDKs
          * Casting here handles a necessary cast that would otherwise need to be done by the client
@@ -139,6 +140,7 @@ public abstract class ChronoSyncedDataStructure implements
 
     protected void publishUpdate() {
         try {
+            LOG.debug("Publishing update: {}", chronoSync.getSequenceNo());
             chronoSync.publishNextSequenceNo();
         } catch (IOException | SecurityException e) {
             throw new RuntimeException(e);
@@ -151,7 +153,6 @@ public abstract class ChronoSyncedDataStructure implements
 
     private void pollFace() {
         try {
-            LOG.trace("polling face");
             face.processEvents();
         } catch (IOException | EncodingException e) {
             throw new RuntimeException(e);

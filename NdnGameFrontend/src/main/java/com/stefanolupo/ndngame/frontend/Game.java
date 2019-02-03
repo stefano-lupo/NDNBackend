@@ -47,6 +47,7 @@ public class Game extends PApplet {
                 backend.handleCommand(command);
             }
         } else {
+            LOG.trace("no command");
             backend.handleNoCommand();
         }
 

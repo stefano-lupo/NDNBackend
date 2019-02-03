@@ -51,6 +51,7 @@ public class GameState {
         boolean hasUpdatedVel = localPlayer.move(command);
 
         if (hasUpdatedVel) {
+            LOG.debug("Player moved and had updated vel");
             playerStatusManager.publishPlayerStatusChange();
         }
     }
@@ -59,6 +60,7 @@ public class GameState {
         boolean hasUpdatedVel = localPlayer.stop();
 
         if (hasUpdatedVel) {
+            LOG.debug("Player stopped and had updated vel");
             playerStatusManager.publishPlayerStatusChange();
         }
     }

@@ -37,10 +37,12 @@ public class Player {
         return this.playerStatus;
     }
 
-    protected void setXAndY(int x, int y) {
+    protected void updateVelocities(int velX, int velY) {
         playerStatus = playerStatus.toBuilder()
-            .setX(x)
-            .setY(y)
+            .setVelX(velX)
+            .setVelY(velY)
+            .setX(playerStatus.getX() + DEFAULT_SPEED * velX)
+            .setY(playerStatus.getY() + DEFAULT_SPEED * velY)
             .build();
     }
 }
