@@ -13,8 +13,7 @@ import com.stefanolupo.ndngame.protos.BulletStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -76,26 +75,30 @@ public class GameState {
         return localPlayer;
     }
 
-    public List<RemotePlayer> getRemotePlayers() {
-        return new ArrayList<>(playerStatusManager.getMap().values());
+    public Collection<RemotePlayer> getRemotePlayers() {
+        return playerStatusManager.getRemotePlayers();
     }
 
-    public List<Bullet> getLocalBullets() {
+    public Collection<Bullet> getLocalBullets() {
         return bulletManager.getLocalBullets();
     }
 
-    public List<Bullet> getRemoteBullets() {
+    public Collection<Bullet> getRemoteBullets() {
         return bulletManager.getRemoteBullets();
     }
 
-    public List<Bullet> getAllBullets() {
+    public Collection<Bullet> getAllBullets() {
         return bulletManager.getAllBullets();
+    }
+
+    public void destroyBullet(Bullet bullet) {
+        bulletManager.destroyBullet(bullet);
     }
 
     private void printPlayerStatus() {
         System.out.println();
         LOG.info("{}", getPlayerPositionString(localPlayer));
-        playerStatusManager.getMap().values().forEach(p -> LOG.info(getPlayerPositionString(p)));
+        playerStatusManager.getRemotePlayers().forEach(p -> LOG.info(getPlayerPositionString(p)));
         System.out.println();
     }
 

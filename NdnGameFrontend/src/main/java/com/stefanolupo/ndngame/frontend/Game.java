@@ -1,6 +1,5 @@
 package com.stefanolupo.ndngame.frontend;
 
-
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.Backend;
@@ -50,7 +49,7 @@ public class Game extends PApplet {
     @Override
     public void draw() {
         handleCommands();
-        tickRemotes();
+        backend.tick();
         drawObjects();
     }
 
@@ -75,14 +74,6 @@ public class Game extends PApplet {
             LOG.trace("no command");
             backend.handleNoCommand();
         }
-    }
-
-    private void tickRemotes() {
-        GameState gameState = backend.getGameState();
-        List<RemotePlayer> remotePlayers = gameState.getRemotePlayers();
-        remotePlayers.forEach(RemotePlayer::tick);
-
-        gameState.getAllBullets().forEach(Bullet::tick);
     }
 
     private void drawObjects() {

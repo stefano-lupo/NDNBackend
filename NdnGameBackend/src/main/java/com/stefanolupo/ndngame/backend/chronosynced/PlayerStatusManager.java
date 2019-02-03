@@ -18,19 +18,17 @@ import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Singleton
-public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, RemotePlayer> {
+public class PlayerStatusManager extends ChronoSyncedDataStructure {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusManager.class);
     private static final String BROADCAST_PREFIX = "/com/stefanolupo/ndngame/%d/status/broadcast";
 
     private final LocalPlayer localPlayer;
+    private final Map<PlayerStatusName, RemotePlayer> remotePlayerMap = new HashMap<>();
 
     @Inject
     public PlayerStatusManager(LocalPlayer localPlayer, Config config) {
@@ -40,20 +38,15 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
     }
 
     @Override
-    protected PlayerStatusName interestToKey(Interest interest) {
-        return new PlayerStatusName(interest);
-    }
-
-    @Override
-    protected RemotePlayer dataToVal(Data data, PlayerStatusName key, RemotePlayer oldVal) {
+    public void onData(Interest interest, Data data) {
         try {
+            PlayerStatusName name = new PlayerStatusName(interest);
             PlayerStatus status = PlayerStatus.parseFrom(data.getContent().getImmutableArray());
-            if (oldVal != null) {
-                oldVal.update(status);
-                return oldVal;
+            if (remotePlayerMap.containsKey(name)) {
+                remotePlayerMap.get(name).update(status);
             } else {
-                LOG.info("First appearance of {}, creating..", key.getPlayerName());
-                return new RemotePlayer(key.getPlayerName(), status);
+                LOG.info("First appearance of {}, creating..", name.getPlayerName());
+                remotePlayerMap.put(name, new RemotePlayer(name.getPlayerName(), status));
             }
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse data received " + data.getName().toUri(), e);
@@ -72,8 +65,8 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
                 .filter(psn -> !psn.getPlayerName().equals(localPlayer.getPlayerName()))
                 .collect(Collectors.toList());
 
-        if (filteredSyncStates.size() > getMap().keySet().size() + 1) {
-            //LOG.error("Got more sync states than remote players and me");
+        if (filteredSyncStates.size() > remotePlayerMap.keySet().size() + 1) {
+            LOG.error("Got more sync states than remote players and me");
         }
         Multimap<String, PlayerStatusName> multimap = Multimaps.index(filteredSyncStates, PlayerStatusName::getPlayerName);
 
@@ -88,6 +81,10 @@ public class PlayerStatusManager extends ChronoSyncedMap<PlayerStatusName, Remot
     @Override
     protected Optional<Blob> localToBlob(Interest interest) {
         return Optional.of(new Blob(localPlayer.getPlayerStatus().toByteArray()));
+    }
+
+    public Collection<RemotePlayer> getRemotePlayers() {
+        return Collections.unmodifiableCollection(remotePlayerMap.values());
     }
 
     public void publishPlayerStatusChange() {

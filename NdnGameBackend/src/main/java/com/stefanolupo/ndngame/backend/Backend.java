@@ -2,10 +2,15 @@ package com.stefanolupo.ndngame.backend;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.stefanolupo.ndngame.backend.entities.Bullet;
+import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
 import com.stefanolupo.ndngame.backend.events.Command;
 import com.stefanolupo.ndngame.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
 public class Backend {
@@ -36,6 +41,23 @@ public class Backend {
 
     public void handleNoCommand() {
         gameState.stopLocalPlayer();
+    }
+
+    public void tick() {
+        Collection<RemotePlayer> remotePlayers = gameState.getRemotePlayers();
+        remotePlayers.forEach(RemotePlayer::tick);
+
+        gameState.getAllBullets().forEach(Bullet::tick);
+
+        // Temp to simulate destruction of bullets
+        if (ThreadLocalRandom.current().nextInt(0, 200) == 1) {
+            Collection<Bullet> bullets = gameState.getLocalBullets();
+            if (!bullets.isEmpty()) {
+                Bullet bullet = bullets.iterator().next();
+                LOG.info("Sending bullet destruction for: {}", bullet);
+                gameState.destroyBullet(bullet);
+            }
+        }
     }
 
     public GameState getGameState() {

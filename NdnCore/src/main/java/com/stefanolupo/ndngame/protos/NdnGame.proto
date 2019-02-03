@@ -27,3 +27,7 @@ message BulletStatus {
 message BulletsList {
     repeated BulletStatus bulletStatuses = 1;
 }
+
+message BulletRemove {
+    int64 id = 1;
+}
