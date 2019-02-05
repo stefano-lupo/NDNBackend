@@ -23,7 +23,6 @@ import java.util.List;
 public class Game extends PApplet {
 
     private static final Logger LOG = LoggerFactory.getLogger(Game.class);
-
     private Backend backend;
     private long frameCount = 0;
 
