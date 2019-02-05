@@ -98,7 +98,7 @@ project(":NdnGameLibGdxCore") {
 
 
     dependencies {
-//        compile "com.stefanolupo.ndngame:NdnGameBackend:1.0-SNAPSHOT"
+        compile project(":NdnGameBackend")
         compile "com.badlogicgames.gdx:gdx:$gdxVersion"
         compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
 
