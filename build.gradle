@@ -5,6 +5,23 @@
 allprojects {
     group = 'com.stefanolupo.ndn'
     version = '1.0-SNAPSHOT'
+    apply plugin: "idea"
+    ext {
+        appName = "NdnGameLibGdx"
+        gdxVersion = '1.9.9'
+        roboVMVersion = '2.3.5'
+        box2DLightsVersion = '1.4'
+        ashleyVersion = '1.7.0'
+        aiVersion = '1.8.0'
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        google()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+
 }
 
 buildscript {
@@ -55,37 +72,30 @@ subprojects {
     }
 
     sourceCompatibility = '1.8'
-
-//    publishing {
-//        publications {
-//            maven(MavenPublication) {
-//                from(components.java)
-//            }
-//        }
-//    }
 }
 
-//sourceSets {
-//    main {
-//        proto {
-//            // In addition to the default 'src/main/proto'
-//            srcDir 'src/main/protobuf'
-//            srcDir 'src/main/protocolbuffers'
-//            srcDir 'src/main/com/stefanolupo/ndngame/protos'
-//            // In addition to the default '**/*.proto' (use with caution).
-//            // Using an extension other than 'proto' is NOT recommended,
-//            // because when proto files are published along with class files, we can
-//            // only tell the type of a file from its extension.
-//            include '**/*.protodevel'
-//        }
-////        java {
-////            ...
-////        }
-//    }
-//    test {
-//        proto {
-//            // In addition to the default 'src/test/proto'
-//            srcDir 'src/test/protocolbuffers'
-//        }
-//    }
-//}
+
+project(":NdnGameLibGdxDesktop") {
+    apply plugin: "java"
+
+    dependencies {
+        compile project(":NdnGameLibGdxCore")
+        compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+
+    }
+}
+
+
+project(":NdnGameLibGdxCore") {
+    apply plugin: "java"
+
+
+    dependencies {
+//        compile "com.stefanolupo.ndngame:NdnGameBackend:1.0-SNAPSHOT"
+        compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+
+    }
+}

@@ -4,6 +4,8 @@
 
 // Defines the projects in the multi project build
 rootProject.name = 'NdnGame'
-include(':NdnCore')
+include(':NdnGameCore')
 include(':NdnGameBackend')
 include(':NdnGameFrontend')
+include(':NdnGameLibGdxCore')
+include(':NdnGameLibGdxDesktop')
