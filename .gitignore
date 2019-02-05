@@ -8,3 +8,5 @@ target
 .temp
 gradle
 out
+build/*
+.gradle
