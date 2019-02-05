@@ -1,7 +1,6 @@
 package com.stefanolupo.ndngame;
 
 import com.stefanolupo.ndngame.protos.PlayerStatus;
-
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Player {
