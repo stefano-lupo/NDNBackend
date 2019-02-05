@@ -46,7 +46,12 @@ subprojects {
     }
 
     sourceSets {
-        main {
+        generated {
+            java {
+                srcDir "${buildDir.absolutePath}/generated"
+            }
+        }
+        proto {
             java {
                 srcDir "${buildDir.absolutePath}/generated/source/"
             }
