@@ -7,14 +7,32 @@ allprojects {
     version = '1.0-SNAPSHOT'
 }
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.8'
+    }
+}
+
 subprojects {
     apply plugin: 'java'
-    apply plugin: 'maven-publish'
+//    apply plugin: 'maven-publish'
+    apply plugin: 'com.google.protobuf'
 
     repositories {
         mavenLocal()
         maven {
             url = 'http://repo.maven.apache.org/maven2'
+        }
+    }
+
+    sourceSets {
+        main {
+            java {
+                srcDir "${buildDir.absolutePath}/generated/source/"
+            }
         }
     }
 
@@ -38,11 +56,36 @@ subprojects {
 
     sourceCompatibility = '1.8'
 
-    publishing {
-        publications {
-            maven(MavenPublication) {
-                from(components.java)
-            }
-        }
-    }
+//    publishing {
+//        publications {
+//            maven(MavenPublication) {
+//                from(components.java)
+//            }
+//        }
+//    }
 }
+
+//sourceSets {
+//    main {
+//        proto {
+//            // In addition to the default 'src/main/proto'
+//            srcDir 'src/main/protobuf'
+//            srcDir 'src/main/protocolbuffers'
+//            srcDir 'src/main/com/stefanolupo/ndngame/protos'
+//            // In addition to the default '**/*.proto' (use with caution).
+//            // Using an extension other than 'proto' is NOT recommended,
+//            // because when proto files are published along with class files, we can
+//            // only tell the type of a file from its extension.
+//            include '**/*.protodevel'
+//        }
+////        java {
+////            ...
+////        }
+//    }
+//    test {
+//        proto {
+//            // In addition to the default 'src/test/proto'
+//            srcDir 'src/test/protocolbuffers'
+//        }
+//    }
+//}
