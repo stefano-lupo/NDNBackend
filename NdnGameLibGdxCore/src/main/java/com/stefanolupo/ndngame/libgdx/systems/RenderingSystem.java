@@ -78,14 +78,14 @@ public class RenderingSystem extends SortedIteratingSystem {
                     originY,
                     width,
                     height,
-                    pixelstoMeters(transformComponent.getScale().x),
-                    pixelstoMeters(transformComponent.getScale().y),
+                    pixelsToMeters(transformComponent.getScale().x),
+                    pixelsToMeters(transformComponent.getScale().y),
                     transformComponent.getRotation()
             );
-
-            spriteBatch.end();
-            renderQueue.clear();
         }
+
+        spriteBatch.end();
+        renderQueue.clear();
     }
 
     @Override
@@ -102,7 +102,7 @@ public class RenderingSystem extends SortedIteratingSystem {
         return pixelDimensions;
     }
 
-    public static float pixelstoMeters(float pixelValue) {
+    public static float pixelsToMeters(float pixelValue) {
         return pixelValue * PIXELS_TO_METERS;
     }
 }

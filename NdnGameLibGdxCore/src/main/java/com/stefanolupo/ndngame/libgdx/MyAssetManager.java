@@ -3,23 +3,19 @@ package com.stefanolupo.ndngame.libgdx;
 import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 
 public class MyAssetManager {
 
-    public final AssetManager assetManager = new AssetManager();
-
-    public static final String playerImage = "img/player.png";
-    public static final String enemyImage = "img/enemy.png";
-
+    public static final String GAME_IMAGES_ATLAS = "img/game/game.atlas";
     public static final String BOING_SOUND = "sounds/boing.wav";
     public static final String PING_SOUND = "sounds/ping.wav";
+    public static final String MUSIC = "music/music.mp3";
 
-    public static final String music = "music/music.mp3";
+    public final AssetManager assetManager = new AssetManager();
 
-    public void queAddImages() {
-        assetManager.load(playerImage, Texture.class);
-        assetManager.load(enemyImage, Texture.class);
+    public void queueAddImages() {
+        assetManager.load(GAME_IMAGES_ATLAS, TextureAtlas.class);
     }
 
     public void queueAddSounds(){
@@ -28,6 +24,6 @@ public class MyAssetManager {
     }
 
     public void queueAddMusic() {
-        assetManager.load(music, Music.class);
+        assetManager.load(MUSIC, Music.class);
     }
 }

@@ -9,6 +9,7 @@ import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -26,23 +27,23 @@ public class MainScreen implements Screen {
     private final Sound ping;
     private final Sound boing;
     private final PooledEngine engine;
-
+    private final TextureAtlas atlas;
     private final SpriteBatch spriteBatch;
 
    public MainScreen(NdnGame ndnGame) {
         this.ndnGame = ndnGame;
         controller = new KeyboardController();
-        world = new World(new Vector2(0, 10f), true);
+        world = new World(new Vector2(0, -10f), true);
         world.setContactListener(new MyContactListener());
         bodyFactory = BodyFactory.getInstance(world);
 
         ndnGame.myAssetManager.queueAddSounds();
+        ndnGame.myAssetManager.queueAddImages();
         ndnGame.myAssetManager.assetManager.finishLoading();
+        atlas = ndnGame.myAssetManager.assetManager.get(MyAssetManager.GAME_IMAGES_ATLAS);
         ping = ndnGame.myAssetManager.assetManager.get(MyAssetManager.PING_SOUND, Sound.class);
         boing = ndnGame.myAssetManager.assetManager.get(MyAssetManager.BOING_SOUND, Sound.class);
 
-//       ndnGame.myAssetManager.queAddImages();
-//       playerTexture = ndnGame.myAssetManager.assetManager.get("img/player.png");
 
         spriteBatch = new SpriteBatch();
         RenderingSystem renderingSystem = new RenderingSystem(spriteBatch);
@@ -59,10 +60,10 @@ public class MainScreen implements Screen {
 
         // create some game objects
         createPlayer();
-        createPlatform(2,2);
-        createPlatform(2,7);
-        createPlatform(7,2);
-        createPlatform(7,7);
+        createPlatform(1,2);
+        createPlatform(8,4);
+        createPlatform(15,6);
+        createPlatform(20,7);
         createFloor();
     }
 
@@ -71,28 +72,35 @@ public class MainScreen implements Screen {
     private void createPlayer() {
         Entity entity = engine.createEntity();
 
-        Body body = bodyFactory.makeCirclePolyBody(10, 10, 1, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        Body body = bodyFactory.makeCirclePolyBody(10, 10, 0.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
         bodyComponent.body = body;
         bodyComponent.body.setUserData(entity);
+        entity.add(bodyComponent);
 
         TransformComponent position = engine.createComponent(TransformComponent.class);
         position.getPosition().set(10, 10, 0);
+        entity.add(position);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);
         texture.region = atlas.findRegion("player");
+        entity.add(texture);
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.type = TypeComponent.PLAYER;
+        entity.add(type);
 
         StateComponent state = engine.createComponent(StateComponent.class);
         state.set(StateComponent.STATE_NORMAL);
+        entity.add(state);
 
         CollisionComponent collision = engine.createComponent(CollisionComponent.class);
+        entity.add(collision);
+
         PlayerComponent player = engine.createComponent(PlayerComponent.class);
+        entity.add(player);
 
         engine.addEntity(entity);
-
     }
 
     private void createPlatform(float x, float y){
@@ -114,16 +122,16 @@ public class MainScreen implements Screen {
 
     private void createFloor(){
         Entity entity = engine.createEntity();
-        BodyComponent b2dbody = engine.createComponent(BodyComponent.class);
-        b2dbody.body = bodyFactory.makeBoxPolyBody(0, 0, 100, 0.2f, BodyFactory.STONE, BodyDef.BodyType.StaticBody, false);
+        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
+        bodyComponent.body = bodyFactory.makeBoxPolyBody(0, 0.3f, 100, 0.3f, BodyFactory.STONE, BodyDef.BodyType.StaticBody, false);
         TextureComponent texture = engine.createComponent(TextureComponent.class);
         texture.region = atlas.findRegion("player");
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.type = TypeComponent.SCENERY;
 
-        b2dbody.body.setUserData(entity);
+        bodyComponent.body.setUserData(entity);
 
-        entity.add(b2dbody);
+        entity.add(bodyComponent);
         entity.add(texture);
         entity.add(type);
 
@@ -164,6 +172,9 @@ public class MainScreen implements Screen {
 
     @Override
     public void dispose() {
-        debugRenderer.dispose();
+        spriteBatch.end();
+        spriteBatch.dispose();
+        atlas.dispose();
+        world.dispose();
     }
 }

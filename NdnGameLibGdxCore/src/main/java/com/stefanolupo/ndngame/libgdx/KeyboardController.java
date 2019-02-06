@@ -16,6 +16,7 @@ public class KeyboardController implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
+        System.out.println("Keydown: " + keycode);
         boolean keyProcessed = false;
         switch (keycode) {
             case Input.Keys.LEFT:  	// if keycode is the same as Keys.LEFT a.k.a 21
@@ -39,6 +40,7 @@ public class KeyboardController implements InputProcessor {
 
     @Override
     public boolean keyUp(int keycode) {
+        System.out.println("Keyup: " + keycode);
         boolean keyProcessed = false;
         switch (keycode) // switch code base on the variable keycode
         {

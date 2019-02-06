@@ -52,7 +52,7 @@ public class PlayerControlSystem extends BaseSystem {
         if(keyboardController.up &&
                 (stateComponent.get() == StateComponent.STATE_NORMAL || stateComponent.get() == StateComponent.STATE_MOVING)){
             //b2body.body.applyForceToCenter(0, 3000,true);
-            body.applyLinearImpulse(0, 75f, body.getWorldCenter().x, body.getWorldCenter().y, true);
+            body.applyLinearImpulse(0, 50f, body.getWorldCenter().x, body.getWorldCenter().y, true);
             stateComponent.set(StateComponent.STATE_JUMPING);
         }
     }
