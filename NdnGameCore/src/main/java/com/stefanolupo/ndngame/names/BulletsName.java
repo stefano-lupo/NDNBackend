@@ -50,7 +50,7 @@ public class BulletsName extends BaseName {
 
     private void parse() {
         Preconditions.checkArgument(tailName.size() == EXPECTED_TAIL_SIZE,
-                "Invalid number of com.stefanolupo.ndngame.libgdx.components for a Bullet Name %s - had %d, expected %d",
+                "Invalid number of components for a Bullet Name %s - had %d, expected %d",
                 tailName, tailName.size(), EXPECTED_TAIL_SIZE);
         checkMatchesRegex(tailName, NAME_PATTERN);
         gameId = getLongFromComponent(tailName.get(0));

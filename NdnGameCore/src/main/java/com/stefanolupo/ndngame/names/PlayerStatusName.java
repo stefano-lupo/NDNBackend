@@ -34,7 +34,7 @@ public class PlayerStatusName extends BaseName {
     }
 
     /**
-     * Create a PlayerStatusName using the com.stefanolupo.ndngame.libgdx.components
+     * Create a PlayerStatusName using the components
      */
     public PlayerStatusName(long gameId, String playerName) {
         super(String.valueOf(gameId), playerName, "status");
