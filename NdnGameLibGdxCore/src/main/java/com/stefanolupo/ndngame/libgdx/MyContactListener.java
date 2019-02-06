@@ -1,56 +1,49 @@
 package com.stefanolupo.ndngame.libgdx;
 
-import com.badlogic.gdx.math.Vector2;
+import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.physics.box2d.*;
-import com.google.common.base.Strings;
+import com.stefanolupo.ndngame.libgdx.components.CollisionComponent;
 
 public class MyContactListener implements ContactListener {
-
-    private MyModel parent;
-
-    public MyContactListener(MyModel parent) {
-        this.parent = parent;
-    }
 
     @Override
     public void beginContact(Contact contact) {
         Fixture fa = contact.getFixtureA();
         Fixture fb = contact.getFixtureB();
 
-        if (isTheSea(fa) || isTheSea(fb)) {
-            System.out.println("Skipping as was water");
-            parent.isSwimming = true;
+        System.out.println(fa.getBody().getType()+" has hit "+ fb.getBody().getType());
+
+        if (fa.getBody().getUserData() instanceof Entity) {
+            Entity entity = (Entity) fa.getBody().getUserData();
+            entityCollision(entity, fb);
+        } else if (fb.getBody().getUserData() instanceof Entity) {
+            Entity entity = (Entity) fb.getBody().getUserData();
+            entityCollision(entity, fa);
+        }
+    }
+
+    private void entityCollision(Entity ent, Fixture fb) {
+        if (!(fb.getBody().getUserData() instanceof Entity)) {
             return;
         }
 
-        System.out.println(fa.getBody().getType()+" has hit "+ fb.getBody().getType());
-        if(fa.getBody().getType() == BodyDef.BodyType.StaticBody){
-            shootUpInAir(fa, fb);
-        } else if (fb.getBody().getType() == BodyDef.BodyType.StaticBody) {
-            shootUpInAir(fb, fa);
+        Entity colEnt = (Entity) fb.getBody().getUserData();
+
+        CollisionComponent col = ent.getComponent(CollisionComponent.class);
+        CollisionComponent colb = colEnt.getComponent(CollisionComponent.class);
+
+        if(col != null){
+            col.collisionEntity = colEnt;
+        }else if(colb != null){
+            colb.collisionEntity = ent;
         }
+
     }
 
-    private void shootUpInAir(Fixture staticFixture, Fixture otherFixture) {
-        System.out.println("Adding Force");
-        parent.playSound(0);
-//        otherFixture.getBody().applyForceToCenter(new Vector2(-100000,-100000), true);
-    }
-
-    private boolean isTheSea(Fixture fixture) {
-        return fixture.getBody().getUserData() != null;
-    }
 
     @Override
     public void endContact(Contact contact) {
         System.out.println("End contact");
-        Fixture fa = contact.getFixtureA();
-        Fixture fb = contact.getFixtureB();
-
-        if (isTheSea(fa) || isTheSea(fb)) {
-            parent.isSwimming = false;
-        }
-
     }
 
     @Override
