@@ -46,7 +46,7 @@ public class BodyFactory {
         //create the body to attach said definition
         Body boxBody = world.createBody(boxBodyDef);
         PolygonShape poly = new PolygonShape();
-        poly.setAsBox(width/2, height/2);
+        poly.setAsBox(width / 2, height / 2);
         boxBody.createFixture(makeFixture(material,poly));
         poly.dispose();
 
@@ -96,7 +96,11 @@ public class BodyFactory {
     }
 
     public static BodyFactory getInstance(World world) {
-        return instance == null ? new BodyFactory(world) : instance;
+        if (instance == null) {
+            instance = new BodyFactory(world);
+        }
+
+        return instance;
     }
 
     public static FixtureDef makeFixture(int material, Shape shape) {

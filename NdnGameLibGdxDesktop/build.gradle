@@ -4,7 +4,7 @@ apply plugin: "java"
 //sourceSets.main.java.srcDirs = [ "src/main/java" ]
 
 project.ext.mainClassName = "com.stefanolupo.ndngame.libgdx.desktop.DesktopLauncher"
-project.ext.assetsDir = new File("../core/assets");
+project.ext.assetsDir = new File("../NdnGameLibGdxCore/assets")
 
 task run(dependsOn: classes, type: JavaExec) {
     main = project.mainClassName

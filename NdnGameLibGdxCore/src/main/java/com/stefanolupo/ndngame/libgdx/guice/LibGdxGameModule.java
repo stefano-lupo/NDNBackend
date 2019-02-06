@@ -3,7 +3,6 @@ package com.stefanolupo.ndngame.libgdx.guice;
 import com.google.inject.AbstractModule;
 import com.stefanolupo.ndngame.backend.guice.BackendModule;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.libgdx.LibGdxGame;
 
 public class LibGdxGameModule extends AbstractModule {
 
@@ -15,6 +14,6 @@ public class LibGdxGameModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new BackendModule(config));
+//        install(new BackendModule(config));
     }
 }
