@@ -22,8 +22,16 @@ public class PlayerControlSystem extends BaseSystem {
     protected void processEntity(Entity entity, float deltaTime) {
         BodyComponent bodyComponent = bodyMapper.get(entity);
         StateComponent stateComponent = stateMapper.get(entity);
+        PlayerComponent playerComponent = playerMapper.get(entity);
 
         Body body = bodyComponent.getBody();
+
+        if (playerComponent.onSping) {
+            body.applyLinearImpulse(0, 175f, body.getWorldCenter().x, body.getWorldCenter().y, true);
+            stateComponent.set(StateComponent.STATE_JUMPING);
+            playerComponent.onSping = false;
+        }
+
 
         if (body.getLinearVelocity().y > 0) {
             stateComponent.set(StateComponent.STATE_FALLING);
@@ -55,5 +63,6 @@ public class PlayerControlSystem extends BaseSystem {
             body.applyLinearImpulse(0, 50f, body.getWorldCenter().x, body.getWorldCenter().y, true);
             stateComponent.set(StateComponent.STATE_JUMPING);
         }
+
     }
 }

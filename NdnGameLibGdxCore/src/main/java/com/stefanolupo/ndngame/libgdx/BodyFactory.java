@@ -53,6 +53,10 @@ public class BodyFactory {
         return boxBody;
     }
 
+    public Body makeBoxPolyBody(float x, float y, float width, float height, int material, BodyDef.BodyType bodyType) {
+        return makeBoxPolyBody(x, y, width, height, material, bodyType, false);
+    }
+
     public void makeConeSensor(Body body, float size) {
         FixtureDef fixtureDef = new FixtureDef();
 //        fixtureDef.isSensor = true;

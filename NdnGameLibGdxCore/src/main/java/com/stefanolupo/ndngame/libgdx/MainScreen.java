@@ -10,12 +10,15 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
 import com.stefanolupo.ndngame.libgdx.components.*;
+import com.stefanolupo.ndngame.libgdx.levels.LevelFactory;
 import com.stefanolupo.ndngame.libgdx.systems.*;
+import com.stefanolupo.ndngame.libgdx.util.Util;
 
 
 public class MainScreen implements Screen {
@@ -29,6 +32,7 @@ public class MainScreen implements Screen {
     private final PooledEngine engine;
     private final TextureAtlas atlas;
     private final SpriteBatch spriteBatch;
+    private final LevelFactory levelFactory;
 
    public MainScreen(NdnGame ndnGame) {
         this.ndnGame = ndnGame;
@@ -57,19 +61,40 @@ public class MainScreen implements Screen {
         engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
         engine.addSystem(new CollisionSystem());
         engine.addSystem(new PlayerControlSystem(controller));
+        engine.addSystem(new EnemySystem());
+
+
+        levelFactory = new LevelFactory(engine, atlas);
+        engine.addSystem(new LevelGenerationSystem(levelFactory));
 
         // create some game objects
-        createPlayer();
+        Entity playerEntity = createPlayer();
+        engine.addSystem(new WaterFloorSystem(playerEntity));
         createPlatform(1,2);
         createPlatform(8,4);
         createPlatform(15,6);
         createPlatform(20,7);
         createFloor();
-    }
+
+       int floorWidth = (int) (40*RenderingSystem.PIXELS_PER_METER);
+       int floorHeight = (int) (1*RenderingSystem.PIXELS_PER_METER);
+       TextureRegion floorRegion = Util.makeTextureRegion(floorWidth, floorHeight, "11331180");
+       levelFactory.createFloor();
+
+       int wFloorWidth = (int) (40*RenderingSystem.PIXELS_PER_METER);
+       int wFloorHeight = (int) (10*RenderingSystem.PIXELS_PER_METER);
+       TextureRegion wFloorRegion = Util.makeTextureRegion(wFloorWidth, wFloorHeight, "11113380");
+       levelFactory.createWaterFloor();
+
+//       int wallWidth = (int) (1*RenderingSystem.PIXELS_PER_METER);
+//       int wallHeight = (int) (60*RenderingSystem.PIXELS_PER_METER);
+//       TextureRegion wallRegion = DFUtils.makeTextureRegion(wallWidth, wallHeight, "222222FF");
+//       levelFactory.createWalls(wallRegion);
+   }
 
 
 
-    private void createPlayer() {
+    private Entity createPlayer() {
         Entity entity = engine.createEntity();
 
         Body body = bodyFactory.makeCirclePolyBody(10, 10, 0.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
@@ -101,6 +126,7 @@ public class MainScreen implements Screen {
         entity.add(player);
 
         engine.addEntity(entity);
+        return entity;
     }
 
     private void createPlatform(float x, float y){

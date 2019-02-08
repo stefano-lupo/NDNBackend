@@ -34,6 +34,9 @@ public class CollisionSystem extends BaseSystem {
                 //do player hit scenery thing
                 System.out.println("player hit scenery");
                 break;
+            case TypeComponent.SPRING:
+                playerMapper.get(entity).onSping = true;
+                System.out.println("Player hit spring");
             case TypeComponent.OTHER:
                 //do player hit other thing
                 System.out.println("player hit other");
