@@ -17,7 +17,7 @@ import java.util.Comparator;
 
 public class RenderingSystem extends SortedIteratingSystem {
 
-    private static final float PIXELS_PER_METER = 32.0f;
+    public static final float PIXELS_PER_METER = 32.0f;
 
     private static final float FRUSTRUM_WIDTH = Gdx.graphics.getWidth() / PIXELS_PER_METER;
     private static final float FRUSTRUM_HEIGHT = Gdx.graphics.getHeight() / PIXELS_PER_METER;

@@ -1,13 +1,10 @@
 package com.stefanolupo.ndngame.libgdx.systems;
 
 import com.badlogic.ashley.core.ComponentMapper;
-import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.stefanolupo.ndngame.libgdx.components.*;
-
 import java.util.Comparator;
-
 public abstract class BaseSystem extends IteratingSystem {
 
     protected final ComponentMapper<AnimationComponent> animationMapper;
@@ -18,6 +15,8 @@ public abstract class BaseSystem extends IteratingSystem {
     protected final ComponentMapper<TextureComponent> textureMapper;
     protected final ComponentMapper<TransformComponent> transformMapper;
     protected final ComponentMapper<TypeComponent> typeMapper;
+    protected final ComponentMapper<WaterFloorComponent> waterFloorMapper;
+    protected final ComponentMapper<EnemyComponent> enemyMapper;
 
 
     public BaseSystem(Family family) {
@@ -29,6 +28,9 @@ public abstract class BaseSystem extends IteratingSystem {
         stateMapper = ComponentMapper.getFor(StateComponent.class);
         textureMapper = ComponentMapper.getFor(TextureComponent.class);
         transformMapper = ComponentMapper.getFor(TransformComponent.class);
+        typeMapper = ComponentMapper.getFor(TypeComponent.class);
+        waterFloorMapper = ComponentMapper.getFor(WaterFloorComponent.class);
+        enemyMapper = ComponentMapper.getFor(EnemyComponent.class);
         typeMapper = ComponentMapper.getFor(TypeComponent.class);;
     }
 }
