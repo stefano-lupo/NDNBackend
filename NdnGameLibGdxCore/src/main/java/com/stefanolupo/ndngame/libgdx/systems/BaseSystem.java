@@ -4,7 +4,7 @@ import com.badlogic.ashley.core.ComponentMapper;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.stefanolupo.ndngame.libgdx.components.*;
-
+import java.util.Comparator;
 public abstract class BaseSystem extends IteratingSystem {
 
     protected final ComponentMapper<AnimationComponent> animationMapper;
@@ -31,5 +31,6 @@ public abstract class BaseSystem extends IteratingSystem {
         typeMapper = ComponentMapper.getFor(TypeComponent.class);
         waterFloorMapper = ComponentMapper.getFor(WaterFloorComponent.class);
         enemyMapper = ComponentMapper.getFor(EnemyComponent.class);
+        typeMapper = ComponentMapper.getFor(TypeComponent.class);;
     }
 }

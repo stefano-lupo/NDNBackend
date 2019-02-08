@@ -31,8 +31,7 @@ public class PlayerControlSystem extends BaseSystem {
             stateComponent.set(StateComponent.STATE_JUMPING);
             playerComponent.onSping = false;
         }
-
-
+      
         if (body.getLinearVelocity().y > 0) {
             stateComponent.set(StateComponent.STATE_FALLING);
         }
@@ -63,6 +62,5 @@ public class PlayerControlSystem extends BaseSystem {
             body.applyLinearImpulse(0, 50f, body.getWorldCenter().x, body.getWorldCenter().y, true);
             stateComponent.set(StateComponent.STATE_JUMPING);
         }
-
     }
 }

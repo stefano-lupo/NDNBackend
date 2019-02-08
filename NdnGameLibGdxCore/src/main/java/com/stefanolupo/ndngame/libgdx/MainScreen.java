@@ -95,6 +95,11 @@ public class MainScreen implements Screen {
 
 
     private Entity createPlayer() {
+    }
+
+
+
+    private void createPlayer() {
         Entity entity = engine.createEntity();
 
         Body body = bodyFactory.makeCirclePolyBody(10, 10, 0.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
