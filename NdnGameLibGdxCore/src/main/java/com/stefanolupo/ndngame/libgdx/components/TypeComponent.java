@@ -1,13 +1,17 @@
 package com.stefanolupo.ndngame.libgdx.components;
 
 import com.badlogic.ashley.core.Component;
+import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 
 public class TypeComponent implements Component {
-    public static final int PLAYER = 0;
-    public static final int ENEMY = 1;
-    public static final int SCENERY = 3;
-    public static final int SPRING = 4;
-    public static final int OTHER = 5;
 
-    public int type = OTHER;
+    private Type type = Type.OTHER;
+
+    public Type getType() {
+        return type;
+    }
+
+    public void setType(Type type) {
+        this.type = type;
+    }
 }

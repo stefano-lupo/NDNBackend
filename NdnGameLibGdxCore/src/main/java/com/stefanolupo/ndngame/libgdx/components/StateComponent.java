@@ -1,24 +1,27 @@
 package com.stefanolupo.ndngame.libgdx.components;
 
 import com.badlogic.ashley.core.Component;
+import com.stefanolupo.ndngame.libgdx.components.enums.State;
 
 public class StateComponent implements Component {
-    public static final int STATE_NORMAL = 0;
-    public static final int STATE_JUMPING = 1;
-    public static final int STATE_FALLING = 2;
-    public static final int STATE_MOVING = 3;
-    public static final int STATE_HIT = 4;
 
-    private int state = 0;
-    public float time = 0.0f;
-    public boolean isLooping = false;
+    private State currentState = State.RESTING;
+    private float timeInState = 0.0f;
 
-    public void set(int newState){
-        state = newState;
-        time = 0.0f;
+    public void updateState(State newState, float deltaTime){
+        if (newState != currentState) {
+            currentState = newState;
+            timeInState = 0;
+        } else {
+            timeInState += deltaTime;
+        }
     }
 
-    public int get(){
-        return state;
+    public State getState(){
+        return currentState;
+    }
+
+    public float getTimeInState() {
+        return timeInState;
     }
 }

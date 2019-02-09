@@ -2,11 +2,15 @@ package com.stefanolupo.ndngame.libgdx.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 
-public class PhysicsDebugSystem extends BaseSystem {
+public class PhysicsDebugSystem
+        extends IteratingSystem
+        implements HasComponentMappers
+{
 
     private final World world;
     private final OrthographicCamera camera;

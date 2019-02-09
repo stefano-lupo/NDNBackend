@@ -2,65 +2,59 @@ package com.stefanolupo.ndngame.libgdx.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.stefanolupo.ndngame.libgdx.KeyboardController;
-import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
+import com.stefanolupo.ndngame.libgdx.InputController;
 import com.stefanolupo.ndngame.libgdx.components.PlayerComponent;
-import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 
-public class PlayerControlSystem extends BaseSystem {
+public class PlayerControlSystem
+        extends IteratingSystem
+        implements HasComponentMappers {
 
-    private final KeyboardController keyboardController;
+    private static final Float MAX_VEL = 5f;
 
-    public PlayerControlSystem(KeyboardController keyboardController) {
+    private final InputController inputController;
+
+    public PlayerControlSystem(InputController inputController) {
         super(Family.all(PlayerComponent.class).get());
-        this.keyboardController = keyboardController;
+        this.inputController = inputController;
     }
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        BodyComponent bodyComponent = bodyMapper.get(entity);
-        StateComponent stateComponent = stateMapper.get(entity);
-        PlayerComponent playerComponent = playerMapper.get(entity);
 
-        Body body = bodyComponent.getBody();
+        Body body = BODY_MAPPER.get(entity).getBody();
 
-        if (playerComponent.onSping) {
-            body.applyLinearImpulse(0, 175f, body.getWorldCenter().x, body.getWorldCenter().y, true);
-            stateComponent.set(StateComponent.STATE_JUMPING);
-            playerComponent.onSping = false;
+        if(inputController.left){
+            lerpVelocityX(body, -MAX_VEL);
         }
-      
-        if (body.getLinearVelocity().y > 0) {
-            stateComponent.set(StateComponent.STATE_FALLING);
+        if(inputController.right){
+            lerpVelocityX(body, MAX_VEL);
         }
 
-        if (body.getLinearVelocity().y == 0) {
-            if(stateComponent.get() == StateComponent.STATE_FALLING){
-                stateComponent.set(StateComponent.STATE_NORMAL);
-            }
-            if(body.getLinearVelocity().x != 0){
-                stateComponent.set(StateComponent.STATE_MOVING);
-            }
+        if(!inputController.left && ! inputController.right){
+            lerpVelocityX(body, 0);
         }
 
-        if(keyboardController.left){
-            body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, -5f, 0.2f), body.getLinearVelocity().y);
+        if(inputController.up){
+            lerpVelocityY(body, MAX_VEL);
         }
-        if(keyboardController.right){
-            body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, 5f, 0.2f), body.getLinearVelocity().y);
-        }
-
-        if(!keyboardController.left && ! keyboardController.right){
-            body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, 0, 0.1f), body.getLinearVelocity().y);
+        if(inputController.down){
+            lerpVelocityY(body, -MAX_VEL);
         }
 
-        if(keyboardController.up &&
-                (stateComponent.get() == StateComponent.STATE_NORMAL || stateComponent.get() == StateComponent.STATE_MOVING)){
-            //b2body.body.applyForceToCenter(0, 3000,true);
-            body.applyLinearImpulse(0, 50f, body.getWorldCenter().x, body.getWorldCenter().y, true);
-            stateComponent.set(StateComponent.STATE_JUMPING);
+        if(!inputController.up && ! inputController.down){
+            lerpVelocityY(body, 0);
         }
+
+    }
+
+    private void lerpVelocityX(Body body, float toValue) {
+        body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, toValue, 0.2f), body.getLinearVelocity().y);
+    }
+
+    private void lerpVelocityY(Body body, float toValue) {
+        body.setLinearVelocity(body.getLinearVelocity().x, MathUtils.lerp(body.getLinearVelocity().y, toValue, 0.2f));
     }
 }
