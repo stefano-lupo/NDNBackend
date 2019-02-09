@@ -10,9 +10,9 @@
 //
 //    public boolean isSwimming = false;
 //
-//    private final KeyboardController controller;
+//    private final InputController controller;
 //    private final OrthographicCamera camera;
-//    private final MyAssetManager assetManager;
+//    private final GameAssetManager assetManager;
 //
 //    private final World world;
 //    private Body dynamicBody;
@@ -25,9 +25,9 @@
 //    private final Sound ping;
 //    private final Sound boing;
 //
-//    public MyModel(KeyboardController controller,
+//    public MyModel(InputController controller,
 //                   OrthographicCamera camera,
-//                   MyAssetManager assetManager) {
+//                   GameAssetManager assetManager) {
 //        this.controller = controller;
 //        this.camera = camera;
 //        this.assetManager = assetManager;

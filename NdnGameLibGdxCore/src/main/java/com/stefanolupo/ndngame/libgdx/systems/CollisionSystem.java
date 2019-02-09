@@ -7,7 +7,9 @@ import com.stefanolupo.ndngame.libgdx.components.CollisionComponent;
 import com.stefanolupo.ndngame.libgdx.components.PlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.TypeComponent;
 
-public class CollisionSystem extends BaseSystem {
+import static com.stefanolupo.ndngame.libgdx.systems.Mappers.*;
+
+public class CollisionSystem extends IteratingSystem {
 
     public CollisionSystem() {
         super(Family.all(CollisionComponent.class, PlayerComponent.class).get());
@@ -15,7 +17,7 @@ public class CollisionSystem extends BaseSystem {
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        CollisionComponent collisionComponent = collisionMapper.get(entity);
+        CollisionComponent collisionComponent = COLLISION_MAPPER.get(entity);
         Entity collidedEntity = collisionComponent.collisionEntity;
         if (collidedEntity == null) {
             return;
@@ -35,7 +37,7 @@ public class CollisionSystem extends BaseSystem {
                 System.out.println("player hit scenery");
                 break;
             case TypeComponent.SPRING:
-                playerMapper.get(entity).onSping = true;
+                PLAYER_MAPPER.get(entity).onSping = true;
                 System.out.println("Player hit spring");
             case TypeComponent.OTHER:
                 //do player hit other thing

@@ -4,7 +4,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector2;
 
-public class KeyboardController implements InputProcessor {
+public class InputController implements InputProcessor {
 
     public boolean left;
     public boolean right;

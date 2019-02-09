@@ -2,28 +2,32 @@ package com.stefanolupo.ndngame.libgdx;
 
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.audio.Music;
+import com.google.inject.Inject;
+import com.stefanolupo.ndngame.config.Config;
 
 public class NdnGame extends Game {
-//	private static final Logger LOG = LoggerFactory.getLogger(NdnGame.class);
-	public final MyAssetManager myAssetManager = new MyAssetManager();
 
-	private MainScreen mainScreen;
 
+	private final Config config;
+	private final GameAssetManager gameAssetManager;
+	private final MainScreen mainScreen;
 	private Music music;
 
-
-	public NdnGame() {
-
+	@Inject
+	public NdnGame(Config config, GameAssetManager gameAssetManager, MainScreen mainScreen) {
+		this.config = config;
+		this.gameAssetManager = gameAssetManager;
+		this.mainScreen = mainScreen;
 	}
 
 	@Override
 	public void create () {
-		mainScreen = new MainScreen(this);
-		setScreen(mainScreen);
-		myAssetManager.queueAddMusic();
-		myAssetManager.assetManager.finishLoading();
-//		music = myAssetManager.assetManager.get("music/music.mp3", Music.class);
+		gameAssetManager.loadAllAssets();
+		music = gameAssetManager.getMusic();
 //		music.play();
+
+		// This must be set after loading all the assets for the screen
+		setScreen(mainScreen);
 	}
 
 	@Override
@@ -34,7 +38,7 @@ public class NdnGame extends Game {
 	@Override
 	public void dispose () {
 		screen.dispose();
-		myAssetManager.assetManager.dispose();
+		gameAssetManager.dispose();
 		music.dispose();
 	}
 }

@@ -1,105 +1,84 @@
 package com.stefanolupo.ndngame.libgdx;
 
-import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
+import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.World;
+import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.components.*;
-import com.stefanolupo.ndngame.libgdx.levels.LevelFactory;
 import com.stefanolupo.ndngame.libgdx.systems.*;
-import com.stefanolupo.ndngame.libgdx.util.Util;
 
 
 public class MainScreen implements Screen {
 
-    private final NdnGame ndnGame;
-    private final KeyboardController controller;
-    private final World world;
+    private final InputController inputController;
     private final BodyFactory bodyFactory;
-    private final Sound ping;
-    private final Sound boing;
+    private final GameAssetManager gameAssetManager;
     private final PooledEngine engine;
-    private final TextureAtlas atlas;
-    private final SpriteBatch spriteBatch;
-    private final LevelFactory levelFactory;
+    private final ContactListener contactListener;
+    private final World world;
 
-   public MainScreen(NdnGame ndnGame) {
-        this.ndnGame = ndnGame;
-        controller = new KeyboardController();
-        world = new World(new Vector2(0, -10f), true);
-        world.setContactListener(new MyContactListener());
-        bodyFactory = BodyFactory.getInstance(world);
+    // This cant be initialized in the constructor
+    private  TextureAtlas atlas = null;
+    private SpriteBatch spriteBatch = null;
+//    private final LevelFactory levelFactory;
 
-        ndnGame.myAssetManager.queueAddSounds();
-        ndnGame.myAssetManager.queueAddImages();
-        ndnGame.myAssetManager.assetManager.finishLoading();
-        atlas = ndnGame.myAssetManager.assetManager.get(MyAssetManager.GAME_IMAGES_ATLAS);
-        ping = ndnGame.myAssetManager.assetManager.get(MyAssetManager.PING_SOUND, Sound.class);
-        boing = ndnGame.myAssetManager.assetManager.get(MyAssetManager.BOING_SOUND, Sound.class);
+    @Inject
+    public MainScreen(InputController inputController,
+                      BodyFactory bodyFactory,
+                      GameAssetManager gameAssetManager,
+                      PooledEngine engine,
+                      ContactListener contactListener,
+                      World world) {
+        this.inputController = inputController;
+        this.bodyFactory = bodyFactory;
+        this.gameAssetManager = gameAssetManager;
+        this.engine = engine;
+        this.contactListener = contactListener;
+        this.world = world;
 
+        world.setContactListener(contactListener);
+    }
 
+    @Override
+    public void show() {
+        Gdx.input.setInputProcessor(inputController);
+//        levelFactory = new LevelFactory(engine, atlas);
+
+        // Create what can't be created until LibGdx is loaded
+        atlas = gameAssetManager.getGameAtlas();
         spriteBatch = new SpriteBatch();
+
+        // Add all the relevant systems our engine should run
         RenderingSystem renderingSystem = new RenderingSystem(spriteBatch);
         spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
-
-        /* add all the relevant systems our engine should run */
-        engine = new PooledEngine();
         engine.addSystem(new AnimationSystem());
-        engine.addSystem(renderingSystem);
-        engine.addSystem(new PhysicsSystem(world));
-        engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
         engine.addSystem(new CollisionSystem());
-        engine.addSystem(new PlayerControlSystem(controller));
+        engine.addSystem(new PlayerControlSystem(inputController));
+        engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
+        engine.addSystem(new PhysicsSystem(world));
+        engine.addSystem(renderingSystem);
         engine.addSystem(new EnemySystem());
-
-
-        levelFactory = new LevelFactory(engine, atlas);
-        engine.addSystem(new LevelGenerationSystem(levelFactory));
+//        engine.addSystem(new LevelGenerationSystem(levelFactory));
 
         // create some game objects
-        Entity playerEntity = createPlayer();
-        engine.addSystem(new WaterFloorSystem(playerEntity));
-        createPlatform(1,2);
-        createPlatform(8,4);
-        createPlatform(15,6);
-        createPlatform(20,7);
+         createPlayer();
+        createPlatform(1, 2);
+        createPlatform(8, 4);
+        createPlatform(15, 6);
+        createPlatform(20, 7);
         createFloor();
-
-       int floorWidth = (int) (40*RenderingSystem.PIXELS_PER_METER);
-       int floorHeight = (int) (1*RenderingSystem.PIXELS_PER_METER);
-       TextureRegion floorRegion = Util.makeTextureRegion(floorWidth, floorHeight, "11331180");
-       levelFactory.createFloor();
-
-       int wFloorWidth = (int) (40*RenderingSystem.PIXELS_PER_METER);
-       int wFloorHeight = (int) (10*RenderingSystem.PIXELS_PER_METER);
-       TextureRegion wFloorRegion = Util.makeTextureRegion(wFloorWidth, wFloorHeight, "11113380");
-       levelFactory.createWaterFloor();
-
-//       int wallWidth = (int) (1*RenderingSystem.PIXELS_PER_METER);
-//       int wallHeight = (int) (60*RenderingSystem.PIXELS_PER_METER);
-//       TextureRegion wallRegion = DFUtils.makeTextureRegion(wallWidth, wallHeight, "222222FF");
-//       levelFactory.createWalls(wallRegion);
-   }
-
-
-
-    private Entity createPlayer() {
     }
 
 
-
-    private void createPlayer() {
+    private Entity createPlayer() {
         Entity entity = engine.createEntity();
 
         Body body = bodyFactory.makeCirclePolyBody(10, 10, 0.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
@@ -134,7 +113,7 @@ public class MainScreen implements Screen {
         return entity;
     }
 
-    private void createPlatform(float x, float y){
+    private void createPlatform(float x, float y) {
         Entity entity = engine.createEntity();
         BodyComponent bodyCompo = engine.createComponent(BodyComponent.class);
         bodyCompo.body = bodyFactory.makeBoxPolyBody(x, y, 3, 0.2f, BodyFactory.STONE, BodyDef.BodyType.StaticBody, false);
@@ -151,7 +130,7 @@ public class MainScreen implements Screen {
         engine.addEntity(entity);
     }
 
-    private void createFloor(){
+    private void createFloor() {
         Entity entity = engine.createEntity();
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
         bodyComponent.body = bodyFactory.makeBoxPolyBody(0, 0.3f, 100, 0.3f, BodyFactory.STONE, BodyDef.BodyType.StaticBody, false);
@@ -167,11 +146,6 @@ public class MainScreen implements Screen {
         entity.add(type);
 
         engine.addEntity(entity);
-    }
-
-    @Override
-    public void show() {
-        Gdx.input.setInputProcessor(controller);
     }
 
     @Override
@@ -203,7 +177,6 @@ public class MainScreen implements Screen {
 
     @Override
     public void dispose() {
-        spriteBatch.end();
         spriteBatch.dispose();
         atlas.dispose();
         world.dispose();

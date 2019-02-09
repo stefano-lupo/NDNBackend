@@ -2,10 +2,13 @@ package com.stefanolupo.ndngame.libgdx.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.systems.IteratingSystem;
 import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
 import com.stefanolupo.ndngame.libgdx.components.EnemyComponent;
 
-public class EnemySystem extends BaseSystem {
+import static com.stefanolupo.ndngame.libgdx.systems.Mappers.*;
+
+public class EnemySystem extends IteratingSystem {
 
     public EnemySystem() {
         super(Family.all(EnemyComponent.class).get());
@@ -13,8 +16,8 @@ public class EnemySystem extends BaseSystem {
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        EnemyComponent enemyComponent = enemyMapper.get(entity);
-        BodyComponent bodyComponent = bodyMapper.get(entity);
+        EnemyComponent enemyComponent = ENEMY_MAPPER.get(entity);
+        BodyComponent bodyComponent = BODY_MAPPER.get(entity);
 
         float distFromOrigin = Math.abs(enemyComponent.xPosCenter - bodyComponent.body.getPosition().x);
 
