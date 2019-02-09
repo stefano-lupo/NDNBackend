@@ -7,7 +7,10 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 
-public class PhysicsDebugSystem extends IteratingSystem {
+public class PhysicsDebugSystem
+        extends IteratingSystem
+        implements HasComponentMappers
+{
 
     private final World world;
     private final OrthographicCamera camera;

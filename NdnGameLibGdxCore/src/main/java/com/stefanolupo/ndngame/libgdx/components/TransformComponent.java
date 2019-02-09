@@ -8,11 +8,6 @@ public class TransformComponent implements Component {
     private final Vector3 position = new Vector3();
     private final Vector2 scale = new Vector2(1.0f, 1.0f);
     private float rotation = 0.0f;
-    private final boolean isHidden = false;
-
-    public boolean isHidden() {
-        return isHidden;
-    }
 
     public Vector3 getPosition() {
         return position;

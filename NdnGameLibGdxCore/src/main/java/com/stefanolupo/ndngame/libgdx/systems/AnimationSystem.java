@@ -9,9 +9,9 @@ import com.stefanolupo.ndngame.libgdx.components.AnimationComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 
-import static com.stefanolupo.ndngame.libgdx.systems.Mappers.*;
-
-public class AnimationSystem extends IteratingSystem {
+public class AnimationSystem
+        extends IteratingSystem
+        implements HasComponentMappers{
 
     public AnimationSystem() {
         super(Family.all(TextureComponent.class, AnimationComponent.class, StateComponent.class).get());
@@ -22,12 +22,9 @@ public class AnimationSystem extends IteratingSystem {
         AnimationComponent animationComponent = ANIMATION_MAPPER.get(entity);
         StateComponent stateComponent = STATE_MAPPER.get(entity);
 
-        if (animationComponent.getAnimations().containsKey(stateComponent.get())) {
-            TextureComponent textureComponent = TEXTURE_MAPPER.get(entity);
-            Animation animation = animationComponent.getAnimations().get(stateComponent.get());
-            textureComponent.region = (TextureRegion) animation.getKeyFrame(stateComponent.time, stateComponent.isLooping);
+        Animation<TextureRegion> animation = animationComponent.getAnimations().get(stateComponent.getState().getSpriteSheetRow());
+        if (animation != null) {
+            TEXTURE_MAPPER.get(entity).setRegion(animation.getKeyFrame(stateComponent.getTimeInState()));
         }
-
-        stateComponent.time += deltaTime;
     }
 }

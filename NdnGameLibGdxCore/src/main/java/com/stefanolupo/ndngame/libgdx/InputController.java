@@ -16,51 +16,49 @@ public class InputController implements InputProcessor {
 
     @Override
     public boolean keyDown(int keycode) {
-        System.out.println("Keydown: " + keycode);
         boolean keyProcessed = false;
         switch (keycode) {
-            case Input.Keys.LEFT:  	// if keycode is the same as Keys.LEFT a.k.a 21
-                left = true;	// do this
-                keyProcessed = true;// we have reacted to a keypress
+            case Input.Keys.A:
+                left = true;
+                keyProcessed = true;
                 break;
-            case Input.Keys.RIGHT: 	// if keycode is the same as Keys.LEFT a.k.a 22
-                right = true;	// do this
-                keyProcessed = true;// we have reacted to a keypress
+            case Input.Keys.D:
+                right = true;
+                keyProcessed = true;
                 break;
-            case Input.Keys.UP: 		// if keycode is the same as Keys.LEFT a.k.a 19
-                up = true;		// do this
-                keyProcessed = true;// we have reacted to a keypress
+            case Input.Keys.W:
+                up = true;
+                keyProcessed = true;
                 break;
-            case Input.Keys.DOWN: 	// if keycode is the same as Keys.LEFT a.k.a 20
-                down = true;	// do this
-                keyProcessed = true;// we have reacted to a keypress
+            case Input.Keys.S:
+                down = true;
+                keyProcessed = true;
         }
         return keyProcessed;
     }
 
     @Override
     public boolean keyUp(int keycode) {
-        System.out.println("Keyup: " + keycode);
         boolean keyProcessed = false;
-        switch (keycode) // switch code base on the variable keycode
+        switch (keycode)
         {
-            case Input.Keys.LEFT:  	// if keycode is the same as Keys.LEFT a.k.a 21
-                left = false;	// do this
-                keyProcessed = true;	// we have reacted to a keypress
+            case Input.Keys.A:
+                left = false;
+                keyProcessed = true;
                 break;
-            case Input.Keys.RIGHT: 	// if keycode is the same as Keys.LEFT a.k.a 22
-                right = false;	// do this
-                keyProcessed = true;	// we have reacted to a keypress
+            case Input.Keys.D:
+                right = false;
+                keyProcessed = true;
                 break;
-            case Input.Keys.UP: 		// if keycode is the same as Keys.LEFT a.k.a 19
-                up = false;		// do this
-                keyProcessed = true;	// we have reacted to a keypress
+            case Input.Keys.W:
+                up = false;
+                keyProcessed = true;
                 break;
-            case Input.Keys.DOWN: 	// if keycode is the same as Keys.LEFT a.k.a 20
-                down = false;	// do this
-                keyProcessed = true;	// we have reacted to a keypress
+            case Input.Keys.S:
+                down = false;
+                keyProcessed = true;
         }
-        return keyProcessed;	//  return our peyProcessed flag
+        return keyProcessed;
     }
 
     @Override

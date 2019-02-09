@@ -26,7 +26,7 @@ public class NdnGame extends Game {
 		music = gameAssetManager.getMusic();
 //		music.play();
 
-		// This must be set after loading all the assets for the screen
+		// This must be updateState after loading all the assets for the screen
 		setScreen(mainScreen);
 	}
 

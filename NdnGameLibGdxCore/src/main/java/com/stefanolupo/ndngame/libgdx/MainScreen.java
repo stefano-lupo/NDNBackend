@@ -5,14 +5,18 @@ import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.World;
+import com.badlogic.gdx.utils.IntMap;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.components.*;
+import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.libgdx.systems.*;
 
 
@@ -25,10 +29,9 @@ public class MainScreen implements Screen {
     private final ContactListener contactListener;
     private final World world;
 
-    // This cant be initialized in the constructor
+    // These cant be initialized in the constructor
     private  TextureAtlas atlas = null;
     private SpriteBatch spriteBatch = null;
-//    private final LevelFactory levelFactory;
 
     @Inject
     public MainScreen(InputController inputController,
@@ -50,7 +53,6 @@ public class MainScreen implements Screen {
     @Override
     public void show() {
         Gdx.input.setInputProcessor(inputController);
-//        levelFactory = new LevelFactory(engine, atlas);
 
         // Create what can't be created until LibGdx is loaded
         atlas = gameAssetManager.getGameAtlas();
@@ -59,32 +61,32 @@ public class MainScreen implements Screen {
         // Add all the relevant systems our engine should run
         RenderingSystem renderingSystem = new RenderingSystem(spriteBatch);
         spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
-        engine.addSystem(new AnimationSystem());
         engine.addSystem(new CollisionSystem());
+        engine.addSystem(new StateSystem());
         engine.addSystem(new PlayerControlSystem(inputController));
         engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
         engine.addSystem(new PhysicsSystem(world));
         engine.addSystem(renderingSystem);
-        engine.addSystem(new EnemySystem());
-//        engine.addSystem(new LevelGenerationSystem(levelFactory));
+        engine.addSystem(new AnimationSystem());
 
         // create some game objects
-         createPlayer();
-        createPlatform(1, 2);
-        createPlatform(8, 4);
-        createPlatform(15, 6);
-        createPlatform(20, 7);
+        createPlayer();
+        createScenery(1, 2);
+        createScenery(8, 4);
+        createScenery(15, 6);
+        createScenery(20, 7);
         createFloor();
     }
 
 
-    private Entity createPlayer() {
+    private void createPlayer() {
         Entity entity = engine.createEntity();
 
-        Body body = bodyFactory.makeCirclePolyBody(10, 10, 0.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        Body body = bodyFactory.makeBoxPolyBody(10, 9.5f, 1f, 1.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        body.setUserData(entity);
+
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
-        bodyComponent.body = body;
-        bodyComponent.body.setUserData(entity);
+        bodyComponent.setBody(body);
         entity.add(bodyComponent);
 
         TransformComponent position = engine.createComponent(TransformComponent.class);
@@ -92,15 +94,14 @@ public class MainScreen implements Screen {
         entity.add(position);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);
-        texture.region = atlas.findRegion("player");
+        texture.setRegion(atlas.findRegion("skeleton_00000"));
         entity.add(texture);
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
-        type.type = TypeComponent.PLAYER;
+        type.setType(Type.PLAYER);
         entity.add(type);
 
         StateComponent state = engine.createComponent(StateComponent.class);
-        state.set(StateComponent.STATE_NORMAL);
         entity.add(state);
 
         CollisionComponent collision = engine.createComponent(CollisionComponent.class);
@@ -109,22 +110,48 @@ public class MainScreen implements Screen {
         PlayerComponent player = engine.createComponent(PlayerComponent.class);
         entity.add(player);
 
+        AnimationComponent animationComponent = engine.createComponent(AnimationComponent.class);
+        IntMap<Animation<TextureRegion>> animationMap = animationComponent.getAnimations();
+
+        // TODO: Move this all to some animation manager
+        String format = "skeleton_%05d";
+        for (int i = 0; i < 4; i++) {
+            TextureRegion[] textureRegions = new TextureRegion[9];
+            for (int j = 0; j < 9; j++) {
+                textureRegions[j] = atlas.findRegion(String.format(format, i*9+j));
+            }
+            Animation<TextureRegion> animation = new Animation<>(0.2f, textureRegions);
+            animation.setPlayMode(Animation.PlayMode.LOOP);
+            animationMap.put(i, animation);
+        }
+        entity.add(animationComponent);
+
         engine.addEntity(entity);
-        return entity;
     }
 
-    private void createPlatform(float x, float y) {
+    private void createScenery(float x, float y) {
         Entity entity = engine.createEntity();
-        BodyComponent bodyCompo = engine.createComponent(BodyComponent.class);
-        bodyCompo.body = bodyFactory.makeBoxPolyBody(x, y, 3, 0.2f, BodyFactory.STONE, BodyDef.BodyType.StaticBody, false);
-        TextureComponent texture = engine.createComponent(TextureComponent.class);
-        texture.region = atlas.findRegion("player");
-        TypeComponent type = engine.createComponent(TypeComponent.class);
-        type.type = TypeComponent.SCENERY;
-        bodyCompo.body.setUserData(entity);
 
-        entity.add(bodyCompo);
+        Body body = bodyFactory.makeBoxPolyBody(
+                x,
+                y, 3,
+                0.2f,
+                BodyFactory.STONE,
+                BodyDef.BodyType.StaticBody,
+                false);
+        body.setUserData(entity);
+
+        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
+        bodyComponent.setBody(body);
+        entity.add(bodyComponent);
+
+        // TODO: Setup correct textures here
+        TextureComponent texture = engine.createComponent(TextureComponent.class);
+        texture.setRegion(atlas.findRegion("player"));
         entity.add(texture);
+
+        TypeComponent type = engine.createComponent(TypeComponent.class);
+        type.setType(Type.SCENERY);
         entity.add(type);
 
         engine.addEntity(entity);
@@ -132,18 +159,25 @@ public class MainScreen implements Screen {
 
     private void createFloor() {
         Entity entity = engine.createEntity();
+
+        Body body = bodyFactory.makeBoxPolyBody(0, 0.5f, 100, 0.3f, BodyFactory.STONE, BodyDef.BodyType.StaticBody);
+        body.setUserData(entity);
+
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
-        bodyComponent.body = bodyFactory.makeBoxPolyBody(0, 0.3f, 100, 0.3f, BodyFactory.STONE, BodyDef.BodyType.StaticBody, false);
-        TextureComponent texture = engine.createComponent(TextureComponent.class);
-        texture.region = atlas.findRegion("player");
-        TypeComponent type = engine.createComponent(TypeComponent.class);
-        type.type = TypeComponent.SCENERY;
-
-        bodyComponent.body.setUserData(entity);
-
+        bodyComponent.setBody(body);
         entity.add(bodyComponent);
+
+        // TODO: Setup correct textures here
+        TextureComponent texture = engine.createComponent(TextureComponent.class);
+        texture.setRegion(atlas.findRegion("player"));
         entity.add(texture);
-        entity.add(type);
+
+        TypeComponent typeComponent = engine.createComponent(TypeComponent.class);
+        typeComponent.setType(Type.SCENERY);
+        entity.add(typeComponent);
+
+        CollisionComponent collisionComponent = engine.createComponent(CollisionComponent.class);
+        entity.add(collisionComponent);
 
         engine.addEntity(entity);
     }

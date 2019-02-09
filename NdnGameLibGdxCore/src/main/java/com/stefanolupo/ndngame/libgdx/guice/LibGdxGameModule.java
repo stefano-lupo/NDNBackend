@@ -1,6 +1,5 @@
 package com.stefanolupo.ndngame.libgdx.guice;
 
-import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.World;
@@ -15,7 +14,7 @@ import com.stefanolupo.ndngame.libgdx.MyContactListener;
 
 public class LibGdxGameModule extends AbstractModule {
 
-    private static final Vector2 WORLD_GRAVITY = new Vector2(0, -10f);
+    private static final Vector2 WORLD_GRAVITY = new Vector2(0, 0);
 
     private final Config config;
 
@@ -32,7 +31,7 @@ public class LibGdxGameModule extends AbstractModule {
     @Singleton
     GameAssetManager providesGameAssetManager() {
         // Note this is will not load the game assets yet
-        // as that has to be done at a very specific time (after Gdx.files is initialized)
+        // as that has to be done at a very specific timeInState (after Gdx.files is initialized)
         return new GameAssetManager();
     }
 
