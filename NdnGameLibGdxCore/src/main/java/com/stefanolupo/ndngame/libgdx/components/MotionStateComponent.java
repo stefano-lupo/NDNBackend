@@ -19,6 +19,25 @@ public class MotionStateComponent implements Component {
         }
     }
 
+    public void updateState(float velX, float velY, float deltaTime) {
+        State newHozState = State.RESTING;
+        State newVertState = State.RESTING;
+
+        if (velX > 0) {
+            newHozState = State.MOVING_RIGHT;
+        } else if (velX < 0) {
+            newHozState = State.MOVING_LEFT;
+        }
+
+        if (velY > 0) {
+            newVertState = State.MOVING_UP;
+        } else if (velY < 0) {
+            newVertState = State.MOVING_DOWN;
+        }
+
+        updateState(newHozState, newVertState, deltaTime);
+    }
+
     public void updateHozState(State hozState, float deltaTime) {
         updateState(hozState, currentVertState, deltaTime);
     }

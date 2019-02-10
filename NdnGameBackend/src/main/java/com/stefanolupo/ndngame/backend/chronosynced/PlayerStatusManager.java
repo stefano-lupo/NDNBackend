@@ -5,8 +5,7 @@ import com.google.common.collect.Multimaps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.stefanolupo.ndngame.backend.entities.players.LocalPlayer;
-import com.stefanolupo.ndngame.backend.entities.players.RemotePlayer;
+import com.stefanolupo.ndngame.backend.entities.LocalPlayer;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
@@ -19,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -28,9 +29,10 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusManager.class);
     private static final String BROADCAST_PREFIX = "/com/stefanolupo/ndngame/%d/status/broadcast";
 
-    private final LocalPlayer localPlayer;
-    private final Map<PlayerStatusName, RemotePlayer> remotePlayerMap = new HashMap<>();
+    private final Map<PlayerStatusName, PlayerStatus> remotePlayerMap = new HashMap<>();
     private final Map<PlayerStatusName, Long> versionByPlayer = new HashMap<>();
+
+    private final LocalPlayer localPlayer;
 
     // Gross hack temporary
     private Consumer<PlayerStatusName> playerStatusDiscovery = null;
@@ -38,8 +40,15 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
     @Inject
     public PlayerStatusManager(LocalPlayer localPlayer, Config config) {
         super(new Name(String.format(BROADCAST_PREFIX, config.getGameId())),
-                new PlayerStatusName(config.getGameId(), localPlayer.getPlayerName()).getListenName());
+                localPlayer.getPlayerStatusName().getListenName());
+
         this.localPlayer = localPlayer;
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                this::publishPlayerStatusChange,
+                1000,
+                30,
+                TimeUnit.MILLISECONDS
+        );
     }
 
     @Override
@@ -47,17 +56,17 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
         try {
             PlayerStatusName name = new PlayerStatusName(interest);
             PlayerStatus status = PlayerStatus.parseFrom(data.getContent().getImmutableArray());
-            if (remotePlayerMap.containsKey(name)) {
-                remotePlayerMap.get(name).update(status);
-                versionByPlayer.compute(name, (key, old) -> ++old);
-            } else {
-                LOG.info("First appearance of {}, creating..", name.getPlayerName());
-                remotePlayerMap.put(name, new RemotePlayer(name.getPlayerName(), status));
-                versionByPlayer.put(name, name.getSequenceNumber());
+            if (!remotePlayerMap.containsKey(name)) {
+                LOG.info("First appearance of {}", name.getPlayerName());
                 if (playerStatusDiscovery != null) {
                     playerStatusDiscovery.accept(name);
                 }
+
             }
+
+            remotePlayerMap.put(name, status);
+            versionByPlayer.put(name, name.getSequenceNumber());
+
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse data received " + data.getName().toUri(), e);
         }
@@ -65,14 +74,10 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
 
     @Override
     protected Collection<Interest> syncStatesToInterests(List<ChronoSync2013.SyncState> syncStates, boolean isRecovery) {
-        if (syncStates.size() > 1) {
-            //LOG.debug("Got more than 1 sync state");
-        }
-
         // TODO: I'm not sure if get 1 sync state per user or whether we can get multiple sync states for the same user
         List<PlayerStatusName> filteredSyncStates = syncStates.stream()
                 .map(PlayerStatusName::new)
-                .filter(psn -> !psn.getPlayerName().equals(localPlayer.getPlayerName()))
+                .filter(psn -> !psn.getPlayerName().equals(localPlayer.getPlayerStatusName().getPlayerName()))
                 .collect(Collectors.toList());
 
         if (filteredSyncStates.size() > remotePlayerMap.keySet().size() + 1) {
@@ -93,23 +98,24 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
         return Optional.of(new Blob(localPlayer.getPlayerStatus().toByteArray()));
     }
 
-    public Collection<RemotePlayer> getRemotePlayers() {
-        return Collections.unmodifiableCollection(remotePlayerMap.values());
-    }
-
-    public long getLatestVersionNumber(PlayerStatusName playerStatusName) {
-        return versionByPlayer.get(playerStatusName);
+    public void updateLocalPlayerStatus(PlayerStatus playerStatus) {
+        localPlayer.setPlayerStatus(playerStatus);
     }
 
     public void setPlayerStatusDiscovery(Consumer<PlayerStatusName> playerStatusDiscovery) {
         this.playerStatusDiscovery = playerStatusDiscovery;
     }
 
-    public RemotePlayer getLatestVersionOfRemotePlayer(PlayerStatusName name) {
+    public PlayerStatus getLatestStatus(PlayerStatusName name) {
         return remotePlayerMap.get(name);
     }
 
-    public void publishPlayerStatusChange() {
+    public long getLatestVersionForPlayer(PlayerStatusName name) {
+        Long latestVersion = versionByPlayer.get(name);
+        return latestVersion != null ? latestVersion : -1;
+    }
+
+    private void publishPlayerStatusChange() {
         publishUpdate();
     }
 }

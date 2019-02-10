@@ -10,6 +10,8 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Performs a world update, updating the positions of all bodies based on their velocities
@@ -24,6 +26,7 @@ public class PhysicsSystem
         implements HasComponentMappers {
 
     private static final float MAX_STEP_TIME = 1/45f;
+    private static final Logger LOG = LoggerFactory.getLogger(PhysicsSystem.class);
 
     private final World world;
     private final Array<Entity> bodiesQueue;

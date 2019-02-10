@@ -30,21 +30,5 @@ public class SteadyStateSystem extends IteratingSystem implements HasComponentMa
         if (body.getLinearVelocity().y == 0) {
             motionStateComponent.updateVertState(State.RESTING, deltaTime);
         }
-
-//        if (body.getLinearVelocity().y > 0) {
-//            motionStateComponent.updateVertState(State.MOVING_UP, deltaTime);
-//        } else if (body.getLinearVelocity().y < 0) {
-//            motionStateComponent.updateVertState(State.MOVING_DOWN, deltaTime);
-//        } else {
-//            motionStateComponent.updateVertState(State.RESTING, deltaTime);
-//        }
-//
-//        if (body.getLinearVelocity().x > 0) {
-//            motionStateComponent.updateHozState(State.MOVING_RIGHT, deltaTime);
-//        } else if (body.getLinearVelocity().x < 0){
-//            motionStateComponent.updateHozState(State.MOVING_LEFT, deltaTime);
-//        } else {
-//            motionStateComponent.updateHozState(State.RESTING, deltaTime);
-//        }
     }
 }

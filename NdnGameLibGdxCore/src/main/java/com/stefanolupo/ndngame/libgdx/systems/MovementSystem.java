@@ -10,7 +10,7 @@ import com.stefanolupo.ndngame.libgdx.components.enums.State;
 
 /**
  * Sets the velocities of all of the Body objects of entities with MotionStateComponents
- * The PhysicsSystem updates all of their positions using these updated velcotieis
+ * The PhysicsSystem updates all of their positions using these updated velocities
  */
 public class MovementSystem extends IteratingSystem implements HasComponentMappers {
 

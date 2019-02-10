@@ -33,7 +33,9 @@ public class MainScreen implements Screen {
 
     // Systems
     private final MovementSystem movementSystem;
+    private final PlayerControlSystem playerControlSystem;
     private final RemotePlayerUpdateSystem remotePlayerUpdateSystem;
+    private final LocalPlayerStatusSystem localPlayerStatusSystem;
 
     // These cant be initialized in the constructor
     private  TextureAtlas atlas = null;
@@ -47,8 +49,10 @@ public class MainScreen implements Screen {
                       ContactListener contactListener,
                       World world,
                       MovementSystem movementSystem,
+                      PlayerControlSystem playerControlSystem,
                       RemotePlayerUpdateSystem remotePlayerUpdateSystem,
-                      PlayerStatusManager playerStatusManager) {
+                      PlayerStatusManager playerStatusManager,
+                      LocalPlayerStatusSystem localPlayerStatusSystem) {
         this.inputController = inputController;
         this.bodyFactory = bodyFactory;
         this.gameAssetManager = gameAssetManager;
@@ -56,7 +60,9 @@ public class MainScreen implements Screen {
         this.contactListener = contactListener;
         this.world = world;
         this.movementSystem = movementSystem;
+        this.playerControlSystem = playerControlSystem;
         this.remotePlayerUpdateSystem = remotePlayerUpdateSystem;
+        this.localPlayerStatusSystem = localPlayerStatusSystem;
 
         world.setContactListener(contactListener);
         playerStatusManager.setPlayerStatusDiscovery(this::createRemotePlayer);
@@ -73,15 +79,17 @@ public class MainScreen implements Screen {
         spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
 
         // Add all the relevant systems our engine should run
+        // Note the order here defines the order in which the system will run
         engine.addSystem(new SteadyStateSystem());
-        engine.addSystem(new PlayerControlSystem(inputController));
-        engine.addSystem(movementSystem);
         engine.addSystem(remotePlayerUpdateSystem);
+        engine.addSystem(playerControlSystem);
+        engine.addSystem(movementSystem);
         engine.addSystem(new PhysicsSystem(world));
         engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
         engine.addSystem(new CollisionSystem());
-        engine.addSystem(new AnimationSystem());
+        engine.addSystem(localPlayerStatusSystem);
         engine.addSystem(renderingSystem);
+        engine.addSystem(new AnimationSystem());
 
         // create some game objects
         createLocalPlayer();
@@ -95,10 +103,10 @@ public class MainScreen implements Screen {
 
     private void createLocalPlayer() {
         Entity entity = engine.createEntity();
-        PlayerComponent player = engine.createComponent(PlayerComponent.class);
+        LocalPlayerComponent player = engine.createComponent(LocalPlayerComponent.class);
         entity.add(player);
 
-        createPlayer(entity);
+        createPlayer(entity, 6);
     }
 
     private void createRemotePlayer(PlayerStatusName playerStatusName) {
@@ -107,12 +115,12 @@ public class MainScreen implements Screen {
         remotePlayerComponent.setPlayerStatusName(playerStatusName);
         entity.add(remotePlayerComponent);
 
-        createPlayer(entity);
+        createPlayer(entity, 8);
     }
 
-    private void createPlayer(Entity entity) {
+    private void createPlayer(Entity entity, float x) {
 
-        Body body = bodyFactory.makeBoxPolyBody(10, 9.5f, 1f, 1.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        Body body = bodyFactory.makeBoxPolyBody(x, 9.5f, 1f, 1.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
@@ -120,7 +128,7 @@ public class MainScreen implements Screen {
         entity.add(bodyComponent);
 
         RenderComponent position = engine.createComponent(RenderComponent.class);
-        position.getPosition().set(10, 10, 0);
+//        position.getPosition().set(10, 10, 0);
         entity.add(position);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);

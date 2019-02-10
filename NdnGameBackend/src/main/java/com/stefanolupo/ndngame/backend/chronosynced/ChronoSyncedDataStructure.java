@@ -189,7 +189,7 @@ public abstract class ChronoSyncedDataStructure implements
         }
 
         void printStats() {
-            LOG.info("{} sync updates ({}% recovery) - average num sync states = {}",
+            LOG.trace("{} sync updates ({}% recovery) - average num sync states = {}",
                     numSyncs,
                     (numRecoveries + 0.0) / numSyncs,
                     (totalNumSyncStates + 0.0) / numSyncs

@@ -3,19 +3,24 @@ package com.stefanolupo.ndngame.libgdx.systems;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.InputController;
+import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.MotionStateComponent;
-import com.stefanolupo.ndngame.libgdx.components.PlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.State;
 
+/**
+ * Updates MotionStateComponents based on input from the InputController
+ */
 public class PlayerControlSystem
         extends IteratingSystem
         implements HasComponentMappers {
 
     private final InputController inputController;
 
+    @Inject
     public PlayerControlSystem(InputController inputController) {
-        super(Family.all(PlayerComponent.class).get());
+        super(Family.all(LocalPlayerComponent.class).get());
         this.inputController = inputController;
     }
 

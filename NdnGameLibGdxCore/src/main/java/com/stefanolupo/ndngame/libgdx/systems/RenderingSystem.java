@@ -4,11 +4,13 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.SortedIteratingSystem;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
-import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
+import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 import com.stefanolupo.ndngame.libgdx.components.ZComparator;
 
 import java.util.Comparator;
@@ -17,7 +19,7 @@ public class RenderingSystem
         extends SortedIteratingSystem
         implements HasComponentMappers {
 
-    private static final float PIXELS_PER_METER = 32.0f;
+    private static final float PIXELS_PER_METER = 32f;
 
     private static final float FRUSTRUM_WIDTH = Gdx.graphics.getWidth() / PIXELS_PER_METER;
     private static final float FRUSTRUM_HEIGHT = Gdx.graphics.getHeight() / PIXELS_PER_METER;
@@ -30,6 +32,9 @@ public class RenderingSystem
     private final Array<Entity> renderQueue;
     private final OrthographicCamera camera;
 
+    private final BitmapFont font = new BitmapFont();
+
+
     public RenderingSystem(SpriteBatch spriteBatch) {
         super(Family.all(RenderComponent.class, TextureComponent.class).get(), zComparator);
 
@@ -37,6 +42,7 @@ public class RenderingSystem
         renderQueue = new Array<>();
         camera = new OrthographicCamera(FRUSTRUM_WIDTH, FRUSTRUM_HEIGHT);
         camera.position.set(FRUSTRUM_WIDTH / 2f, FRUSTRUM_HEIGHT / 2f, 0);
+
     }
 
     @Override
@@ -61,6 +67,8 @@ public class RenderingSystem
 
             float originX = width / 2f;
             float originY = height / 2f;
+
+//            drawPositions(entity, renderComponent);
 
             spriteBatch.draw(textureComponent.getRegion(),
                     renderComponent.getPosition().x - originX,
@@ -90,5 +98,20 @@ public class RenderingSystem
 
     public static float pixelsToMeters(float pixelValue) {
         return pixelValue * PIXELS_TO_METERS;
+    }
+
+    private void drawPositions(Entity entity, RenderComponent renderComponent) {
+        if (LOCAL_PLAYER_MAPPER.get(entity) != null) {
+            font.setColor(Color.BLUE);
+            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
+                    renderComponent.getPosition().x, renderComponent.getPosition().y);
+        }
+
+        if (REMOTE_PLAYER_MAPPER.get(entity) != null) {
+            font.setColor(Color.RED);
+            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
+                    renderComponent.getPosition().x, renderComponent.getPosition().y);
+        }
+
     }
 }

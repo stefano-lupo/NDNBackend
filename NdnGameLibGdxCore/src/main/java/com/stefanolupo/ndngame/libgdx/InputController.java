@@ -3,7 +3,9 @@ package com.stefanolupo.ndngame.libgdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.math.Vector2;
+import com.google.inject.Singleton;
 
+@Singleton
 public class InputController implements InputProcessor {
 
     public boolean left;
