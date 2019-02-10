@@ -9,8 +9,9 @@ public interface HasComponentMappers {
     ComponentMapper<BodyComponent> BODY_MAPPER = ComponentMapper.getFor(BodyComponent.class);
     ComponentMapper<CollisionComponent> COLLISION_MAPPER = ComponentMapper.getFor(CollisionComponent.class);
     ComponentMapper<PlayerComponent> PLAYER_MAPPER = ComponentMapper.getFor(PlayerComponent.class);
-    ComponentMapper<StateComponent> STATE_MAPPER = ComponentMapper.getFor(StateComponent.class);
+    ComponentMapper<MotionStateComponent> MOTION_STATE_MAPPER = ComponentMapper.getFor(MotionStateComponent.class);
     ComponentMapper<TextureComponent> TEXTURE_MAPPER = ComponentMapper.getFor(TextureComponent.class);
-    ComponentMapper<TransformComponent> TRANSFORM_MAPPER = ComponentMapper.getFor(TransformComponent.class);
+    ComponentMapper<RenderComponent> TRANSFORM_MAPPER = ComponentMapper.getFor(RenderComponent.class);
     ComponentMapper<TypeComponent> TYPE_MAPPER = ComponentMapper.getFor(TypeComponent.class);
+    ComponentMapper<RemotePlayerComponent> REMOTE_PLAYER_MAPPER = ComponentMapper.getFor(RemotePlayerComponent.class);
 }

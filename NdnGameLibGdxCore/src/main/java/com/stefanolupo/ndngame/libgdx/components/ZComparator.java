@@ -7,10 +7,10 @@ import java.util.Comparator;
 
 public class ZComparator implements Comparator<Entity> {
 
-    private final ComponentMapper<TransformComponent> transformComponentComponentMapper;
+    private final ComponentMapper<RenderComponent> transformComponentComponentMapper;
 
     public ZComparator() {
-        transformComponentComponentMapper = ComponentMapper.getFor(TransformComponent.class);
+        transformComponentComponentMapper = ComponentMapper.getFor(RenderComponent.class);
     }
 
     @Override

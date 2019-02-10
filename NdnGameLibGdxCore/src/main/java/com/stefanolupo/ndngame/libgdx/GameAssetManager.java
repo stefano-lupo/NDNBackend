@@ -9,7 +9,7 @@ import com.badlogic.gdx.utils.Disposable;
 
 public class GameAssetManager implements Disposable {
 
-    private static final String GAME_IMAGES_ATLAS = "img/game/skeleton.atlas";
+    private static final String GAME_IMAGES_ATLAS = "img/game/trump.atlas";
     private static final String BOING_SOUND = "sounds/boing.wav";
     private static final String PING_SOUND = "sounds/ping.wav";
     private static final String MUSIC = "music/music.mp3";

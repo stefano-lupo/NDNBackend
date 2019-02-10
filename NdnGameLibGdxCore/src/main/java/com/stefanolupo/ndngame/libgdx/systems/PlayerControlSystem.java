@@ -3,16 +3,14 @@ package com.stefanolupo.ndngame.libgdx.systems;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.MathUtils;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.stefanolupo.ndngame.libgdx.InputController;
+import com.stefanolupo.ndngame.libgdx.components.MotionStateComponent;
 import com.stefanolupo.ndngame.libgdx.components.PlayerComponent;
+import com.stefanolupo.ndngame.libgdx.components.enums.State;
 
 public class PlayerControlSystem
         extends IteratingSystem
         implements HasComponentMappers {
-
-    private static final Float MAX_VEL = 5f;
 
     private final InputController inputController;
 
@@ -23,38 +21,22 @@ public class PlayerControlSystem
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-
-        Body body = BODY_MAPPER.get(entity).getBody();
+        MotionStateComponent motionStateComponent = MOTION_STATE_MAPPER.get(entity);
 
         if(inputController.left){
-            lerpVelocityX(body, -MAX_VEL);
-        }
-        if(inputController.right){
-            lerpVelocityX(body, MAX_VEL);
-        }
-
-        if(!inputController.left && ! inputController.right){
-            lerpVelocityX(body, 0);
+            motionStateComponent.updateHozState(State.MOVING_LEFT, deltaTime);
+        } else if(inputController.right){
+            motionStateComponent.updateHozState(State.MOVING_RIGHT, deltaTime);
+        } else {
+            motionStateComponent.updateHozState(State.RESTING, deltaTime);
         }
 
         if(inputController.up){
-            lerpVelocityY(body, MAX_VEL);
+            motionStateComponent.updateVertState(State.MOVING_UP, deltaTime);
+        } else if(inputController.down){
+            motionStateComponent.updateVertState(State.MOVING_DOWN, deltaTime);
+        } else {
+            motionStateComponent.updateVertState(State.RESTING, deltaTime);
         }
-        if(inputController.down){
-            lerpVelocityY(body, -MAX_VEL);
-        }
-
-        if(!inputController.up && ! inputController.down){
-            lerpVelocityY(body, 0);
-        }
-
-    }
-
-    private void lerpVelocityX(Body body, float toValue) {
-        body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, toValue, 0.2f), body.getLinearVelocity().y);
-    }
-
-    private void lerpVelocityY(Body body, float toValue) {
-        body.setLinearVelocity(body.getLinearVelocity().x, MathUtils.lerp(body.getLinearVelocity().y, toValue, 0.2f));
     }
 }

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -29,6 +30,10 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
 
     private final LocalPlayer localPlayer;
     private final Map<PlayerStatusName, RemotePlayer> remotePlayerMap = new HashMap<>();
+    private final Map<PlayerStatusName, Long> versionByPlayer = new HashMap<>();
+
+    // Gross hack temporary
+    private Consumer<PlayerStatusName> playerStatusDiscovery = null;
 
     @Inject
     public PlayerStatusManager(LocalPlayer localPlayer, Config config) {
@@ -44,9 +49,14 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
             PlayerStatus status = PlayerStatus.parseFrom(data.getContent().getImmutableArray());
             if (remotePlayerMap.containsKey(name)) {
                 remotePlayerMap.get(name).update(status);
+                versionByPlayer.compute(name, (key, old) -> ++old);
             } else {
                 LOG.info("First appearance of {}, creating..", name.getPlayerName());
                 remotePlayerMap.put(name, new RemotePlayer(name.getPlayerName(), status));
+                versionByPlayer.put(name, name.getSequenceNumber());
+                if (playerStatusDiscovery != null) {
+                    playerStatusDiscovery.accept(name);
+                }
             }
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse data received " + data.getName().toUri(), e);
@@ -85,6 +95,18 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
 
     public Collection<RemotePlayer> getRemotePlayers() {
         return Collections.unmodifiableCollection(remotePlayerMap.values());
+    }
+
+    public long getLatestVersionNumber(PlayerStatusName playerStatusName) {
+        return versionByPlayer.get(playerStatusName);
+    }
+
+    public void setPlayerStatusDiscovery(Consumer<PlayerStatusName> playerStatusDiscovery) {
+        this.playerStatusDiscovery = playerStatusDiscovery;
+    }
+
+    public RemotePlayer getLatestVersionOfRemotePlayer(PlayerStatusName name) {
+        return remotePlayerMap.get(name);
     }
 
     public void publishPlayerStatusChange() {

@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
-import com.stefanolupo.ndngame.libgdx.components.TransformComponent;
+import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.ZComparator;
 
 import java.util.Comparator;
@@ -31,7 +31,7 @@ public class RenderingSystem
     private final OrthographicCamera camera;
 
     public RenderingSystem(SpriteBatch spriteBatch) {
-        super(Family.all(TransformComponent.class, TextureComponent.class).get(), zComparator);
+        super(Family.all(RenderComponent.class, TextureComponent.class).get(), zComparator);
 
         this.spriteBatch = spriteBatch;
         renderQueue = new Array<>();
@@ -50,7 +50,7 @@ public class RenderingSystem
 
         for (Entity entity : renderQueue) {
             TextureComponent textureComponent = TEXTURE_MAPPER.get(entity);
-            TransformComponent transformComponent = TRANSFORM_MAPPER.get(entity);
+            RenderComponent renderComponent = TRANSFORM_MAPPER.get(entity);
 
             if (textureComponent.getRegion() == null) {
                 continue;
@@ -63,15 +63,15 @@ public class RenderingSystem
             float originY = height / 2f;
 
             spriteBatch.draw(textureComponent.getRegion(),
-                    transformComponent.getPosition().x - originX,
-                    transformComponent.getPosition().y - originY,
+                    renderComponent.getPosition().x - originX,
+                    renderComponent.getPosition().y - originY,
                     originX,
                     originY,
                     width,
                     height,
-                    pixelsToMeters(transformComponent.getScale().x),
-                    pixelsToMeters(transformComponent.getScale().y),
-                    transformComponent.getRotation()
+                    pixelsToMeters(renderComponent.getScale().x),
+                    pixelsToMeters(renderComponent.getScale().y),
+                    renderComponent.getRotation()
             );
         }
 

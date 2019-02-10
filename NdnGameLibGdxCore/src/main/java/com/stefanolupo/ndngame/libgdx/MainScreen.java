@@ -15,9 +15,11 @@ import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.IntMap;
 import com.google.inject.Inject;
+import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.libgdx.systems.*;
+import com.stefanolupo.ndngame.names.PlayerStatusName;
 
 
 public class MainScreen implements Screen {
@@ -29,6 +31,10 @@ public class MainScreen implements Screen {
     private final ContactListener contactListener;
     private final World world;
 
+    // Systems
+    private final MovementSystem movementSystem;
+    private final RemotePlayerUpdateSystem remotePlayerUpdateSystem;
+
     // These cant be initialized in the constructor
     private  TextureAtlas atlas = null;
     private SpriteBatch spriteBatch = null;
@@ -39,15 +45,21 @@ public class MainScreen implements Screen {
                       GameAssetManager gameAssetManager,
                       PooledEngine engine,
                       ContactListener contactListener,
-                      World world) {
+                      World world,
+                      MovementSystem movementSystem,
+                      RemotePlayerUpdateSystem remotePlayerUpdateSystem,
+                      PlayerStatusManager playerStatusManager) {
         this.inputController = inputController;
         this.bodyFactory = bodyFactory;
         this.gameAssetManager = gameAssetManager;
         this.engine = engine;
         this.contactListener = contactListener;
         this.world = world;
+        this.movementSystem = movementSystem;
+        this.remotePlayerUpdateSystem = remotePlayerUpdateSystem;
 
         world.setContactListener(contactListener);
+        playerStatusManager.setPlayerStatusDiscovery(this::createRemotePlayer);
     }
 
     @Override
@@ -57,20 +69,22 @@ public class MainScreen implements Screen {
         // Create what can't be created until LibGdx is loaded
         atlas = gameAssetManager.getGameAtlas();
         spriteBatch = new SpriteBatch();
-
-        // Add all the relevant systems our engine should run
         RenderingSystem renderingSystem = new RenderingSystem(spriteBatch);
         spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
-        engine.addSystem(new CollisionSystem());
-        engine.addSystem(new StateSystem());
+
+        // Add all the relevant systems our engine should run
+        engine.addSystem(new SteadyStateSystem());
         engine.addSystem(new PlayerControlSystem(inputController));
-        engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
+        engine.addSystem(movementSystem);
+        engine.addSystem(remotePlayerUpdateSystem);
         engine.addSystem(new PhysicsSystem(world));
-        engine.addSystem(renderingSystem);
+        engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
+        engine.addSystem(new CollisionSystem());
         engine.addSystem(new AnimationSystem());
+        engine.addSystem(renderingSystem);
 
         // create some game objects
-        createPlayer();
+        createLocalPlayer();
         createScenery(1, 2);
         createScenery(8, 4);
         createScenery(15, 6);
@@ -79,8 +93,24 @@ public class MainScreen implements Screen {
     }
 
 
-    private void createPlayer() {
+    private void createLocalPlayer() {
         Entity entity = engine.createEntity();
+        PlayerComponent player = engine.createComponent(PlayerComponent.class);
+        entity.add(player);
+
+        createPlayer(entity);
+    }
+
+    private void createRemotePlayer(PlayerStatusName playerStatusName) {
+        Entity entity = engine.createEntity();
+        RemotePlayerComponent remotePlayerComponent = engine.createComponent(RemotePlayerComponent.class);
+        remotePlayerComponent.setPlayerStatusName(playerStatusName);
+        entity.add(remotePlayerComponent);
+
+        createPlayer(entity);
+    }
+
+    private void createPlayer(Entity entity) {
 
         Body body = bodyFactory.makeBoxPolyBody(10, 9.5f, 1f, 1.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
         body.setUserData(entity);
@@ -89,38 +119,35 @@ public class MainScreen implements Screen {
         bodyComponent.setBody(body);
         entity.add(bodyComponent);
 
-        TransformComponent position = engine.createComponent(TransformComponent.class);
+        RenderComponent position = engine.createComponent(RenderComponent.class);
         position.getPosition().set(10, 10, 0);
         entity.add(position);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);
-        texture.setRegion(atlas.findRegion("skeleton_00000"));
+        texture.setRegion(atlas.findRegion("trump_00000"));
         entity.add(texture);
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.PLAYER);
         entity.add(type);
 
-        StateComponent state = engine.createComponent(StateComponent.class);
+        MotionStateComponent state = engine.createComponent(MotionStateComponent.class);
         entity.add(state);
 
         CollisionComponent collision = engine.createComponent(CollisionComponent.class);
         entity.add(collision);
 
-        PlayerComponent player = engine.createComponent(PlayerComponent.class);
-        entity.add(player);
-
         AnimationComponent animationComponent = engine.createComponent(AnimationComponent.class);
         IntMap<Animation<TextureRegion>> animationMap = animationComponent.getAnimations();
 
         // TODO: Move this all to some animation manager
-        String format = "skeleton_%05d";
+        String format = "trump_%05d";
         for (int i = 0; i < 4; i++) {
-            TextureRegion[] textureRegions = new TextureRegion[9];
-            for (int j = 0; j < 9; j++) {
-                textureRegions[j] = atlas.findRegion(String.format(format, i*9+j));
+            TextureRegion[] textureRegions = new TextureRegion[6];
+            for (int j = 0; j < 6; j++) {
+                textureRegions[j] = atlas.findRegion(String.format(format, i*6+j));
             }
-            Animation<TextureRegion> animation = new Animation<>(0.2f, textureRegions);
+            Animation<TextureRegion> animation = new Animation<>(0.4f, textureRegions);
             animation.setPlayMode(Animation.PlayMode.LOOP);
             animationMap.put(i, animation);
         }
