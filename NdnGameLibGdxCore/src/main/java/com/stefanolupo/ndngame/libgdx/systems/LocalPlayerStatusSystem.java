@@ -11,23 +11,18 @@ import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 public class LocalPlayerStatusSystem
         extends IteratingSystem
         implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayerStatusSystem.class);
 
-    private Entity entity;
     private final PlayerStatusManager playerStatusManager;
 
     @Inject
     public LocalPlayerStatusSystem(PlayerStatusManager playerStatusManager) {
         super(Family.all(LocalPlayerComponent.class).get());
         this.playerStatusManager = playerStatusManager;
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::logPosition, 5, 5, TimeUnit.SECONDS);
     }
 
     @Override
@@ -40,11 +35,5 @@ public class LocalPlayerStatusSystem
                 .setVelY(body.getLinearVelocity().y)
                 .build();
         playerStatusManager.updateLocalPlayerStatus(newPlayerStatus);
-        this.entity = entity;
-    }
-
-    private void logPosition() {
-        Body b = BODY_MAPPER.get(entity).getBody();
-        LOG.debug("Local: x: {}, y: {}, velX: {}, velY: {}", b.getPosition().x, b.getPosition().y, b.getLinearVelocity().x, b.getLinearVelocity().y);
     }
 }

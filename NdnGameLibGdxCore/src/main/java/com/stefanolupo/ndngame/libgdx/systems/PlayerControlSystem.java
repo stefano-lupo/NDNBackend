@@ -2,46 +2,120 @@ package com.stefanolupo.ndngame.libgdx.systems;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
+import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
+import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.InputController;
+import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
-import com.stefanolupo.ndngame.libgdx.components.MotionStateComponent;
-import com.stefanolupo.ndngame.libgdx.components.enums.State;
+import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
+import com.stefanolupo.ndngame.names.AttackName;
+import com.stefanolupo.ndngame.protos.Attack;
+import com.stefanolupo.ndngame.protos.AttackType;
+import com.stefanolupo.ndngame.protos.ID;
+
+import java.util.UUID;
 
 /**
- * Updates MotionStateComponents based on input from the InputController
+ * Updates StateComponent based on input from the InputController
  */
 public class PlayerControlSystem
         extends IteratingSystem
         implements HasComponentMappers {
 
     private final InputController inputController;
+    private final PooledEngine pooledEngine;
+    private final Config config;
 
     @Inject
-    public PlayerControlSystem(InputController inputController) {
+    public PlayerControlSystem(InputController inputController,
+                               PooledEngine pooledEngine,
+                               Config config) {
         super(Family.all(LocalPlayerComponent.class).get());
         this.inputController = inputController;
+        this.pooledEngine = pooledEngine;
+        this.config = config;
     }
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        MotionStateComponent motionStateComponent = MOTION_STATE_MAPPER.get(entity);
+        StateComponent stateComponent = STATE_MAPPER.get(entity);
+        Body body = BODY_MAPPER.get(entity).getBody();
 
+        // No input allowed if currently attacking
+        if (stateComponent.isCurrentlyAttacking()) {
+            return;
+        }
+
+        // If attacking: don't allow movement
+        if (inputController.isMouseButtonDown()) {
+            handleAttackCommand(stateComponent, deltaTime, body);
+            return;
+        }
+
+        handleMovementCommand(stateComponent, deltaTime);
+    }
+
+    private void handleAttackCommand(StateComponent stateComponent,
+                                     float deltaTime,
+                                     Body body) {
+
+//        if (inputController.isMouse1Down) {
+//            stateComponent.updateAttackState(AttackState.SWING, deltaTime);
+//        } else if (inputController.isMouse2Down) {
+//            stateComponent.updateAttackState(AttackState.CAST, deltaTime);
+//        } else if (inputController.isMouse3Down) {
+//            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
+//        }
+
+        if (inputController.isMouse1Down) {
+            buildAttackComponent(body, 3f, AttackType.SWING);
+//            stateComponent.updateAttackState(AttackState.SWING, deltaTime);
+        } else if (inputController.isMouse2Down) {
+            buildAttackComponent(body, 3f, AttackType.CAST);
+//            stateComponent.updateAttackState(AttackState.CAST, deltaTime);
+        } else if (inputController.isMouse3Down) {
+            buildAttackComponent(body, 3f, AttackType.SHIELD);
+//            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
+        }
+
+        Entity entity = pooledEngine.createEntity();
+        entity.add
+    }
+
+    private AttackComponent buildAttackComponent(Body body, float radius, AttackType type) {
+        AttackComponent attackComponent = pooledEngine.createComponent(AttackComponent.class);
+        AttackName name = new AttackName(config.getGameId(), config.getPlayerName());
+        Attack attack = Attack.newBuilder()
+                .setId(ID.newBuilder().setValue(UUID.randomUUID().toString()).build())
+                .setRadius(radius)
+                .setX(body.getPosition().x)
+                .setY(body.getPosition().y)
+                .setType(type)
+                .build();
+        attackComponent.setAttackName(name);
+        attackComponent.setAttack(attack);
+        return attackComponent;
+    }
+
+    private void handleMovementCommand(StateComponent stateComponent, float deltaTime) {
         if(inputController.left){
-            motionStateComponent.updateHozState(State.MOVING_LEFT, deltaTime);
+            stateComponent.updateHozState(MotionState.MOVE_LEFT, deltaTime);
         } else if(inputController.right){
-            motionStateComponent.updateHozState(State.MOVING_RIGHT, deltaTime);
+            stateComponent.updateHozState(MotionState.MOVE_RIGHT, deltaTime);
         } else {
-            motionStateComponent.updateHozState(State.RESTING, deltaTime);
+            stateComponent.updateHozState(MotionState.REST, deltaTime);
         }
 
         if(inputController.up){
-            motionStateComponent.updateVertState(State.MOVING_UP, deltaTime);
+            stateComponent.updateVertState(MotionState.MOVE_UP, deltaTime);
         } else if(inputController.down){
-            motionStateComponent.updateVertState(State.MOVING_DOWN, deltaTime);
+            stateComponent.updateVertState(MotionState.MOVE_DOWN, deltaTime);
         } else {
-            motionStateComponent.updateVertState(State.RESTING, deltaTime);
+            stateComponent.updateVertState(MotionState.REST, deltaTime);
         }
     }
 }

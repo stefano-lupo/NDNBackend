@@ -12,6 +12,8 @@ public class InputController implements InputProcessor {
     public boolean right;
     public boolean up;
     public boolean down;
+    public boolean space;
+
     public boolean isMouse1Down, isMouse2Down,isMouse3Down;
     public boolean isDragged;
     public Vector2 mouseLocation = new Vector2();
@@ -34,6 +36,9 @@ public class InputController implements InputProcessor {
                 break;
             case Input.Keys.S:
                 down = true;
+                keyProcessed = true;
+            case Input.Keys.SPACE:
+                space = true;
                 keyProcessed = true;
         }
         return keyProcessed;
@@ -58,6 +63,9 @@ public class InputController implements InputProcessor {
                 break;
             case Input.Keys.S:
                 down = false;
+                keyProcessed = true;
+            case Input.Keys.SPACE:
+                space = false;
                 keyProcessed = true;
         }
         return keyProcessed;
@@ -116,5 +124,9 @@ public class InputController implements InputProcessor {
     @Override
     public boolean scrolled(int amount) {
         return false;
+    }
+
+    public boolean isMouseButtonDown() {
+        return isMouse1Down || isMouse2Down || isMouse3Down;
     }
 }

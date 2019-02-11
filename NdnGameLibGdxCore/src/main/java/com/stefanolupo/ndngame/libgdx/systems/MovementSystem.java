@@ -5,8 +5,8 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.stefanolupo.ndngame.libgdx.components.MotionStateComponent;
-import com.stefanolupo.ndngame.libgdx.components.enums.State;
+import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
 
 /**
  * Sets the velocities of all of the Body objects of entities with MotionStateComponents
@@ -17,25 +17,25 @@ public class MovementSystem extends IteratingSystem implements HasComponentMappe
     private static final Float MAX_VEL = 5f;
 
     public MovementSystem() {
-        super(Family.all(MotionStateComponent.class).get());
+        super(Family.all(StateComponent.class).get());
     }
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        MotionStateComponent motionStateComponent = MOTION_STATE_MAPPER.get(entity);
+        StateComponent stateComponent = STATE_MAPPER.get(entity);
         Body body = BODY_MAPPER.get(entity).getBody();
 
-        if (motionStateComponent.getHozState() == State.MOVING_RIGHT) {
+        if (stateComponent.getHozState() == MotionState.MOVE_RIGHT) {
             lerpVelocityX(body, MAX_VEL);
-        } else if (motionStateComponent.getHozState() == State.MOVING_LEFT) {
+        } else if (stateComponent.getHozState() == MotionState.MOVE_LEFT) {
             lerpVelocityX(body, -MAX_VEL);
         } else {
             lerpVelocityX(body, 0);
         }
 
-        if (motionStateComponent.getVertState() == State.MOVING_UP) {
+        if (stateComponent.getVertState() == MotionState.MOVE_UP) {
             lerpVelocityY(body, MAX_VEL);
-        } else if (motionStateComponent.getVertState() == State.MOVING_DOWN) {
+        } else if (stateComponent.getVertState() == MotionState.MOVE_DOWN) {
             lerpVelocityY(body, -MAX_VEL);
         } else {
             lerpVelocityY(body, 0);

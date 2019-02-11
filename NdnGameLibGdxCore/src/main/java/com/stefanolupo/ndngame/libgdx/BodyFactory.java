@@ -2,7 +2,10 @@ package com.stefanolupo.ndngame.libgdx;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
+@Singleton
 public class BodyFactory {
 
     public static final int STEEL = 0;
@@ -10,11 +13,9 @@ public class BodyFactory {
     public static final int RUBBER = 2;
     public static final int STONE = 3;
 
-    private static final float DEGTORAD = 0.0174533f;
-    private static BodyFactory instance;
+    private final World world;
 
-    private World world;
-
+    @Inject
     private BodyFactory(World world) {
         this.world = world;
     }
@@ -57,31 +58,6 @@ public class BodyFactory {
         return makeBoxPolyBody(x, y, width, height, material, bodyType, false);
     }
 
-    public void makeConeSensor(Body body, float size) {
-        FixtureDef fixtureDef = new FixtureDef();
-//        fixtureDef.isSensor = true;
-
-        PolygonShape polygon = new PolygonShape();
-
-        float radius = size;
-        Vector2[] vertices = new Vector2[5];
-        vertices[0] = new Vector2(0, 0);
-        for (int i = 2; i < 6; i++) {
-            float angle = (float) (i / 6.0 * 145 * DEGTORAD);
-            vertices[i-1] = new Vector2(radius*((float) Math.cos(angle)), radius * ((float)Math.sin(angle)));
-        }
-        polygon.set(vertices);
-        fixtureDef.shape = polygon;
-        body.createFixture(fixtureDef);
-        polygon.dispose();
-
-    }
-
-    public void makeAllFixturesSensors(Body body) {
-        for (Fixture f : body.getFixtureList()) {
-            f.setSensor(true);
-        }
-    }
 
     public Body makePolygonBody(Vector2[] vertices, float x, float y, int material, BodyDef.BodyType bodyType) {
         BodyDef bodyDef = new BodyDef();
@@ -99,15 +75,8 @@ public class BodyFactory {
 
     }
 
-    public static BodyFactory getInstance(World world) {
-        if (instance == null) {
-            instance = new BodyFactory(world);
-        }
 
-        return instance;
-    }
-
-    public static FixtureDef makeFixture(int material, Shape shape) {
+    private static FixtureDef makeFixture(int material, Shape shape) {
         FixtureDef fixtureDef = new FixtureDef();
         fixtureDef.shape = shape;
 
