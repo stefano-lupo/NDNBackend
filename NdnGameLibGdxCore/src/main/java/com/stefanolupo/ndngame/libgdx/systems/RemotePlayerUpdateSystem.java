@@ -75,6 +75,7 @@ public class RemotePlayerUpdateSystem
 
         PlayerStatus latestStatus = playerStatusManager.getLatestStatus(playerStatusName);
 
+
         // Update the motion state component for this entity according to latest status
         stateComponent.updateMotionState(latestStatus.getVelX(), latestStatus.getVelY(), deltaTime);
 
