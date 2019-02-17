@@ -82,8 +82,8 @@ public class PlayerControlSystem
 //            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
         }
 
-        Entity entity = pooledEngine.createEntity();
-        entity.add
+//        Entity entity = pooledEngine.createEntity();
+//        entity.add
     }
 
     private AttackComponent buildAttackComponent(Body body, float radius, AttackType type) {
