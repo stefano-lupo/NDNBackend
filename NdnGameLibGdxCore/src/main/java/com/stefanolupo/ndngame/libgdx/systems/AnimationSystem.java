@@ -35,14 +35,14 @@ public class AnimationSystem
 
         Animation<TextureRegion> animationToUse;
         if (stateComponent.isCurrentlyAttacking()) {
-            LOG.debug("Using attack animation as: {}", stateComponent.getAttackState());
+//            LOG.debug("Using attack animation as: {}", stateComponent.getAttackState());
             animationToUse = animationComponent.getAttackAnimations().get(stateComponent.getAttackState());
         } else if (stateComponent.getVertState() != MotionState.REST) {
             animationToUse = animationComponent.getMotionAnimations().get(stateComponent.getVertState());
-            LOG.debug("Using vertical animation as: {}", stateComponent.getVertState());
+//            LOG.debug("Using vertical animation as: {}", stateComponent.getVertState());
         } else {
             animationToUse = animationComponent.getMotionAnimations().get(stateComponent.getHozState());
-            LOG.debug("Using horizontal animation as: {}", stateComponent.getHozState());
+//            LOG.debug("Using horizontal animation as: {}", stateComponent.getHozState());
         }
 
         if (animationToUse == null) {

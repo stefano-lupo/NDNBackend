@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 public class AttackManager extends ChronoSyncedDataStructure {
 
     private static final Logger LOG = LoggerFactory.getLogger(AttackManager.class);
-    private static final Name BROADCAST_PREFIX = new Name("/com/stefanolupo/ndngame/%d/attack/broadcast");
+    private static final String BROADCAST_PREFIX = "/com/stefanolupo/ndngame/%d/attack/broadcast";
 
     private final ArrayListMultimap<AttackName, Attack> unprocessedAttacks = ArrayListMultimap.create();
     private final Map<ID, Attack> localRecentAttacks = new HashMap<>();
@@ -33,7 +33,7 @@ public class AttackManager extends ChronoSyncedDataStructure {
 
     @Inject
     public AttackManager(Config config) {
-        super(BROADCAST_PREFIX, new AttackName(config.getGameId(), config.getPlayerName()).getListenName());
+        super(new Name(String.format(BROADCAST_PREFIX, config.getGameId())), new AttackName(config.getGameId(), config.getPlayerName()).getListenName());
         this.config = config;
     }
 
