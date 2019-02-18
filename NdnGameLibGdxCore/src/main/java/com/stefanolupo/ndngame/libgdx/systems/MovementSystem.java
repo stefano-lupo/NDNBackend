@@ -3,7 +3,6 @@ package com.stefanolupo.ndngame.libgdx.systems;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
@@ -44,10 +43,12 @@ public class MovementSystem extends IteratingSystem implements HasComponentMappe
 
 
     private void lerpVelocityX(Body body, float toValue) {
-        body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, toValue, 0.2f), body.getLinearVelocity().y);
+        body.setLinearVelocity(toValue, body.getLinearVelocity().y);
+//        body.setLinearVelocity(MathUtils.lerp(body.getLinearVelocity().x, toValue, 0.2f), body.getLinearVelocity().y);
     }
 
     private void lerpVelocityY(Body body, float toValue) {
-        body.setLinearVelocity(body.getLinearVelocity().x, MathUtils.lerp(body.getLinearVelocity().y, toValue, 0.2f));
+        body.setLinearVelocity(body.getLinearVelocity().x, toValue);
+        //        body.setLinearVelocity(body.getLinearVelocity().x, MathUtils.lerp(body.getLinearVelocity().y, toValue, 0.2f));
     }
 }

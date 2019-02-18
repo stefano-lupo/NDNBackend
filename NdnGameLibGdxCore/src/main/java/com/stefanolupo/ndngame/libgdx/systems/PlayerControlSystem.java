@@ -16,6 +16,8 @@ import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.AttackType;
 import com.stefanolupo.ndngame.protos.ID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
@@ -25,6 +27,8 @@ import java.util.UUID;
 public class PlayerControlSystem
         extends IteratingSystem
         implements HasComponentMappers {
+
+    private static final Logger LOG = LoggerFactory.getLogger(PlayerControlSystem.class);
 
     private final InputController inputController;
     private final PooledEngine pooledEngine;
@@ -71,13 +75,13 @@ public class PlayerControlSystem
 //            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
 //        }
 
-        if (inputController.isMouse1Down) {
+        if (inputController.isMouse1Down()) {
             buildAttackComponent(body, 3f, AttackType.SWING);
 //            stateComponent.updateAttackState(AttackState.SWING, deltaTime);
-        } else if (inputController.isMouse2Down) {
+        } else if (inputController.isMouse2Down()) {
             buildAttackComponent(body, 3f, AttackType.CAST);
 //            stateComponent.updateAttackState(AttackState.CAST, deltaTime);
-        } else if (inputController.isMouse3Down) {
+        } else if (inputController.isMouse3Down()) {
             buildAttackComponent(body, 3f, AttackType.SHIELD);
 //            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
         }
@@ -102,17 +106,17 @@ public class PlayerControlSystem
     }
 
     private void handleMovementCommand(StateComponent stateComponent, float deltaTime) {
-        if(inputController.left){
+        if(inputController.isLeftPressed()){
             stateComponent.updateHozState(MotionState.MOVE_LEFT, deltaTime);
-        } else if(inputController.right){
+        } else if(inputController.isRightPressed()){
             stateComponent.updateHozState(MotionState.MOVE_RIGHT, deltaTime);
         } else {
             stateComponent.updateHozState(MotionState.REST, deltaTime);
         }
 
-        if(inputController.up){
+        if(inputController.isUpPressed()){
             stateComponent.updateVertState(MotionState.MOVE_UP, deltaTime);
-        } else if(inputController.down){
+        } else if(inputController.isDownPressed()){
             stateComponent.updateVertState(MotionState.MOVE_DOWN, deltaTime);
         } else {
             stateComponent.updateVertState(MotionState.REST, deltaTime);

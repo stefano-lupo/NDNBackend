@@ -8,6 +8,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.guice.BackendModule;
 import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.libgdx.AutomatedInputController;
+import com.stefanolupo.ndngame.libgdx.InputController;
+import com.stefanolupo.ndngame.libgdx.RealInputController;
 
 public class LibGdxGameModule extends AbstractModule {
 
@@ -28,6 +31,14 @@ public class LibGdxGameModule extends AbstractModule {
     @Singleton
     World providesGameWorld() {
         return new World(WORLD_GRAVITY, true);
+    }
+
+    @Provides
+    @Singleton
+    InputController providesInputController() {
+        return config.isAutomated() ?
+                new AutomatedInputController() :
+                new RealInputController();
     }
 
     @Provides

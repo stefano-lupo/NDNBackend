@@ -3,6 +3,7 @@ package com.stefanolupo.ndngame.libgdx;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -74,7 +75,9 @@ public class MainScreen implements Screen {
 
     @Override
     public void show() {
-        Gdx.input.setInputProcessor(inputController);
+        if (!config.isAutomated()) {
+            Gdx.input.setInputProcessor((InputProcessor) inputController);
+        }
 
         // Create what can't be created until LibGdx is loaded
         spriteBatch = new SpriteBatch();
