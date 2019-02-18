@@ -185,11 +185,11 @@ public abstract class ChronoSyncedDataStructure implements
         long totalNumSyncStates = 0;
 
         Statistics() {
-            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printStats, 7L, 7L, TimeUnit.SECONDS);
+            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printStats, 7L, 15L, TimeUnit.SECONDS);
         }
 
         void printStats() {
-            LOG.info("{} sync updates ({}% recovery) - average num sync states = {}",
+            LOG.debug("{} sync updates ({}% recovery) - average num sync states = {}",
                     numSyncs,
                     (numRecoveries + 0.0) / numSyncs,
                     (totalNumSyncStates + 0.0) / numSyncs

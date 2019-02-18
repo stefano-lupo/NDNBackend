@@ -3,8 +3,10 @@ package com.stefanolupo.ndngame.libgdx;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.physics.box2d.*;
 import com.google.common.base.Preconditions;
+import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.libgdx.components.CollisionComponent;
 
+@Singleton
 public class MyContactListener implements ContactListener {
 
     @Override

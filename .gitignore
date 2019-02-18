@@ -10,3 +10,4 @@ gradle
 out
 build/*
 .gradle
+NdnGameCore/build/*

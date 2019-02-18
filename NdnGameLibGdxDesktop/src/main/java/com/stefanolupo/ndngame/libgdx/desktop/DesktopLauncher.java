@@ -13,6 +13,8 @@ public class DesktopLauncher {
 		Config config = new CommandLineHelper().getConfig(args);
 		NdnGame ndnGame = Guice.createInjector(new LibGdxGameModule(config)).getInstance(NdnGame.class);
 		LwjglApplicationConfiguration lwjglConfig= new LwjglApplicationConfiguration();
+		lwjglConfig.title = config.getPlayerName();
+
 		new LwjglApplication(ndnGame, lwjglConfig);
 	}
 }

@@ -81,6 +81,10 @@ public class PlayerStatusName extends BaseName {
         sequenceNumber = Long.valueOf(tailName.get(3).toEscapedString());
     }
 
+
+    /**
+     * equals which ignores the sequence number
+     */
     @Override
     public boolean equals(Object obj) {
         if (!(obj instanceof PlayerStatusName)) {
@@ -93,6 +97,9 @@ public class PlayerStatusName extends BaseName {
                 other.gameId == gameId;
     }
 
+    /**
+     * hashCode which ignores the sequence number
+     */
     @Override
     public int hashCode() {
         return 31 * playerName.hashCode() + Long.hashCode(gameId);

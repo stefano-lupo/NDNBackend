@@ -1,0 +1,98 @@
+ {
+   "width": 832,
+   "height": 1344,
+    
+  "rowInfo":
+    [
+      {
+        "name": "JUMP_UP",
+        "numCols": 7
+      },
+      {
+        "name": "JUMP_LEFT",
+        "numCols": 7
+      },
+      {
+        "name": "JUMP_DOWN",
+        "numCols": 7
+      },
+      {
+        "name": "JUMP_RIGHT",
+        "numCols": 7
+      },
+
+      {
+        "name": "DANCE_UP",
+        "numCols": 8
+      },
+      {
+        "name": "DANCE_LEFT",
+        "numCols": 8
+      },
+      {
+        "name": "DANCE_DOWN",
+        "numCols": 8
+      },
+      {
+        "name": "DANCE_RIGHT",
+        "numCols": 8
+      },
+
+      {
+        "name": "MOVE_UP",
+        "numCols": 9
+      },
+      {
+        "name": "MOVE_LEFT",
+        "numCols": 9
+      },
+      {
+        "name": "MOVE_DOWN",
+        "numCols": 9
+      },
+      {
+        "name": "MOVE_RIGHT",
+        "numCols": 9
+      },
+
+      {
+        "name": "ATTACK_UP",
+        "numCols": 6
+      },
+      {
+        "name": "ATTACK_LEFT",
+        "numCols": 6
+      },
+      {
+        "name": "ATTACK_DOWN",
+        "numCols": 6
+      },
+      {
+        "name": "ATTACK_RIGHT",
+        "numCols": 6
+      },
+
+      {
+        "name": "BOW_UP",
+        "numCols": 13
+      },
+      {
+        "name": "BOW_LEFT",
+        "numCols": 13
+      },
+      {
+        "name": "BOW_DOWN",
+        "numCols": 13
+      },
+      {
+        "name": "BOW_RIGHT",
+        "numCols": 13
+      },
+
+      {
+        "name": "DIE",
+        "numCols": 6
+      }
+      
+    ]
+}
