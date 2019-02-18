@@ -17,7 +17,7 @@ public class AutomatedBackend {
     private final PlayerStatusManager playerStatusManager;
     private PlayerStatus playerStatus = PlayerStatus.newBuilder()
             .setX(5)
-            .setY(9.5f)
+            .setY((float) (7f + Math.random() * 3))
             .build();
 
     float velX = 0.25f;

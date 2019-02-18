@@ -85,6 +85,9 @@ public class PlayerStatusManager extends ChronoSyncedDataStructure {
         }
         Multimap<String, PlayerStatusName> multimap = Multimaps.index(filteredSyncStates, PlayerStatusName::getPlayerName);
 
+
+        //TODO: Experiment with must be fresh and timestamps of updates
+        // When they start coming from other nodes
         return multimap.asMap().entrySet().stream()
                 .map(e -> e.getValue().stream().max(Comparator.comparing(PlayerStatusName::getSequenceNumber)))
                 .filter(Optional::isPresent)
