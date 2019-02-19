@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -29,9 +28,6 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
     private final Player localPlayer;
     private final Set<OnPlayersDiscovered> discoveryCallbacks;
 
-    // TODO: Factory
-    private Consumer<Set<Player>> playerDiscoveryCallback;
-
     @Inject
     public DiscoveryManager(Config config,
                             Set<OnPlayersDiscovered> discoveryCallbacks) {
@@ -42,17 +38,12 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
         this.discoveryCallbacks = discoveryCallbacks;
     }
 
-    public void registerDiscoveryCallback(Consumer<Set<Player>> playerDiscoveryCallback) {
-        this.playerDiscoveryCallback = playerDiscoveryCallback;
-    }
-
     @Override
     public void onInitialized() {
         super.onInitialized();
         players.add(localPlayer);
         publishUpdate();
     }
-
 
     @Override
     protected Optional<Blob> localToBlob(Interest interest) {
@@ -79,10 +70,7 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
             this.players.add(localPlayer);
             this.players.addAll(players);
 
-            if (playerDiscoveryCallback != null) {
-                discoveryCallbacks.forEach(callback -> callback.onPlayersDiscovered(players));
-                playerDiscoveryCallback.accept(newPlayers);
-            }
+            discoveryCallbacks.forEach(callback -> callback.onPlayersDiscovered(newPlayers));
         } catch (InvalidProtocolBufferException e) {
             LOG.error("Unable to parse players list for {}", interest.toUri());
         }
