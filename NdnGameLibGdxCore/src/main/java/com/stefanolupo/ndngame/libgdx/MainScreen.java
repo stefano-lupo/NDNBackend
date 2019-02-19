@@ -11,7 +11,6 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
@@ -52,7 +51,7 @@ public class MainScreen implements Screen {
                       MovementSystem movementSystem,
                       PlayerControlSystem playerControlSystem,
                       RemotePlayerUpdateSystem remotePlayerUpdateSystem,
-                      PlayerStatusManager playerStatusManager,
+//                      PlayerStatusManager playerStatusManager,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
                       AttackSystem attackSystem) {
         this.config = config;
@@ -70,7 +69,7 @@ public class MainScreen implements Screen {
         this.attackSystem = attackSystem;
 
         world.setContactListener(myContactListener);
-        playerStatusManager.setPlayerStatusDiscovery(this::createRemotePlayer);
+//        playerStatusManager.setPlayerStatusDiscovery(this::createRemotePlayer);
     }
 
     @Override
@@ -104,6 +103,10 @@ public class MainScreen implements Screen {
         createScenery(8, 4);
         createScenery(15, 6);
         createScenery(20, 7);
+
+        String otherName = config.getPlayerName().equals("desktop") ? "desktoptwo" : "desktop";
+        PlayerStatusName remotePlayer = new PlayerStatusName(0, otherName);
+        createRemotePlayer(remotePlayer);
     }
 
 

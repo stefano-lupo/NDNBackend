@@ -40,7 +40,7 @@ public class PlayerStatusName extends BaseName {
         super(String.valueOf(gameId), playerName, "status");
         this.gameId = gameId;
         this.playerName = playerName;
-        this.sequenceNumber = -1;
+        this.sequenceNumber = 0;
     }
 
     public Name getListenName() {

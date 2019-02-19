@@ -5,7 +5,7 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
+import com.stefanolupo.ndngame.backend.publisher.PlayerStatusPublisher;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
@@ -17,12 +17,15 @@ public class LocalPlayerStatusSystem
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayerStatusSystem.class);
 
-    private final PlayerStatusManager playerStatusManager;
+//    private final PlayerStatusManager playerStatusManager;
+    private final PlayerStatusPublisher playerStatusPublisher;
 
     @Inject
-    public LocalPlayerStatusSystem(PlayerStatusManager playerStatusManager) {
+    public LocalPlayerStatusSystem(/*PlayerStatusManager playerStatusManager,*/
+                                   PlayerStatusPublisher playerStatusPublisher) {
         super(Family.all(LocalPlayerComponent.class).get());
-        this.playerStatusManager = playerStatusManager;
+//        this.playerStatusManager = playerStatusManager;
+        this.playerStatusPublisher = playerStatusPublisher;
     }
 
     @Override
@@ -34,6 +37,7 @@ public class LocalPlayerStatusSystem
                 .setVelX(body.getLinearVelocity().x)
                 .setVelY(body.getLinearVelocity().y)
                 .build();
-        playerStatusManager.updateLocalPlayerStatus(newPlayerStatus);
+//        playerStatusManager.updateLocalPlayerStatus(newPlayerStatus);
+        playerStatusPublisher.updateEntity(newPlayerStatus);
     }
 }

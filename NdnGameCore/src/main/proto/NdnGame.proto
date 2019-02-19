@@ -48,3 +48,13 @@ message BulletsList {
 message BulletRemove {
     int64 id = 1;
 }
+
+message Block {
+    int64 id = 1;
+    int32 x = 2;
+    int32 y = 3;
+}
+
+message Blocks {
+    repeated Block blocks = 1;
+}

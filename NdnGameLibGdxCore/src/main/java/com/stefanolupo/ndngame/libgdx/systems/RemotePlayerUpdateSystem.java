@@ -7,7 +7,8 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.chronosynced.AttackManager;
-import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
+import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
+import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.RemotePlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
@@ -33,18 +34,24 @@ public class RemotePlayerUpdateSystem
     private static long numberOfRemoteUpdates = 0;
     private static long numberOfNonUpdates = 0;
 
-    private final PlayerStatusManager playerStatusManager;
+//    private final PlayerStatusManager playerStatusManager;
+    private final PlayerStatusSubscriber playerStatusSubscriber;
     private final AttackManager attackManager;
     private final PooledEngine pooledEngine;
 
     @Inject
-    public RemotePlayerUpdateSystem(PlayerStatusManager playerStatusManager,
+    public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber,
                                     AttackManager attackManager,
+                                    Config config,
                                     PooledEngine pooledEngine) {
         super(Family.all(RemotePlayerComponent.class).get());
-        this.playerStatusManager = playerStatusManager;
+        this.playerStatusSubscriber = playerStatusSubscriber;
         this.attackManager = attackManager;
         this.pooledEngine = pooledEngine;
+
+        // Temporary
+        PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), config.getPlayerName().equals("desktop") ? "desktoptwo" : "desktop");
+        playerStatusSubscriber.addSubscription(playerStatusName);
 //        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::logStats, 10, 5, TimeUnit.SECONDS);
     }
 
@@ -66,14 +73,14 @@ public class RemotePlayerUpdateSystem
                                     float deltaTime) {
         PlayerStatusName playerStatusName = remotePlayerComponent.getPlayerStatusName();
 
-        long latestVersionForPlayer = playerStatusManager.getLatestVersionForPlayer(playerStatusName);
+        long latestVersionForPlayer = playerStatusSubscriber.getLatestVersionForPlayer(playerStatusName);
 
         if (latestVersionForPlayer <= remotePlayerComponent.getLatestVersionSeen()) {
             numberOfNonUpdates++;
             return;
         }
 
-        PlayerStatus latestStatus = playerStatusManager.getLatestStatus(playerStatusName);
+        PlayerStatus latestStatus = playerStatusSubscriber.getLatestStatusForPlayer(playerStatusName);
 
 
         // Update the motion state component for this entity according to latest status
