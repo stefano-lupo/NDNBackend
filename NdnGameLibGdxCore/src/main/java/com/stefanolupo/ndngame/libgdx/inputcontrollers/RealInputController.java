@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;

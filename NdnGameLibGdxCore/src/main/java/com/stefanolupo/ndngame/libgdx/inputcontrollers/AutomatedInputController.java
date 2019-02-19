@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;

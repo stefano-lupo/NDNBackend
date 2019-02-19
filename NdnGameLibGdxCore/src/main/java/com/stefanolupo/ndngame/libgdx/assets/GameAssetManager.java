@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.assets;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.assets.AssetManager;
@@ -15,10 +15,6 @@ import java.util.Map;
 
 @Singleton
 public class GameAssetManager implements Disposable {
-
-
-
-    private static final String PLAYER_ATLAS = "img/.atlas";
 
     // Move these to an enum too
     private static final String BOING_SOUND = "sounds/boing.wav";

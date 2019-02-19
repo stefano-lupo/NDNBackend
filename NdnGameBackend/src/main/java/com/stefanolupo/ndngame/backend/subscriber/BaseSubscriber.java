@@ -44,7 +44,7 @@ public class BaseSubscriber<T> implements OnData, OnTimeout {
         long now = System.currentTimeMillis();
         long sleepTime = WAIT_TIME_MS - (now - lastInterestExpressTime);
         if (sleepTime > 10) {
-            LOG.debug("Sleeping for {}ms", sleepTime);
+//            LOG.debug("Sleeping for {}ms", sleepTime);
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {

@@ -8,6 +8,15 @@ message ID {
     string value = 1;
 }
 
+
+message Player {
+    string name = 1;
+}
+
+message Players {
+    repeated Player players = 1;
+}
+
 message PlayerStatus {
     float x = 1;
     float y = 2;

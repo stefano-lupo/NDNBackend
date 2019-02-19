@@ -11,17 +11,30 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
+import com.stefanolupo.ndngame.backend.chronosynced.DiscoveryManager;
 import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.libgdx.assets.SpriteSheet;
+import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
+import com.stefanolupo.ndngame.libgdx.contactlisteners.MyContactListener;
+import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.systems.*;
 import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
+import com.stefanolupo.ndngame.protos.Player;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.Set;
 
 
 public class MainScreen implements Screen {
 
+    private static final Logger LOG = LoggerFactory.getLogger(MainScreen.class);
+
     private final Config config;
+    private final DiscoveryManager discoveryManager;
     private final InputController inputController;
     private final BodyFactory bodyFactory;
     private final PooledEngine engine;
@@ -40,6 +53,7 @@ public class MainScreen implements Screen {
 
     @Inject
     public MainScreen(Config config,
+                      DiscoveryManager discoveryManager,
                       InputController inputController,
                       BodyFactory bodyFactory,
                       PooledEngine engine,
@@ -51,10 +65,10 @@ public class MainScreen implements Screen {
                       MovementSystem movementSystem,
                       PlayerControlSystem playerControlSystem,
                       RemotePlayerUpdateSystem remotePlayerUpdateSystem,
-//                      PlayerStatusManager playerStatusManager,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
                       AttackSystem attackSystem) {
         this.config = config;
+        this.discoveryManager = discoveryManager;
         this.inputController = inputController;
         this.bodyFactory = bodyFactory;
         this.engine = engine;
@@ -69,7 +83,7 @@ public class MainScreen implements Screen {
         this.attackSystem = attackSystem;
 
         world.setContactListener(myContactListener);
-//        playerStatusManager.setPlayerStatusDiscovery(this::createRemotePlayer);
+        discoveryManager.registerDiscoveryCallback(this::createDiscoveredPlayers);
     }
 
     @Override
@@ -103,14 +117,14 @@ public class MainScreen implements Screen {
         createScenery(8, 4);
         createScenery(15, 6);
         createScenery(20, 7);
-
-        String otherName = config.getPlayerName().equals("desktop") ? "desktoptwo" : "desktop";
-        PlayerStatusName remotePlayer = new PlayerStatusName(0, otherName);
-        createRemotePlayer(remotePlayer);
     }
 
+    private void createDiscoveredPlayers(Set<Player> discoveredPlayers) {
+        discoveredPlayers.forEach(this::createRemotePlayer);
+    }
 
     private void createLocalPlayer() {
+
         Entity entity = engine.createEntity();
         LocalPlayerComponent player = engine.createComponent(LocalPlayerComponent.class);
         entity.add(player);
@@ -124,7 +138,9 @@ public class MainScreen implements Screen {
         createPlayer(entity, 6);
     }
 
-    private void createRemotePlayer(PlayerStatusName playerStatusName) {
+    private void createRemotePlayer(Player player) {
+        LOG.debug("Creating remote player: {}", player);
+        PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), player.getName());
         Entity entity = engine.createEntity();
         RemotePlayerComponent remotePlayerComponent = engine.createComponent(RemotePlayerComponent.class);
         remotePlayerComponent.setPlayerStatusName(playerStatusName);

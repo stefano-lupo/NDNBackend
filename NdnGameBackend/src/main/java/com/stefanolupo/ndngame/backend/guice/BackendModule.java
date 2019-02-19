@@ -3,6 +3,9 @@ package com.stefanolupo.ndngame.backend.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.multibindings.Multibinder;
+import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.config.Config;
 import net.named_data.jndn.security.KeyChain;
 
@@ -16,6 +19,9 @@ public class BackendModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        Multibinder<OnPlayersDiscovered> onDiscoveryBinder =
+                Multibinder.newSetBinder(binder(), OnPlayersDiscovered.class);
+        onDiscoveryBinder.addBinding().to(PlayerStatusSubscriber.class);
     }
 
     @Provides

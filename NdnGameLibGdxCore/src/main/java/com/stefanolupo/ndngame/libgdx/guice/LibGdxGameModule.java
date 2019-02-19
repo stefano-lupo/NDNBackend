@@ -8,9 +8,9 @@ import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.guice.BackendModule;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.libgdx.AutomatedInputController;
-import com.stefanolupo.ndngame.libgdx.InputController;
-import com.stefanolupo.ndngame.libgdx.RealInputController;
+import com.stefanolupo.ndngame.libgdx.inputcontrollers.AutomatedInputController;
+import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
+import com.stefanolupo.ndngame.libgdx.inputcontrollers.RealInputController;
 
 public class LibGdxGameModule extends AbstractModule {
 
@@ -25,6 +25,7 @@ public class LibGdxGameModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new BackendModule(config));
+
     }
 
     @Provides
