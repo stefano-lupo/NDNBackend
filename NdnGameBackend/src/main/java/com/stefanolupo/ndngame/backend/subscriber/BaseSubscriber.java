@@ -39,7 +39,6 @@ public class BaseSubscriber<T> implements OnData, OnTimeout {
     @Override
     public void onData(Interest interest, Data data) {
         entity = dataFunction.apply(interest, data);
-//        LOG.info("Got data for {}", interest.toUri());
         latestVersionSeen++;
 
         long now = System.currentTimeMillis();
@@ -71,15 +70,20 @@ public class BaseSubscriber<T> implements OnData, OnTimeout {
     }
 
     private Interest buildInterest(Name name) {
+        // We wan't routers on the way to provide cached copies if applicable (obviously)
+        // But our sequence number can fall behind potentially
+        // If falls pretty far behind, cached ones in routers will no longer be fresh and we will go to producer
+        // They will send the LATEST SEQUENCE number which we will then jump to
+
         return new Interest(name)
                 .setMustBeFresh(true)
-                .setInterestLifetimeMilliseconds(INTEREST_LIFETIME_MS);
+                .setInterestLifetimeMilliseconds(INTEREST_LIFETIME_MS)
+                .setCanBePrefix(true);
     }
 
     private void expressInterestSafe(Interest i) {
         lastInterestExpressTime = System.currentTimeMillis();
         try {
-//            LOG.debug("Expressing interest {}", i.toUri());
             face.expressInterest(i, this, this);
         } catch (IOException e) {
             LOG.error("Unable to express interest for {}", i.toUri(), e);

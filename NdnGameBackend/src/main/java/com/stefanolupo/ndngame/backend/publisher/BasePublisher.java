@@ -1,5 +1,8 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.stefanolupo.ndngame.names.BaseName;
+import com.stefanolupo.ndngame.names.HasNameWithSequenceNumber;
+import com.stefanolupo.ndngame.names.HasSequenceNumber;
 import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
@@ -10,31 +13,39 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.BlockingQueue;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
-public abstract class BasePublisher<T> implements OnInterestCallback {
+public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWithSequenceNumber> implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 10L;
-    private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 5000L;
+    private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 1000L;
+    private static final Long DEFAULT_QUEUE_PROCESS_TIME_MS = 50L;
+    private static final Long DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS = 1000L;
     private static final Double FRESHNESS_PERIOD_MS = 20.0;
 
-    private final BlockingQueue<Interest> outstandingInterests = new LinkedBlockingQueue<>();
+    private final List<T> outstandingInterests = new ArrayList<>();
 
     private final Name syncName;
-    private T entity;
+    private final Function<Interest, T> interestTFunction;
+
+    private Blob latestBlob;
+    private AtomicBoolean hasUpdate = new AtomicBoolean(false);
+    private long sequenceNumber = 0;
 
     private final Face face;
     private final KeyChain keyChain;
     private final Name certificateName;
 
-    public BasePublisher(Name syncName,
-                         T entity) {
+    public BasePublisher(Name syncName, Function<Interest, T> interestTFunction) {
         this.syncName = syncName;
-        this.entity = entity;
+        this.interestTFunction = interestTFunction;
 
         try {
             keyChain = new KeyChain();
@@ -44,53 +55,64 @@ public abstract class BasePublisher<T> implements OnInterestCallback {
             face.setCommandSigningInfo(keyChain, certificateName);
 
             face.registerPrefix(syncName, this, this::registerPrefixFailure);
-            Executors.newSingleThreadScheduledExecutor()
-                    .scheduleAtFixedRate(this::pollFace,
-                            DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
-                            DEFAULT_FACE_POLL_TIME_MS,
-                            TimeUnit.MILLISECONDS);
         } catch (SecurityException | KeyChain.Error | PibImpl.Error | IOException e) {
             String errorMessage = String.format("Could not initialize Producer (Prefix: %s)", syncName);
             throw new RuntimeException(errorMessage, e);
         }
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::pollFace, 500, 10, TimeUnit.MILLISECONDS);
-        Executors.newSingleThreadExecutor().submit(this::pollQueue);
+
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                this::pollFace,
+                DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
+                DEFAULT_FACE_POLL_TIME_MS,
+                TimeUnit.MILLISECONDS);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                this::processQueue,
+                DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
+                DEFAULT_FACE_POLL_TIME_MS,
+                TimeUnit.MILLISECONDS);
     }
 
-    protected abstract byte[] entityToByteArray(T entity);
-
-    public void updateEntity(T entity) {
-        this.entity = entity;
+    /**
+     * Update the blob that will be used to service interests
+     * @param latestBlob the new blob to serve
+     */
+    public void updateLatestBlob(Blob latestBlob) {
+        this.latestBlob = latestBlob;
+        hasUpdate.set(true);
     }
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        outstandingInterests.add(interest);
+        outstandingInterests.add(interestTFunction.apply(interest));
     }
 
-    // TODO: I should probably multithread this but not sure if sendData is thread safe
-    private void pollQueue() {
-        while (true) {
-            try {
-                // TODO: I need to only update if there is an update..
-                Interest interest = outstandingInterests.take();
-                Blob blob = new Blob(entityToByteArray(entity));
-                sendData(interest, blob);
-            } catch (InterruptedException e) {
-                LOG.debug("Interupted, shutting down..");
-                return;
+    // TODO: Maybe multithread this?
+    // TODO: Only send updates when there is one
+    // TODO: Not sure about concurrent modifications here but think its okay
+    private void processQueue() {
+        // If had an update, consume the update
+        if (hasUpdate.compareAndSet(true, false)) {
+            sequenceNumber++;
+        }
+
+        // Get all interests with sequence number < current sequence number
+        for (Iterator<T> i = outstandingInterests.iterator(); i.hasNext();) {
+            T t = i.next();
+            if (t.getSequenceNumber() <= sequenceNumber) {
+                sendData(t.getNameWithSequenceNumber());
+                i.remove();
             }
         }
     }
 
-    private void sendData(Interest interest, Blob blob) {
-        Data data = new Data(interest.getName()).setContent(blob);
+    private void sendData(Name name) {
+        Data data = new Data(name).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(FRESHNESS_PERIOD_MS);
         try {
             keyChain.sign(data, certificateName);
             face.putData(data);
         } catch (Exception e) {
-            LOG.error("Unable to send data to satisfy interest " + interest.toUri(), e);
+            LOG.error("Unable to send data to satisfy interest " + name.toUri(), e);
         }
     }
 

@@ -3,25 +3,26 @@ package com.stefanolupo.ndngame.backend.publisher;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import net.named_data.jndn.Name;
+import net.named_data.jndn.util.Blob;
 
 @Singleton
-public class PlayerStatusPublisher extends BasePublisher<PlayerStatus> {
+public class PlayerStatusPublisher {
 
-    private static final String STATUS_SYNC_PREFIX = "/com/stefanolupo/ndngame/%d/%s/status";
+    private final BasePublisher<PlayerStatusName> publisher;
 
     @Inject
     public PlayerStatusPublisher(Config config) {
-        super(getSyncName(config), PlayerStatus.newBuilder().build());
+        publisher = new BasePublisher<>(getSyncName(config), PlayerStatusName::new);
     }
 
-    @Override
-    protected byte[] entityToByteArray(PlayerStatus entity) {
-        return entity.toByteArray();
+    public void updateLocalPlayerStatus(PlayerStatus playerStatus) {
+        publisher.updateLatestBlob(new Blob(playerStatus.toByteArray()));
     }
 
     private static Name getSyncName(Config config) {
-        return new Name(String.format(STATUS_SYNC_PREFIX, config.getGameId(), config.getPlayerName()));
+        return new PlayerStatusName(config.getGameId(), config.getPlayerName()).getNameWithSequenceNumber();
     }
 }

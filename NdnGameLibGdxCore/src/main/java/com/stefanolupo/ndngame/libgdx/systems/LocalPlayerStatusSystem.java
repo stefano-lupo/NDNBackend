@@ -38,6 +38,6 @@ public class LocalPlayerStatusSystem
                 .setVelY(body.getLinearVelocity().y)
                 .build();
 //        playerStatusManager.updateLocalPlayerStatus(newPlayerStatus);
-        playerStatusPublisher.updateEntity(newPlayerStatus);
+        playerStatusPublisher.updateLocalPlayerStatus(newPlayerStatus);
     }
 }

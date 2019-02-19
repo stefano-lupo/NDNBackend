@@ -9,7 +9,9 @@ import java.util.regex.Pattern;
 /**
  * Schema: base_name/|game_id|/|player_name|/status/|sequence_number|
  */
-public class PlayerStatusName extends BaseName {
+public class PlayerStatusName
+        extends BaseName
+        implements HasSequenceNumber, HasNameWithSequenceNumber {
 
     private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/status/\\d+");
 
@@ -68,9 +70,21 @@ public class PlayerStatusName extends BaseName {
         return playerName;
     }
 
+    @Override
+    public Name getNameWithSequenceNumber() {
+        return new Name(GAME_BASE_NAME)
+                .append(String.valueOf(gameId))
+                .append(playerName)
+                .append("status")
+                .append(String.valueOf(sequenceNumber));
+    }
+
+    @Override
     public long getSequenceNumber() {
         return sequenceNumber;
     }
+
+
 
     private void parse() {
 //        Preconditions.checkArgument(tailName.size() == 4);

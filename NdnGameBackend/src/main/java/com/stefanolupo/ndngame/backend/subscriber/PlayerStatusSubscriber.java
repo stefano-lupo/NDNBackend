@@ -24,7 +24,7 @@ public class PlayerStatusSubscriber {
 
     public void addSubscription(PlayerStatusName name) {
         // TODO: Factory
-        BaseSubscriber<PlayerStatus> subscriber = new BaseSubscriber<>(name.getListenName(), this::typeFromData);
+        BaseSubscriber<PlayerStatus> subscriber = new BaseSubscriber<>(name.getNameWithSequenceNumber(), this::typeFromData);
         subscriberMap.put(name, subscriber);
     }
 
