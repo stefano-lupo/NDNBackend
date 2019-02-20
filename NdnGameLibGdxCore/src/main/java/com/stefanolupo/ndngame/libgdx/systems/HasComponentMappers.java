@@ -15,4 +15,5 @@ public interface HasComponentMappers {
     ComponentMapper<TypeComponent> TYPE_MAPPER = ComponentMapper.getFor(TypeComponent.class);
     ComponentMapper<RemotePlayerComponent> REMOTE_PLAYER_MAPPER = ComponentMapper.getFor(RemotePlayerComponent.class);
     ComponentMapper<AttackComponent> ATTACK_MAPPER = ComponentMapper.getFor(AttackComponent.class);
+    ComponentMapper<BlockComponent> BLOCK_MAPPER = ComponentMapper.getFor(BlockComponent.class);
 }

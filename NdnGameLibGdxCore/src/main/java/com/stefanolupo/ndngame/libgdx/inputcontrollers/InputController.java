@@ -12,7 +12,10 @@ public interface InputController {
     boolean isMouse2Down();
     boolean isMouse3Down();
 
-    default boolean isMouseButtonDown() {
+    default boolean isAttackButtonPressed() {
         return isMouse1Down() || isMouse2Down() || isMouse3Down();
+    }
+    default boolean isInteractButtonPressed() {
+        return isSpacePressed();
     }
 }

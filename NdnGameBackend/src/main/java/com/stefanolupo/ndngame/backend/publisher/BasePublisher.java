@@ -1,8 +1,6 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
-import com.stefanolupo.ndngame.names.BaseName;
-import com.stefanolupo.ndngame.names.HasNameWithSequenceNumber;
-import com.stefanolupo.ndngame.names.HasSequenceNumber;
+import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
@@ -21,18 +19,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWithSequenceNumber> implements OnInterestCallback {
+public class BasePublisher <T extends SequenceNumberedName> implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 10L;
     private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 1000L;
-    private static final Long DEFAULT_QUEUE_PROCESS_TIME_MS = 50L;
+    private static final Long DEFAULT_QUEUE_PROCESS_TIME_MS = 10L;
     private static final Long DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS = 1000L;
     private static final Double FRESHNESS_PERIOD_MS = 20.0;
 
     private final List<T> outstandingInterests = new ArrayList<>();
 
-    private final Name syncName;
+    private final SequenceNumberedName syncName;
     private final Function<Interest, T> interestTFunction;
 
     private Blob latestBlob;
@@ -43,7 +41,7 @@ public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWith
     private final KeyChain keyChain;
     private final Name certificateName;
 
-    public BasePublisher(Name syncName, Function<Interest, T> interestTFunction) {
+    public BasePublisher(SequenceNumberedName syncName, Function<Interest, T> interestTFunction) {
         this.syncName = syncName;
         this.interestTFunction = interestTFunction;
 
@@ -53,8 +51,8 @@ public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWith
 //            this.face = new Face(new UdpTransport(), new UdpTransport.ConnectionInfo("localhost", 6363));
             this.face = new Face();
             face.setCommandSigningInfo(keyChain, certificateName);
-
-            face.registerPrefix(syncName, this, this::registerPrefixFailure);
+            LOG.debug("Registering {}", syncName.getListenName());
+            face.registerPrefix(syncName.getListenName(), this, this::registerPrefixFailure);
         } catch (SecurityException | KeyChain.Error | PibImpl.Error | IOException e) {
             String errorMessage = String.format("Could not initialize Producer (Prefix: %s)", syncName);
             throw new RuntimeException(errorMessage, e);
@@ -67,8 +65,8 @@ public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWith
                 TimeUnit.MILLISECONDS);
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 this::processQueue,
-                DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
-                DEFAULT_FACE_POLL_TIME_MS,
+                DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS,
+                DEFAULT_QUEUE_PROCESS_TIME_MS,
                 TimeUnit.MILLISECONDS);
     }
 
@@ -83,7 +81,8 @@ public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWith
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        outstandingInterests.add(interestTFunction.apply(interest));
+        T interestName = interestTFunction.apply(interest);
+        outstandingInterests.add(interestName);
     }
 
     // TODO: Maybe multithread this?
@@ -93,26 +92,40 @@ public class BasePublisher <T extends BaseName & HasSequenceNumber & HasNameWith
         // If had an update, consume the update
         if (hasUpdate.compareAndSet(true, false)) {
             sequenceNumber++;
+//            LOG.debug("new sequence number: {}", sequenceNumber);
+        } else {
+            return;
         }
 
         // Get all interests with sequence number < current sequence number
         for (Iterator<T> i = outstandingInterests.iterator(); i.hasNext();) {
             T t = i.next();
-            if (t.getSequenceNumber() <= sequenceNumber) {
-                sendData(t.getNameWithSequenceNumber());
+            if (t.getLatestSequenceNumberSeen() <= sequenceNumber) {
+                sendData(t);
                 i.remove();
             }
         }
     }
 
-    private void sendData(Name name) {
-        Data data = new Data(name).setContent(latestBlob);
+    // TODO: Naming of return here might be important
+    // If i send interest for /data/45 and the sn is actually at 65 now
+        // Publisher can send back something like /data/45/65
+        // If another subscriber later requests /data/45, will caches send back /data/45/65?
+        // Do we even want them to? The SN might be >> than 65 now..
+        // Can use freshness to control this somewhat
+    // If we're always sending back newest one --> we don't need sequence numbers
+
+    private void sendData(SequenceNumberedName name) {
+//        nameWithSequenceNumber.setSequenceNumber(sequenceNumber);
+//        Name name = new Name(name.getNameWithSequenceNumber()).append(String.valueOf(sequenceNumber));
+        name.setNextSequenceNumber(sequenceNumber);
+        Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(FRESHNESS_PERIOD_MS);
         try {
             keyChain.sign(data, certificateName);
             face.putData(data);
         } catch (Exception e) {
-            LOG.error("Unable to send data to satisfy interest " + name.toUri(), e);
+            LOG.error("Unable to send data to satisfy interest " + name.getFullName(), e);
         }
     }
 

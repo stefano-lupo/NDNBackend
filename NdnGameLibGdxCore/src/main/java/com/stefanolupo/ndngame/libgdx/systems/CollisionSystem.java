@@ -31,26 +31,22 @@ public class CollisionSystem
 
 
         Type myType = entity.getComponent(TypeComponent.class).getType();
-        Type colliededWithType = collidedWithEntity.getComponent(TypeComponent.class).getType();
+        TypeComponent typeComponent = collidedWithEntity.getComponent(TypeComponent.class);
 
-        if (colliededWithType == null || myType == null) {
-            LOG.error("Null type in collision between {} and {}", myType, colliededWithType);
+        if (typeComponent == null) {
+            LOG.error("Type component was null for collision with {}", myType);
+            collisionComponent.setCollidedWith(null);
+            return;
+        }
+
+        Type collidedWithType = typeComponent.getType();
+        if (typeComponent.getType() == null || myType == null) {
+            LOG.error("Null type in collision between {} and {}", myType, typeComponent);
+            collisionComponent.setCollidedWith(null);
             return;
         }
         
-        switch (colliededWithType) {
-            case PLAYER:
-                LOG.debug("{} hit player", myType);
-            case ENEMY:
-                LOG.debug("{} hit enemy", myType);
-                break;
-            case SCENERY:
-                LOG.debug("{} hit scenery", myType);
-                break;
-            case OTHER:
-                LOG.debug("{} hit other", myType);
-        }
-
+        LOG.debug("{} collided with {}", myType, collidedWithType);
         // Reset once handled
         collisionComponent.setCollidedWith(null);
     }

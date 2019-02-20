@@ -32,6 +32,7 @@ public class MainScreen implements Screen {
     private final RemotePlayerUpdateSystem remotePlayerUpdateSystem;
     private final LocalPlayerStatusSystem localPlayerStatusSystem;
     private final AttackSystem attackSystem;
+    private final BlockSystem blockSystem;
 
     // These cant be initialized in the constructor
     private SpriteBatch spriteBatch = null;
@@ -49,7 +50,8 @@ public class MainScreen implements Screen {
                       PlayerControlSystem playerControlSystem,
                       RemotePlayerUpdateSystem remotePlayerUpdateSystem,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
-                      AttackSystem attackSystem) {
+                      AttackSystem attackSystem,
+                      BlockSystem blockSystem) {
         this.config = config;
         this.inputController = inputController;
         this.engine = engine;
@@ -62,6 +64,7 @@ public class MainScreen implements Screen {
         this.remotePlayerUpdateSystem = remotePlayerUpdateSystem;
         this.localPlayerStatusSystem = localPlayerStatusSystem;
         this.attackSystem = attackSystem;
+        this.blockSystem = blockSystem;
 
         world.setContactListener(myContactListener);
     }
@@ -83,6 +86,7 @@ public class MainScreen implements Screen {
         engine.addSystem(remotePlayerUpdateSystem);
         engine.addSystem(playerControlSystem);
         engine.addSystem(attackSystem);
+        engine.addSystem(blockSystem);
         engine.addSystem(movementSystem);
         engine.addSystem(new PhysicsSystem(world));
         engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));

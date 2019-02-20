@@ -34,9 +34,12 @@ public class AnimationSystem
         TextureComponent textureComponent = TEXTURE_MAPPER.get(entity);
 
         Animation<TextureRegion> animationToUse;
-        if (stateComponent.isCurrentlyAttacking()) {
+        if (stateComponent.isInAttackState()) {
 //            LOG.debug("Using attack animation as: {}", stateComponent.getAttackState());
             animationToUse = animationComponent.getAttackAnimations().get(stateComponent.getAttackState());
+        } else if (stateComponent.isInInteractState()) {
+            animationToUse = animationComponent.getInteractionAnimations().get(stateComponent.getInteractionState());
+//            LOG.debug("In interaction state");
         } else if (stateComponent.getVertState() != MotionState.REST) {
             animationToUse = animationComponent.getMotionAnimations().get(stateComponent.getVertState());
 //            LOG.debug("Using vertical animation as: {}", stateComponent.getVertState());

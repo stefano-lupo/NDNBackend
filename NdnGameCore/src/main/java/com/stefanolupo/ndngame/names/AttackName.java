@@ -41,7 +41,6 @@ public class AttackName extends BaseName{
                 .append("attack");
     }
 
-    @Override
     public Interest toInterest() {
         return new Interest(getListenName().append(String.valueOf(sequenceNumber)));
     }

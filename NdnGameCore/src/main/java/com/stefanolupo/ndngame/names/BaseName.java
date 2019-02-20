@@ -1,7 +1,6 @@
 package com.stefanolupo.ndngame.names;
 
 import com.google.common.base.Preconditions;
-import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
 import java.util.regex.Pattern;
@@ -38,8 +37,6 @@ public abstract class BaseName {
         }
         return name;
     }
-    
-    public abstract Interest toInterest();
 
     protected Name getTailName() {
         return tailName;

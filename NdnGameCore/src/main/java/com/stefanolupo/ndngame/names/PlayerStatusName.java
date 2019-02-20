@@ -1,26 +1,41 @@
 package com.stefanolupo.ndngame.names;
 
+import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
-import net.named_data.jndn.sync.ChronoSync2013;
 
 import java.util.regex.Pattern;
 
 /**
- * Schema: base_name/|game_id|/|player_name|/status/|sequence_number|
+ * Schema: base_name/|game_id|/|player_name|/status/|sequence_number|/|next_seqeunce_number|
  */
 public class PlayerStatusName
         extends BaseName
-        implements HasSequenceNumber, HasNameWithSequenceNumber {
+        implements SequenceNumberedName {
 
     private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/status/\\d+");
 
     private long gameId;
     private String playerName;
     private long sequenceNumber;
+    private long nextSequenceNumber = sequenceNumber;
 
     /**
-     * Validate and parse name incoming from Interest
+     * Create a PlayerStatusName using the components
+     * Initialize both sequence numbers to zero
+     * Used on discovery
+     */
+    public PlayerStatusName(long gameId, String playerName) {
+        super(String.valueOf(gameId), playerName, "status");
+        this.gameId = gameId;
+        this.playerName = playerName;
+        this.sequenceNumber = 0;
+        this.nextSequenceNumber = this.sequenceNumber;
+    }
+
+    /**
+     * Create Name from received interest
+     * Used by Producer
      */
     public PlayerStatusName(Interest interest) {
         super(interest.getName());
@@ -28,23 +43,36 @@ public class PlayerStatusName
     }
 
     /**
-     * Validate and parse name incoming from SyncState
+     * Create Name from data sent back from producer
+     * This is the name that contains the updated next sequence number
      */
-    public PlayerStatusName(ChronoSync2013.SyncState syncState) {
-        super(new Name(syncState.getDataPrefix()).append(String.valueOf(syncState.getSequenceNo())));
+    public PlayerStatusName(Data data) {
+        super(data.getName());
         parse();
     }
 
-    /**
-     * Create a PlayerStatusName using the components
-     */
-    public PlayerStatusName(long gameId, String playerName) {
-        super(String.valueOf(gameId), playerName, "status");
-        this.gameId = gameId;
-        this.playerName = playerName;
-        this.sequenceNumber = 0;
+    @Override
+    public void setNextSequenceNumber(long nextSequenceNumber) {
+        this.nextSequenceNumber = nextSequenceNumber;
     }
 
+    /**
+     * Used by subscribers to create interests for the latest sequence number
+     */
+    @Override
+    public Interest buildInterest() {
+
+        // This must NOT contain the nextSequenceNumber
+        // Otherwise we will only get data back for when they match!!
+        Name name = getListenName().append(String.valueOf(nextSequenceNumber));
+        return new Interest(name);
+    }
+
+    /**
+     * Used by producers to register prefix
+     * @return the name to accept interests for
+     */
+    @Override
     public Name getListenName() {
         return new Name(GAME_BASE_NAME)
                 .append(String.valueOf(gameId))
@@ -52,14 +80,22 @@ public class PlayerStatusName
                 .append("status");
     }
 
+    /**
+     * Used by publishers to name their data packets
+     * @return Data packet Name with appropriate sequence numbers
+     */
     @Override
-    public Interest toInterest() {
-        return new Interest(getExpressInterestName());
+    public Name getFullName() {
+        return getListenName().append(String.valueOf(sequenceNumber)).append(String.valueOf(nextSequenceNumber));
     }
 
-    public Name getExpressInterestName() {
-        return getListenName()
-                .append(String.valueOf(sequenceNumber));
+
+    /**
+     * Engine needs this for comparing its entities
+     */
+    @Override
+    public long getLatestSequenceNumberSeen() {
+        return sequenceNumber;
     }
 
     public long getGameId() {
@@ -70,22 +106,6 @@ public class PlayerStatusName
         return playerName;
     }
 
-    @Override
-    public Name getNameWithSequenceNumber() {
-        return new Name(GAME_BASE_NAME)
-                .append(String.valueOf(gameId))
-                .append(playerName)
-                .append("status")
-                .append(String.valueOf(sequenceNumber));
-    }
-
-    @Override
-    public long getSequenceNumber() {
-        return sequenceNumber;
-    }
-
-
-
     private void parse() {
 //        Preconditions.checkArgument(tailName.size() == 4);
         checkMatchesRegex(tailName, NAME_PATTERN);
@@ -93,6 +113,10 @@ public class PlayerStatusName
         gameId = Long.valueOf(tailName.get(0).toEscapedString());
         playerName = tailName.get(1).toEscapedString();
         sequenceNumber = Long.valueOf(tailName.get(3).toEscapedString());
+
+        if (tailName.size() == 5) {
+            nextSequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
+        }
     }
 
 

@@ -37,7 +37,6 @@ public class DiscoveryName extends BaseName implements HasSequenceNumber{
         this.sequenceNumber = 0;
     }
 
-    @Override
     public Interest toInterest() {
         return new Interest(getDataListenPrefix(gameId, playerName).append(String.valueOf(sequenceNumber)));
     }

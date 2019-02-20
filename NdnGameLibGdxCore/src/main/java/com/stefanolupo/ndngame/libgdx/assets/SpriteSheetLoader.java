@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.components.AnimationComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
+import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +46,14 @@ public class SpriteSheetLoader {
 
         Map<MotionState, Animation<TextureRegion>> motionMap = animationComponent.getMotionAnimations();
         Map<AttackState, Animation<TextureRegion>> attackMap = animationComponent.getAttackAnimations();
+        Map<InteractionState, Animation<TextureRegion>> interactionMap = animationComponent.getInteractionAnimations();
+
         for (RowInfo rowInfo : description.rowInfo) {
             String animationName = rowInfo.name;
 
-            if (!(MotionState.isMotionState(animationName) || AttackState.isAttackState(animationName))) {
+            if (!(MotionState.isMotionState(animationName) ||
+                    AttackState.isAttackState(animationName) ||
+                    InteractionState.isInteractionState(animationName))) {
                 // Not currently using all of the sprites on the spritesheets
                 continue;
             }
@@ -61,10 +66,17 @@ public class SpriteSheetLoader {
             Animation<TextureRegion> animation = new Animation<>(FRAME_DURATION, textureRegions);
             animation.setPlayMode(Animation.PlayMode.LOOP);
 
+            // Reusing these animations, otherwise this would be exclusive
             if (MotionState.isMotionState(animationName)) {
                 motionMap.put(MotionState.fromString(animationName), animation);
-            } else {
+            }
+
+            if (AttackState.isAttackState(animationName)) {
                 attackMap.put(AttackState.fromString(animationName), animation);
+            }
+
+            if (InteractionState.isInteractionState(animationName)) {
+                interactionMap.put(InteractionState.fromString(animationName), animation);
             }
         }
 

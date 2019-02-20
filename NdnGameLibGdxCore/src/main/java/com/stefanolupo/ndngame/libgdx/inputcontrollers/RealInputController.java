@@ -81,9 +81,11 @@ public class RealInputController implements InputProcessor, InputController {
             case Input.Keys.S:
                 down = true;
                 keyProcessed = true;
+                break;
             case Input.Keys.SPACE:
                 space = true;
                 keyProcessed = true;
+                break;
         }
         return keyProcessed;
     }
@@ -108,9 +110,11 @@ public class RealInputController implements InputProcessor, InputController {
             case Input.Keys.S:
                 down = false;
                 keyProcessed = true;
+                break;
             case Input.Keys.SPACE:
                 space = false;
                 keyProcessed = true;
+                break;
         }
         return keyProcessed;
     }
@@ -137,7 +141,6 @@ public class RealInputController implements InputProcessor, InputController {
     @Override
     public boolean touchUp(int screenX, int screenY, int pointer, int button) {
         isDragged = false;
-        //System.out.println(button);
         if(button == 0){
             isMouse1Down = false;
         }else if(button == 1){
@@ -170,7 +173,7 @@ public class RealInputController implements InputProcessor, InputController {
         return false;
     }
 
-    public boolean isMouseButtonDown() {
+    public boolean isAttackButtonPressed() {
         return isMouse1Down || isMouse2Down || isMouse3Down;
     }
 }

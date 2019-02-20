@@ -7,6 +7,8 @@ import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
+import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheet;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
@@ -14,6 +16,7 @@ import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
+import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Player;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +33,28 @@ public class EntityCreator implements OnPlayersDiscovered {
     private final SpriteSheetLoader spriteSheetLoader;
     private final BodyFactory bodyFactory;
 
+    // Backend Connections
+    private final BlockPublisher blockPublisher;
+    private final BlockSubscriber blockSubscriber;
+
     @Inject
     public EntityCreator(Config config,
                          PooledEngine engine,
                          SpriteSheetLoader spriteSheetLoader,
-                         BodyFactory bodyFactory) {
+                         BodyFactory bodyFactory,
+
+                         //Backend Connections
+                         BlockPublisher blockPublisher,
+                         BlockSubscriber blockSubscriber) {
+
         this.config = config;
         this.engine = engine;
         this.spriteSheetLoader = spriteSheetLoader;
         this.bodyFactory = bodyFactory;
+
+        // Backend Connections
+        this.blockPublisher = blockPublisher;
+        this.blockSubscriber = blockSubscriber;
     }
 
     @Override
@@ -46,7 +62,53 @@ public class EntityCreator implements OnPlayersDiscovered {
         players.forEach(this::createRemotePlayer);
     }
 
-    void createLocalPlayer() {
+    public void createLocalBlock(float x, float y) {
+        Block block = Block.newBuilder()
+                .setX(x)
+                .setY(y)
+                .setWidth(2f)
+                .setHeight(2f)
+                .setHealth(5)
+                .build();
+        Entity entity = createBlockEntity(block, false);
+        blockPublisher.addBlock(block);
+
+        // TODO I have no idea why I don't need to add this to the engine..
+         engine.addEntity(entity);
+    }
+
+    public void createRemoteBlock(Block block) {
+        Entity entity = createBlockEntity(block, true);
+        // TODO I have no idea why I don't need to add this to the engine..
+         engine.addEntity(entity);
+    }
+
+    private Entity createBlockEntity(Block block, boolean isRemote) {
+        LOG.debug("Creating a block at {}, {}, isRemote: {}", block.getX(), block.getY(), isRemote);
+
+        Entity entity = engine.createEntity();
+
+        Body body = bodyFactory.makeBoxPolyBody(block.getX(), block.getY(), block.getWidth(), block.getHeight(), BodyFactory.STONE, BodyDef.BodyType.StaticBody);
+        body.setUserData(entity);
+
+        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
+        bodyComponent.setBody(body);
+        entity.add(bodyComponent);
+
+        TypeComponent type = engine.createComponent(TypeComponent.class);
+        type.setType(Type.SCENERY);
+        entity.add(type);
+
+        BlockComponent blockComponent = engine.createComponent(BlockComponent.class);
+        blockComponent.setId(block.getId());
+        blockComponent.setRemote(isRemote);
+        blockComponent.setHealth(block.getHealth());
+        entity.add(blockComponent);
+
+        return entity;
+    }
+
+    public void createLocalPlayer() {
 
         Entity entity = engine.createEntity();
         LocalPlayerComponent player = engine.createComponent(LocalPlayerComponent.class);
@@ -61,7 +123,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         createPlayer(entity, 6);
     }
 
-    void createRemotePlayer(Player player) {
+    public void createRemotePlayer(Player player) {
         LOG.debug("Creating remote player: {}", player);
         PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), player.getName());
         Entity entity = engine.createEntity();
@@ -80,7 +142,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         createPlayer(entity, 8);
     }
 
-    void createPlayer(Entity entity, float x) {
+    private void createPlayer(Entity entity, float x) {
 
         Body body = bodyFactory.makeBoxPolyBody(x, 9.5f, 1f, 1.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
         body.setUserData(entity);
@@ -104,7 +166,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         engine.addEntity(entity);
     }
 
-    void createScenery(float x, float y) {
+    public void createScenery(float x, float y) {
         Entity entity = engine.createEntity();
 
         Body body = bodyFactory.makeBoxPolyBody(
