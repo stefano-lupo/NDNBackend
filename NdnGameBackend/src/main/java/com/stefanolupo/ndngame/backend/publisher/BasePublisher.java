@@ -90,11 +90,17 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
     // TODO: Not sure about concurrent modifications here but think its okay
     private void processQueue() {
         // If had an update, consume the update
+
+
         if (hasUpdate.compareAndSet(true, false)) {
             sequenceNumber++;
 //            LOG.debug("new sequence number: {}", sequenceNumber);
         } else {
             return;
+        }
+
+        if (syncName.getFullName().toUri().contains("block")) {
+            int x= 5;
         }
 
         // Get all interests with sequence number < current sequence number
@@ -103,6 +109,8 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
             if (t.getLatestSequenceNumberSeen() <= sequenceNumber) {
                 sendData(t);
                 i.remove();
+            } else {
+                LOG.debug("Had Update but {} already had sn {}", t.getFullName(), sequenceNumber);
             }
         }
     }

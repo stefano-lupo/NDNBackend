@@ -17,7 +17,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     /**
      * The timeout of the interest
      */
-    private static final long INTEREST_LIFETIME_MS = 1000;
+    private static final long INTEREST_LIFETIME_MS = 2000000;
 
     /**
      * The time to wait between receiving data for an interest and queueing up the next one

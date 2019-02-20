@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 /**
  * Schema: base_name/|game_id|/discovery/|name|/|sequence_number|
  */
-public class DiscoveryName extends BaseName implements HasSequenceNumber{
+public class DiscoveryName extends BaseName {
 
     private static final String DISCOVERY_BROADCAST = GAME_BASE_NAME + "/%d/discovery/broadcast";
     private static final String DISCOVERY_DATA = GAME_BASE_NAME + "/%d/discovery/%s/%d";
@@ -39,11 +39,6 @@ public class DiscoveryName extends BaseName implements HasSequenceNumber{
 
     public Interest toInterest() {
         return new Interest(getDataListenPrefix(gameId, playerName).append(String.valueOf(sequenceNumber)));
-    }
-
-    @Override
-    public long getSequenceNumber() {
-        return 0;
     }
 
     public static Name getDataListenPrefix(long gameId, String playerName) {

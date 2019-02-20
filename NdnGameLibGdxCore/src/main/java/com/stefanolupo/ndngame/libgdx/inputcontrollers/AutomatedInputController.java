@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AutomatedInputController implements InputController {
 
-    public static final int WALK_TIME_MS = 500;
+    private static final int WALK_TIME_MS = 500;
 
     private static int count = 0;
 
@@ -74,9 +74,14 @@ public class AutomatedInputController implements InputController {
 
         // Using 5 should make them stand still for a tick
         count = ++count % 5;
+
+        if (Math.random() > 0.99) {
+            isSpacePressed = true;
+        }
     }
 
     private void setAllFalse() {
+        isSpacePressed = false;
         isLeftPressed = false;
         isRightPressed = false;
         isUpPressed = false;

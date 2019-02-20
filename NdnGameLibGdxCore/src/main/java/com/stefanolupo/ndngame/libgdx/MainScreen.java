@@ -11,6 +11,7 @@ import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.contactlisteners.MyContactListener;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
+import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
 import com.stefanolupo.ndngame.libgdx.systems.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,9 @@ public class MainScreen implements Screen {
     private final AttackSystem attackSystem;
     private final BlockSystem blockSystem;
 
+    // Listeners
+    private final AttackListener attackListener;
+
     // These cant be initialized in the constructor
     private SpriteBatch spriteBatch = null;
 
@@ -51,7 +55,10 @@ public class MainScreen implements Screen {
                       RemotePlayerUpdateSystem remotePlayerUpdateSystem,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
                       AttackSystem attackSystem,
-                      BlockSystem blockSystem) {
+                      BlockSystem blockSystem,
+
+                      // Listeners
+                      AttackListener attackListener) {
         this.config = config;
         this.inputController = inputController;
         this.engine = engine;
@@ -65,6 +72,9 @@ public class MainScreen implements Screen {
         this.localPlayerStatusSystem = localPlayerStatusSystem;
         this.attackSystem = attackSystem;
         this.blockSystem = blockSystem;
+
+        // Listeners
+        this.attackListener = attackListener;
 
         world.setContactListener(myContactListener);
     }
@@ -85,7 +95,7 @@ public class MainScreen implements Screen {
         engine.addSystem(new SteadyStateSystem());
         engine.addSystem(remotePlayerUpdateSystem);
         engine.addSystem(playerControlSystem);
-        engine.addSystem(attackSystem);
+//        engine.addSystem(attackSystem);
         engine.addSystem(blockSystem);
         engine.addSystem(movementSystem);
         engine.addSystem(new PhysicsSystem(world));
@@ -94,6 +104,9 @@ public class MainScreen implements Screen {
         engine.addSystem(localPlayerStatusSystem);
         engine.addSystem(new AnimationSystem());
         engine.addSystem(renderingSystem);
+
+        // Add listeners
+        engine.addEntityListener(AttackListener.FAMILY, attackListener);
 
         // create some game objects
         entityCreator.createLocalPlayer();

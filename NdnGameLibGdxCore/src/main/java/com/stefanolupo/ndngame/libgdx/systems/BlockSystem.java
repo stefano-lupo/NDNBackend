@@ -5,12 +5,14 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.ashley.systems.IntervalSystem;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.physics.box2d.Body;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
+import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
 import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
@@ -52,11 +54,12 @@ public class BlockSystem extends IntervalSystem implements HasComponentMappers {
     protected void updateInterval() {
         Map<String, Block> remoteBlocksById = blockSubscriber.getBlocksById();
         Map<String, Block> localBlocksById = blockPublisher.getLocalBlocksById();
-        ImmutableArray<Entity> entities = engine.getEntitiesFor(Family.all(BlockComponent.class).get());
+        ImmutableArray<Entity> blockEntities = engine.getEntitiesFor(Family.all(BlockComponent.class).get());
+        ImmutableArray<Entity> attackEntities = engine.getEntitiesFor(Family.all(AttackComponent.class).get());
 
-        // Index entities for later
+        // Index blockEntities for later
         Map<String, Entity> entityMap = new HashMap<>();
-        for (Entity e : entities) {
+        for (Entity e : blockEntities) {
             BlockComponent blockComponent = BLOCK_MAPPER.get(e);
             entityMap.put(blockComponent.getId(), e);
         }
@@ -69,35 +72,58 @@ public class BlockSystem extends IntervalSystem implements HasComponentMappers {
             LOG.error("Found overlapping remote / local block IDs: {}", overlappingBlockIds);
         }
 
-        // Remote blocks are currently created in EntityCreator
-        Set<String> blocksToCreate = Sets.difference(remoteBlocksById.keySet(), entityMap.keySet());
+        createMissingRemoteBlocks(remoteBlocksById, entityMap);
         Set<String> blocksToDestroy = Sets.difference(entityMap.keySet(), Sets.union(remoteBlocksById.keySet(), localBlocksById.keySet()));
+        for (String id : blocksToDestroy) {
+            engine.removeEntity(entityMap.get(id));
+        }
 
-
-        // Update existing entities
-        for (Entity e : entities) {
-            BlockComponent blockComponent = BLOCK_MAPPER.get(e);
+        // Update existing blockEntities
+        for (Entity blockEntity : blockEntities) {
+            BlockComponent blockComponent = BLOCK_MAPPER.get(blockEntity);
 
             String id = blockComponent.getId();
             Block block = blockComponent.isRemote() ? remoteBlocksById.get(id) : localBlocksById.get(id);
             if (block == null) {
                 // Hopefully catch this on the next one
-                LOG.error("Got null block for {}", e);
+                LOG.error("Got null block for {}", blockEntity);
                 continue;
             }
+
+//            for (Entity attack : attackEntities) {
+//                Body blockBody = BODY_MAPPER.get(blockEntity).getBody();
+//                AttackComponent attackComponent = ATTACK_MAPPER.get(attack);
+//                float x = attackComponent.getAttack().getX();
+//                float y = attackComponent.getAttack().getY();
+//                float radius = attackComponent.getAttack().getRadius();
+//                if (Math.abs(block.getX()-x) <= radius && Math.abs(block.getY()-y) <= radius) {
+//                    LOG.info("Got attack");
+//                }
+//
+//            }
+
             blockComponent.setHealth(block.getHealth());
+            Body body = BODY_MAPPER.get(blockEntity).getBody();
+            Block protoBlock = null;
+            if (blockComponent.isRemote()) {
+                protoBlock = remoteBlocksById.get(id);
+            } else {
+                protoBlock = localBlocksById.get(id);
+            }
+            body.setTransform(protoBlock.getX(), protoBlock.getY(), 0);
         }
 
+
+
+    }
+
+    private void createMissingRemoteBlocks(Map<String, Block> remoteBlocksById, Map<String, Entity> entityMap) {
+        Set<String> blocksToCreate = Sets.difference(remoteBlocksById.keySet(), entityMap.keySet());
         // Create missing remote blocks
         for (String id : blocksToCreate) {
             LOG.debug("Had {} blocks to create", blocksToCreate.size());
             Block block = remoteBlocksById.get(id);
             entityCreator.createRemoteBlock(block);
-        }
-
-        // Delete old blocks
-        for (String id : blocksToDestroy) {
-            engine.removeEntity(entityMap.get(id));
         }
     }
 

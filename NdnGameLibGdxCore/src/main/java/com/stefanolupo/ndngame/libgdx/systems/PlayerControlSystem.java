@@ -76,17 +76,23 @@ public class PlayerControlSystem
     private void handleAttackCommand(StateComponent stateComponent,
                                      float deltaTime,
                                      Body body) {
-
+        AttackComponent attackComponent = null;
         if (inputController.isMouse1Down()) {
-            buildAttackComponent(body, 3f, AttackType.SWING);
+            attackComponent = buildAttackComponent(body, 3f, AttackType.SWING);
             stateComponent.updateAttackState(AttackState.SWING, deltaTime);
         } else if (inputController.isMouse2Down()) {
-            buildAttackComponent(body, 3f, AttackType.CAST);
+            attackComponent = buildAttackComponent(body, 3f, AttackType.CAST);
             stateComponent.updateAttackState(AttackState.CAST, deltaTime);
         } else if (inputController.isMouse3Down()) {
-            buildAttackComponent(body, 3f, AttackType.SHIELD);
+            attackComponent = buildAttackComponent(body, 3f, AttackType.SHIELD);
             stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
+        } else {
+            LOG.error("Unknown attack command: {}", stateComponent.getAttackState());
         }
+
+        Entity entity = pooledEngine.createEntity();
+        entity.add(attackComponent);
+        pooledEngine.addEntity(entity);
 
         // TODO: I had started doing something for attacks with ChronoSync
 //        Entity entity = pooledEngine.createEntity();
