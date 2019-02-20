@@ -22,7 +22,7 @@ import java.util.Set;
 
 @Singleton
 public class BlockSystem extends IntervalSystem implements HasComponentMappers {
-    private static final float BLOCK_UPDATE_INTERVAL_SEC = 5f / 1000;
+    private static final float BLOCK_UPDATE_INTERVAL_SEC = 25f / 1000;
     private static final Logger LOG = LoggerFactory.getLogger(BlockSystem.class);
 
     private final BlockSubscriber blockSubscriber;
@@ -90,6 +90,7 @@ public class BlockSystem extends IntervalSystem implements HasComponentMappers {
 
         // Create missing remote blocks
         for (String id : blocksToCreate) {
+            LOG.debug("Had {} blocks to create", blocksToCreate.size());
             Block block = remoteBlocksById.get(id);
             entityCreator.createRemoteBlock(block);
         }

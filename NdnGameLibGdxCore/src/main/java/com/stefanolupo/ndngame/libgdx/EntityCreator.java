@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
+import java.util.UUID;
 
 @Singleton
 public class EntityCreator implements OnPlayersDiscovered {
@@ -64,6 +65,7 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     public void createLocalBlock(float x, float y) {
         Block block = Block.newBuilder()
+                .setId(UUID.randomUUID().toString())
                 .setX(x)
                 .setY(y)
                 .setWidth(2f)
