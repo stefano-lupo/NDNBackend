@@ -14,6 +14,7 @@ public class AutomatedInputController implements InputController {
     private boolean isUpPressed = false;
     private boolean isDownPressed = false;
     private boolean isSpacePressed = false;
+    private boolean isMouse1Pressed = false;
 
     public AutomatedInputController() {
         Executors.newSingleThreadScheduledExecutor()
@@ -47,7 +48,7 @@ public class AutomatedInputController implements InputController {
 
     @Override
     public boolean isMouse1Down() {
-        return false;
+        return isMouse1Pressed;
     }
 
     @Override
@@ -75,8 +76,12 @@ public class AutomatedInputController implements InputController {
         // Using 5 should make them stand still for a tick
         count = ++count % 5;
 
-        if (Math.random() > 0.99) {
+        if (Math.random() > 0.95) {
             isSpacePressed = true;
+        }
+
+        if (Math.random() > 0.95) {
+            isMouse1Pressed = true;
         }
     }
 
@@ -86,5 +91,6 @@ public class AutomatedInputController implements InputController {
         isRightPressed = false;
         isUpPressed = false;
         isDownPressed = false;
+        isMouse1Pressed = false;
     }
 }

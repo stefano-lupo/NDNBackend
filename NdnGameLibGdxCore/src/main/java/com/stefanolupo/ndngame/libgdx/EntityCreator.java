@@ -10,8 +10,10 @@ import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheet;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
+import com.stefanolupo.ndngame.libgdx.assets.Textures;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.names.AttackName;
@@ -23,16 +25,30 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Singleton
 public class EntityCreator implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityCreator.class);
 
+    public static final float WORLD_WIDTH = 50;
+    public static final float WORLD_HEIGHT = 50;
+
+    public static final float PLAYER_WIDTH = 1;
+    public static final float PLAYER_HEIGHT = 1.5f;
+    public static final float PLAYER_SCALE_X = 1;
+    public static final float PLAYER_SCALE_Y = 1;
+
+    public static final float BLOCK_WIDTH = 2;
+    public static final float BLOCK_HEIGHT = 2;
+
+
     private final Config config;
     private final PooledEngine engine;
     private final SpriteSheetLoader spriteSheetLoader;
     private final BodyFactory bodyFactory;
+    private final GameAssetManager gameAssetManager;
 
     // Backend Connections
     private final BlockPublisher blockPublisher;
@@ -43,6 +59,7 @@ public class EntityCreator implements OnPlayersDiscovered {
                          PooledEngine engine,
                          SpriteSheetLoader spriteSheetLoader,
                          BodyFactory bodyFactory,
+                         GameAssetManager gameAssetManager,
 
                          //Backend Connections
                          BlockPublisher blockPublisher,
@@ -52,6 +69,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         this.engine = engine;
         this.spriteSheetLoader = spriteSheetLoader;
         this.bodyFactory = bodyFactory;
+        this.gameAssetManager = gameAssetManager;
 
         // Backend Connections
         this.blockPublisher = blockPublisher;
@@ -68,21 +86,18 @@ public class EntityCreator implements OnPlayersDiscovered {
                 .setId(UUID.randomUUID().toString())
                 .setX(x)
                 .setY(y)
-                .setWidth(2f)
-                .setHeight(2f)
+                .setWidth(BLOCK_WIDTH)
+                .setHeight(BLOCK_HEIGHT)
                 .setHealth(5)
                 .build();
         Entity entity = createBlockEntity(block, false);
         blockPublisher.addBlock(block);
-
-        // TODO I have no idea why I don't need to add this to the engine..
-         engine.addEntity(entity);
+        engine.addEntity(entity);
     }
 
     public void createRemoteBlock(Block block) {
         Entity entity = createBlockEntity(block, true);
-        // TODO I have no idea why I don't need to add this to the engine..
-         engine.addEntity(entity);
+        engine.addEntity(entity);
     }
 
     private Entity createBlockEntity(Block block, boolean isRemote) {
@@ -100,6 +115,17 @@ public class EntityCreator implements OnPlayersDiscovered {
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.SCENERY);
         entity.add(type);
+
+
+        // TODO: Write proper loader
+        TextureComponent textureComponent = engine.createComponent(TextureComponent.class);
+        textureComponent.setRegion(gameAssetManager.getTexture(Textures.TNT));
+        entity.add(textureComponent);
+
+        RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
+        renderComponent.setWidth(BLOCK_WIDTH);
+        renderComponent.setHeight(BLOCK_HEIGHT);
+        entity.add(renderComponent);
 
         BlockComponent blockComponent = engine.createComponent(BlockComponent.class);
         blockComponent.setId(block.getId());
@@ -146,15 +172,19 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     private void createPlayer(Entity entity, float x) {
 
-        Body body = bodyFactory.makeBoxPolyBody(x, 9.5f, 1f, 1.5f, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        Body body = bodyFactory.makeBoxPolyBody(x, ThreadLocalRandom.current().nextInt((int)WORLD_HEIGHT-10), PLAYER_WIDTH, PLAYER_HEIGHT, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
         bodyComponent.setBody(body);
         entity.add(bodyComponent);
 
-        RenderComponent position = engine.createComponent(RenderComponent.class);
-        entity.add(position);
+        RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
+        renderComponent.setWidth(PLAYER_WIDTH);
+        renderComponent.setHeight(PLAYER_HEIGHT);
+        renderComponent.setScale(PLAYER_SCALE_X, PLAYER_SCALE_Y);
+        renderComponent.setRotation(5);
+        entity.add(renderComponent);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);
         entity.add(texture);
@@ -192,6 +222,25 @@ public class EntityCreator implements OnPlayersDiscovered {
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.SCENERY);
         entity.add(type);
+
+        engine.addEntity(entity);
+    }
+
+    public void createWorldBoundary() {
+        Entity entity = engine.createEntity();
+
+        Body body = bodyFactory.makeBoundary();
+        body.setUserData(entity);
+        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
+        bodyComponent.setBody(body);
+        entity.add(bodyComponent);
+
+        TypeComponent typeComponent =engine.createComponent(TypeComponent.class);
+        typeComponent.setType(Type.BOUNDARY);
+        entity.add(typeComponent);
+
+        CollisionComponent collisionComponent = engine.createComponent(CollisionComponent.class);
+        entity.add(collisionComponent);
 
         engine.addEntity(entity);
     }

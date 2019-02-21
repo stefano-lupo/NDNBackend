@@ -12,8 +12,11 @@ import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
+import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
+import com.stefanolupo.ndngame.libgdx.assets.Textures;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
+import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,18 +34,21 @@ public class BlockSystem extends IntervalSystem implements HasComponentMappers {
     private final BlockPublisher blockPublisher;
     private final EntityCreator entityCreator;
     private final PooledEngine engine;
+    private final GameAssetManager gameAssetManager;
 
     @Inject
     public BlockSystem(BlockSubscriber blockSubscriber,
                        BlockPublisher blockPublisher,
                        EntityCreator entityCreator,
-                       PooledEngine engine) {
+                       PooledEngine engine,
+                       GameAssetManager gameAssetManager) {
         super(BLOCK_UPDATE_INTERVAL_SEC);
 
         this.blockSubscriber = blockSubscriber;
         this.blockPublisher = blockPublisher;
         this.entityCreator = entityCreator;
         this.engine = engine;
+        this.gameAssetManager = gameAssetManager;
     }
 
 //    @Override
@@ -90,27 +96,22 @@ public class BlockSystem extends IntervalSystem implements HasComponentMappers {
                 continue;
             }
 
-//            for (Entity attack : attackEntities) {
-//                Body blockBody = BODY_MAPPER.get(blockEntity).getBody();
-//                AttackComponent attackComponent = ATTACK_MAPPER.get(attack);
-//                float x = attackComponent.getAttack().getX();
-//                float y = attackComponent.getAttack().getY();
-//                float radius = attackComponent.getAttack().getRadius();
-//                if (Math.abs(block.getX()-x) <= radius && Math.abs(block.getY()-y) <= radius) {
-//                    LOG.info("Got attack");
-//                }
-//
-//            }
-
             blockComponent.setHealth(block.getHealth());
             Body body = BODY_MAPPER.get(blockEntity).getBody();
-            Block protoBlock = null;
+            Block protoBlock;
             if (blockComponent.isRemote()) {
                 protoBlock = remoteBlocksById.get(id);
             } else {
                 protoBlock = localBlocksById.get(id);
             }
+
+            // Just temp to test block update
             body.setTransform(protoBlock.getX(), protoBlock.getY(), 0);
+            int health = protoBlock.getHealth();
+            health = Math.max(0, Math.min(health, Textures.values().length) - 1);
+
+            TextureComponent textureComponent = TEXTURE_MAPPER.get(blockEntity);
+            textureComponent.setRegion(gameAssetManager.getTexture(Textures.values()[health]));
         }
 
 

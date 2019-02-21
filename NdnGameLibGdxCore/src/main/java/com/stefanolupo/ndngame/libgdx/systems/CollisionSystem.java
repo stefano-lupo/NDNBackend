@@ -46,7 +46,7 @@ public class CollisionSystem
             return;
         }
         
-        LOG.debug("{} collided with {}", myType, collidedWithType);
+//        LOG.debug("{} collided with {}", myType, collidedWithType);
         // Reset once handled
         collisionComponent.setCollidedWith(null);
     }

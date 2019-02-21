@@ -99,10 +99,6 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
             return;
         }
 
-        if (syncName.getFullName().toUri().contains("block")) {
-            int x= 5;
-        }
-
         // Get all interests with sequence number < current sequence number
         for (Iterator<T> i = outstandingInterests.iterator(); i.hasNext();) {
             T t = i.next();

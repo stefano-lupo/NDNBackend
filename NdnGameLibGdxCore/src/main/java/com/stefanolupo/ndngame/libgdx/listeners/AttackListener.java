@@ -16,8 +16,6 @@ import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 public class AttackListener implements EntityListener, HasComponentMappers {
 
     public static final Family FAMILY = Family.all(AttackComponent.class).get();
@@ -49,15 +47,15 @@ public class AttackListener implements EntityListener, HasComponentMappers {
             BodyComponent bodyComponent = BODY_MAPPER.get(blockEntity);
             if (intersectsWithBlock(attackComponent, bodyComponent)) {
                 if (blockComponent.isRemote()) {
-
+                    // TODO: subscriber update
                 } else {
                     blockComponent.setHealth(blockComponent.getHealth() - 1);
                     Block block = blockPublisher.getLocalBlocksById().get(blockComponent.getId());
                     block = block.toBuilder()
-                            .setX(block.getX() + 1)
+                            .setHealth(blockComponent.getHealth())
                             .build();
 
-                    bodyComponent.getBody().setTransform(block.getX(), bodyComponent.getBody().getPosition().y, 0f);
+//                    bodyComponent.getBody().setTransform(block.getX(), bodyComponent.getBody().getPosition().y, 0f);
                     blockPublisher.updateBlock(blockComponent.getId(), block);
                     LOG.info("Published block updat for {}", block.getId());
                 }
@@ -69,7 +67,7 @@ public class AttackListener implements EntityListener, HasComponentMappers {
     }
 
     private boolean intersectsWithBlock(AttackComponent attackComponent, BodyComponent bodyComponent) {
-        return ThreadLocalRandom.current().nextBoolean();
+        return true;
     }
 
     @Override

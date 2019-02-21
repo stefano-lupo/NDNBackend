@@ -88,7 +88,7 @@ public class MainScreen implements Screen {
         // Create what can't be created until LibGdx is loaded
         spriteBatch = new SpriteBatch();
         RenderingSystem renderingSystem = new RenderingSystem(spriteBatch);
-        spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
+//        spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
 
         // Add all the relevant systems our engine should run
         // Note the order here defines the order in which the system will run
@@ -109,6 +109,7 @@ public class MainScreen implements Screen {
         engine.addEntityListener(AttackListener.FAMILY, attackListener);
 
         // create some game objects
+        entityCreator.createWorldBoundary();
         entityCreator.createLocalPlayer();
         entityCreator.createScenery(1, 2);
         entityCreator.createScenery(8, 4);

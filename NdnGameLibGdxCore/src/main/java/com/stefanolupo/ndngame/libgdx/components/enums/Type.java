@@ -6,5 +6,6 @@ public enum Type {
     REMOTE_PLAYER,
     PLACABLE_OBJECT,
     SCENERY,
+    BOUNDARY,
     OTHER
 }

@@ -9,6 +9,9 @@ public class RenderComponent implements Component {
     private final Vector2 scale = new Vector2(1.0f, 1.0f);
     private float rotation = 0.0f;
 
+    private float width;
+    private float height;
+
     public void setRotation(float rotation) {
         this.rotation = rotation;
     }
@@ -31,5 +34,21 @@ public class RenderComponent implements Component {
 
     public Vector2 getScale() {
         return scale;
+    }
+
+    public float getWidth() {
+        return width;
+    }
+
+    public void setWidth(float width) {
+        this.width = width;
+    }
+
+    public float getHeight() {
+        return height;
+    }
+
+    public void setHeight(float height) {
+        this.height = height;
     }
 }
