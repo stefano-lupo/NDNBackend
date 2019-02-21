@@ -13,28 +13,16 @@ import java.util.regex.Pattern;
 public class DiscoveryName extends BaseName {
 
     private static final String DISCOVERY_BROADCAST = GAME_BASE_NAME + "/%d/discovery/broadcast";
-    private static final String DISCOVERY_DATA = GAME_BASE_NAME + "/%d/discovery/%s/%d";
+    private static final String DISCOVERY_DATA = GAME_BASE_NAME + "/%d/discovery/%s/";
     private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/discovery/[a-z]+/\\d+");
 
     private long gameId;
     private String playerName;
     private long sequenceNumber;
 
-    public DiscoveryName(Interest interest) {
-        super(interest.getName());
-        parse();
-    }
-
     public DiscoveryName(ChronoSync2013.SyncState syncState) {
-        super(new Name(syncState.getDataPrefix()));
+        super(new Name(syncState.getDataPrefix()).append(String.valueOf(syncState.getSequenceNo())));
         parse();
-    }
-
-    public DiscoveryName(long gameId, String playerName) {
-        super(String.valueOf(gameId), playerName, "discovery");
-        this.gameId = gameId;
-        this.playerName = playerName;
-        this.sequenceNumber = 0;
     }
 
     public Interest toInterest() {
@@ -42,7 +30,7 @@ public class DiscoveryName extends BaseName {
     }
 
     public static Name getDataListenPrefix(long gameId, String playerName) {
-        return new Name(String.format(DISCOVERY_DATA, gameId, playerName, 0));
+        return new Name(String.format(DISCOVERY_DATA, gameId, playerName));
     }
 
     public static Name getBroadcastPrefix(long gameId) {
@@ -50,7 +38,7 @@ public class DiscoveryName extends BaseName {
     }
 
     private void parse() {
-        Preconditions.checkArgument(tailName.size() == 4);
+        Preconditions.checkArgument(tailName.size() == 4, "Invalid tail name size (should be four) - %s" + tailName);
         checkMatchesRegex(tailName, NAME_PATTERN);
 
         gameId = Long.valueOf(tailName.get(0).toEscapedString());

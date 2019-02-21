@@ -66,10 +66,9 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
             Set<Player> newPlayers = new HashSet<>(Sets.difference(players, this.players));
 
             // Make sure to re-add local player as remote may not have it
-            this.players.clear();
-            this.players.add(localPlayer);
+//            this.players.clear();
+//            this.players.add(localPlayer);
             this.players.addAll(players);
-            LOG.debug("Have {} players", players.size());
 
             discoveryCallbacks.forEach(callback -> callback.onPlayersDiscovered(newPlayers));
         } catch (InvalidProtocolBufferException e) {

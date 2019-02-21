@@ -32,8 +32,8 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityCreator.class);
 
-    public static final float WORLD_WIDTH = 50;
-    public static final float WORLD_HEIGHT = 50;
+    public static final float WORLD_WIDTH = 200;
+    public static final float WORLD_HEIGHT = 200;
 
     public static final float PLAYER_WIDTH = 1;
     public static final float PLAYER_HEIGHT = 1.5f;
@@ -196,34 +196,6 @@ public class EntityCreator implements OnPlayersDiscovered {
 
         CollisionComponent collision = engine.createComponent(CollisionComponent.class);
         entity.add(collision);
-
-        engine.addEntity(entity);
-    }
-
-    public void createScenery(float x, float y) {
-        Entity entity = engine.createEntity();
-
-        Body body = bodyFactory.makeBoxPolyBody(
-                x,
-                y, 3,
-                0.2f,
-                BodyFactory.STONE,
-                BodyDef.BodyType.StaticBody,
-                false);
-        body.setUserData(entity);
-
-        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
-        bodyComponent.setBody(body);
-        entity.add(bodyComponent);
-
-        // TODO: Setup correct textures here
-//        TextureComponent texture = engine.createComponent(TextureComponent.class);
-//        texture.setRegion(atlas.findRegion("player"));
-//        entity.add(texture);
-
-        TypeComponent type = engine.createComponent(TypeComponent.class);
-        type.setType(Type.SCENERY);
-        entity.add(type);
 
         engine.addEntity(entity);
     }

@@ -8,9 +8,6 @@ import com.google.inject.Singleton;
 @Singleton
 public class BodyFactory {
 
-    private static final int WORLD_WIDTH = 50;
-    private static final int WORLD_HEIGHT = WORLD_WIDTH;
-
     public static final int STEEL = 0;
     public static final int WOOD = 1;
     public static final int RUBBER = 2;
@@ -84,16 +81,16 @@ public class BodyFactory {
         Body body = world.createBody(bodyDef);
         EdgeShape edgeShape = new EdgeShape();
 
-        edgeShape.set(0,0, WORLD_WIDTH, 0);
+        edgeShape.set(0,0, EntityCreator.WORLD_WIDTH, 0);
         body.createFixture(edgeShape, 0);
 
-        edgeShape.set(0,0, 0, WORLD_HEIGHT);
+        edgeShape.set(0,0, 0, EntityCreator.WORLD_HEIGHT);
         body.createFixture(edgeShape, 0);
 
-        edgeShape.set(WORLD_WIDTH,WORLD_HEIGHT, WORLD_WIDTH, 0);
+        edgeShape.set(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT, EntityCreator.WORLD_WIDTH, 0);
         body.createFixture(edgeShape, 0);
 
-        edgeShape.set(WORLD_WIDTH, WORLD_HEIGHT, 0, WORLD_HEIGHT);
+        edgeShape.set(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT, 0, EntityCreator.WORLD_HEIGHT);
         body.createFixture(edgeShape, 0);
 
         return body;

@@ -7,8 +7,10 @@ public class CommandLineHelper {
 
     private final Option NAME_OF_PLAYER;
     private final Option AUTOMATED_MODE;
-    private final Option GAME_ID;
     private final Option IS_MASTER_VIEW;
+    private final Option GAME_ID;
+    private final Option SCREEN_WIDTH;
+    private final Option SCREEN_HEIGHT;
 
     private final Options options;
 
@@ -36,6 +38,16 @@ public class CommandLineHelper {
         GAME_ID.setType(Long.class);
         options.addOption(GAME_ID);
 
+        SCREEN_WIDTH = new Option("w", "width", true, "screen width");
+        SCREEN_WIDTH.setRequired(false);
+        SCREEN_WIDTH.setType(Integer.class);
+        options.addOption(SCREEN_WIDTH);
+
+        SCREEN_HEIGHT = new Option("h", "height", true, "screen height");
+        SCREEN_HEIGHT.setRequired(false);
+        SCREEN_HEIGHT.setType(Integer.class);
+        options.addOption(SCREEN_HEIGHT);
+
     }
 
     public Config getConfig(String[] args) {
@@ -55,6 +67,14 @@ public class CommandLineHelper {
 
             if (cmd.hasOption(GAME_ID.getLongOpt())) {
                 builder.setGameId(Long.valueOf(cmd.getOptionValue(GAME_ID.getLongOpt())));
+            }
+
+            if (cmd.hasOption(SCREEN_WIDTH.getLongOpt())) {
+                builder.setScreenWidth(Integer.valueOf(cmd.getOptionValue(SCREEN_WIDTH.getLongOpt())));
+            }
+
+            if (cmd.hasOption(SCREEN_HEIGHT.getLongOpt())) {
+                builder.setScreenHeight(Integer.valueOf(cmd.getOptionValue(SCREEN_HEIGHT.getLongOpt())));
             }
 
             return builder.build();

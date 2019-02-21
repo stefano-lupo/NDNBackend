@@ -90,13 +90,16 @@ public abstract class ChronoSyncedDataStructure implements
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        LOG.trace("Received interest: {}", interest.toUri());
         Optional<Blob> maybeBlob = localToBlob(interest);
         if (!maybeBlob.isPresent()) {
             return;
         }
 
-        Data data = new Data(interest.getName()).setContent(maybeBlob.get());
+        MetaInfo metaInfo = new MetaInfo();
+        metaInfo.setFreshnessPeriod(100);
+        Data data = new Data(interest.getName())
+                .setContent(maybeBlob.get())
+                .setMetaInfo(metaInfo);
         try {
             keyChain.sign(data, certificateName);
             face.putData(data);
@@ -144,7 +147,6 @@ public abstract class ChronoSyncedDataStructure implements
 
     protected void publishUpdate(byte[] content) {
         try {
-            LOG.trace("Publishing update: {}", chronoSync.getSequenceNo());
             if (content != null) {
                 chronoSync.publishNextSequenceNo(new Blob(content));
             } else {

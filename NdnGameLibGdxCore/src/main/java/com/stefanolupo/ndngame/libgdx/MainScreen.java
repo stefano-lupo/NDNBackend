@@ -111,10 +111,6 @@ public class MainScreen implements Screen {
         // create some game objects
         entityCreator.createWorldBoundary();
         entityCreator.createLocalPlayer();
-        entityCreator.createScenery(1, 2);
-        entityCreator.createScenery(8, 4);
-        entityCreator.createScenery(15, 6);
-        entityCreator.createScenery(20, 7);
     }
 
     @Override
