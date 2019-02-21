@@ -4,7 +4,6 @@ import com.badlogic.ashley.core.Component;
 
 public class BlockComponent implements Component {
     private String id;
-    private long versionNumber = 0;
     private boolean isRemote = false;
     private int health;
 
@@ -22,14 +21,6 @@ public class BlockComponent implements Component {
 
     public void setRemote(boolean remote) {
         isRemote = remote;
-    }
-
-    public long getVersionNumber() {
-        return versionNumber;
-    }
-
-    public void setVersionNumber(long versionNumber) {
-        this.versionNumber = versionNumber;
     }
 
     public int getHealth() {

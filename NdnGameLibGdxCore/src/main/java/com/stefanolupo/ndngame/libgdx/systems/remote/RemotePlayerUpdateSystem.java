@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx.systems;
+package com.stefanolupo.ndngame.libgdx.systems.remote;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -9,12 +9,11 @@ import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.RemotePlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-//import com.stefanolupo.ndngame.backend.chronosynced.AttackManager;
 
 /**
  * Handles updates from remote players

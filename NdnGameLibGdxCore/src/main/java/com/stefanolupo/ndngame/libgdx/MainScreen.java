@@ -12,7 +12,13 @@ import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.contactlisteners.MyContactListener;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
-import com.stefanolupo.ndngame.libgdx.systems.*;
+import com.stefanolupo.ndngame.libgdx.systems.BlockSystem;
+import com.stefanolupo.ndngame.libgdx.systems.PlayerControlSystem;
+import com.stefanolupo.ndngame.libgdx.systems.core.*;
+import com.stefanolupo.ndngame.libgdx.systems.local.LocalPlayerStatusSystem;
+import com.stefanolupo.ndngame.libgdx.systems.remote.AttackSystem;
+import com.stefanolupo.ndngame.libgdx.systems.remote.BlockUpdateSystem;
+import com.stefanolupo.ndngame.libgdx.systems.remote.RemotePlayerUpdateSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +34,18 @@ public class MainScreen implements Screen {
     private final EntityCreator entityCreator;
 
     // Systems
-    private final MovementSystem movementSystem;
-    private final PlayerControlSystem playerControlSystem;
-    private final RemotePlayerUpdateSystem remotePlayerUpdateSystem;
-    private final LocalPlayerStatusSystem localPlayerStatusSystem;
+    private final AnimationSystem animationSystem;
     private final AttackSystem attackSystem;
     private final BlockSystem blockSystem;
+    private final BlockUpdateSystem blockUpdateSystem;
+    private final CollisionSystem collisionSystem;
+    private final LocalPlayerStatusSystem localPlayerStatusSystem;
+    private final MovementSystem movementSystem;
+    private final PhysicsSystem physicsSystem;
+    private final PlayerControlSystem playerControlSystem;
+    private final RemotePlayerUpdateSystem remotePlayerUpdateSystem;
+    private final RenderingSystem renderingSystem;
+    private final SteadyStateSystem steadyStateSystem;
 
     // Listeners
     private final AttackListener attackListener;
@@ -50,12 +62,18 @@ public class MainScreen implements Screen {
                       EntityCreator entityCreator,
 
                       // Systems
-                      MovementSystem movementSystem,
-                      PlayerControlSystem playerControlSystem,
-                      RemotePlayerUpdateSystem remotePlayerUpdateSystem,
-                      LocalPlayerStatusSystem localPlayerStatusSystem,
+                      AnimationSystem animationSystem,
                       AttackSystem attackSystem,
                       BlockSystem blockSystem,
+                      BlockUpdateSystem blockUpdateSystem,
+                      CollisionSystem collisionSystem,
+                      LocalPlayerStatusSystem localPlayerStatusSystem,
+                      MovementSystem movementSystem,
+                      PhysicsSystem physicsSystem,
+                      PlayerControlSystem playerControlSystem,
+                      RemotePlayerUpdateSystem remotePlayerUpdateSystem,
+                      RenderingSystem renderingSystem,
+                      SteadyStateSystem steadyStateSystem,
 
                       // Listeners
                       AttackListener attackListener) {
@@ -66,12 +84,18 @@ public class MainScreen implements Screen {
         this.entityCreator = entityCreator;
 
         // Systems
-        this.movementSystem = movementSystem;
-        this.playerControlSystem = playerControlSystem;
-        this.remotePlayerUpdateSystem = remotePlayerUpdateSystem;
-        this.localPlayerStatusSystem = localPlayerStatusSystem;
+        this.animationSystem = animationSystem;
         this.attackSystem = attackSystem;
         this.blockSystem = blockSystem;
+        this.blockUpdateSystem = blockUpdateSystem;
+        this.collisionSystem = collisionSystem;
+        this.localPlayerStatusSystem = localPlayerStatusSystem;
+        this.movementSystem = movementSystem;
+        this.physicsSystem = physicsSystem;
+        this.playerControlSystem = playerControlSystem;
+        this.remotePlayerUpdateSystem = remotePlayerUpdateSystem;
+        this.renderingSystem = renderingSystem;
+        this.steadyStateSystem = steadyStateSystem;
 
         // Listeners
         this.attackListener = attackListener;
@@ -87,30 +111,34 @@ public class MainScreen implements Screen {
 
         // Create what can't be created until LibGdx is loaded
         spriteBatch = new SpriteBatch();
-        RenderingSystem renderingSystem = new RenderingSystem(spriteBatch, config);
-//        spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
+        renderingSystem.configureOnInit(spriteBatch);
 
         // Add all the relevant systems our engine should run
         // Note the order here defines the order in which the system will run
-        engine.addSystem(new SteadyStateSystem());
+        engine.addSystem(steadyStateSystem);
+
+        // Remote Updater Systems
         engine.addSystem(remotePlayerUpdateSystem);
+        engine.addSystem(blockUpdateSystem);
+
+        // Core game systems
         engine.addSystem(playerControlSystem);
 //        engine.addSystem(attackSystem);
-        engine.addSystem(blockSystem);
         engine.addSystem(movementSystem);
-        engine.addSystem(new PhysicsSystem(world));
+        engine.addSystem(blockSystem);
         engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
-        engine.addSystem(new CollisionSystem());
-        engine.addSystem(localPlayerStatusSystem);
-        engine.addSystem(new AnimationSystem());
+        engine.addSystem(physicsSystem);
+        engine.addSystem(collisionSystem);
+        engine.addSystem(animationSystem);
         engine.addSystem(renderingSystem);
 
-        // Add listeners
+        // Local publisher systems
+        engine.addSystem(localPlayerStatusSystem);
+
+        // Listeners
         engine.addEntityListener(AttackListener.FAMILY, attackListener);
 
-        // create some game objects
-        entityCreator.createWorldBoundary();
-        entityCreator.createLocalPlayer();
+        entityCreator.createInitialWorld();
     }
 
     @Override

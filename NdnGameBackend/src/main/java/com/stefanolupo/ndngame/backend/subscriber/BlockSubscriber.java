@@ -5,14 +5,18 @@ import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.names.BlockInteractionName;
 import com.stefanolupo.ndngame.names.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import com.stefanolupo.ndngame.protos.Player;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Face;
+import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 
 @Singleton
@@ -56,6 +60,22 @@ public class BlockSubscriber implements OnPlayersDiscovered {
         return map;
     }
 
+
+    public void interactWithBlock(String blockId) {
+        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
+            if (subscriber.getEntity().containsKey(blockId)) {
+                BlockInteractionName name = new BlockInteractionName(config.getGameId(), blockId);
+                Face face = new Face();
+                Interest interest = name.toInterest();
+                LOG.info("Interacting with block: {}", interest.toUri());
+                try {
+                    face.expressInterest(interest, (i, d) -> LOG.debug("Got data"));
+                } catch (IOException e) {
+                    LOG.error("Unable to express interest when interacting with block: {}", name.toInterest().toUri());
+                }
+            }
+        }
+    }
 
     private Map<String, Block> typeFromData(Data data) {
         try {

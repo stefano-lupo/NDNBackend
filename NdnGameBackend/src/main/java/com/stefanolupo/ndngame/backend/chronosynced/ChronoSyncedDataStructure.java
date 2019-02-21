@@ -187,7 +187,7 @@ public abstract class ChronoSyncedDataStructure implements
         long totalNumSyncStates = 0;
 
         Statistics() {
-            Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printStats, 7L, 15L, TimeUnit.SECONDS);
+            //Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::printStats, 7L, 15L, TimeUnit.SECONDS);
         }
 
         void printStats() {

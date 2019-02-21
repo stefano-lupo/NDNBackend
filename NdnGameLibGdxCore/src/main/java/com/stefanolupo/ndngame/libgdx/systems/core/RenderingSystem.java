@@ -1,19 +1,19 @@
-package com.stefanolupo.ndngame.libgdx.systems;
+package com.stefanolupo.ndngame.libgdx.systems.core;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.SortedIteratingSystem;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
+import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,37 +24,49 @@ public class RenderingSystem
         implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderingSystem.class);
-    private static final float PIXELS_PER_METER = 20f;
-    private static final float WORLD_VIEW_WIDTH = Gdx.graphics.getWidth() / PIXELS_PER_METER;
-    private static final float WORLD_VIEW_HEIGHT = Gdx.graphics.getHeight() / PIXELS_PER_METER;
     private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getPosition().z);
+    private static final float PIXELS_PER_METER = 40f;
 
-    private final SpriteBatch spriteBatch;
     private final Config config;
+    private final OrthographicCamera camera;
 
     private final Array<Entity> renderQueue;
-    private final OrthographicCamera camera;
-    private final BitmapFont font = new BitmapFont();
+//    private final BitmapFont font = new BitmapFont();
+    private SpriteBatch spriteBatch;
 
-    public RenderingSystem(SpriteBatch spriteBatch, Config confg) {
+    @Inject
+    public RenderingSystem(Config config,
+                           OrthographicCamera camera) {
         super(Family.all(RenderComponent.class, TextureComponent.class).get(), Z_COMPARATOR);
-        this.spriteBatch = spriteBatch;
-        this.config = confg;
-
+        this.config = config;
+        this.camera = camera;
         renderQueue = new Array<>();
+    }
+
+    /**
+     * These require LibGdx to be set up and must be run before rendering
+     */
+    public void configureOnInit(SpriteBatch spriteBatch) {
+        this.spriteBatch = spriteBatch;
         if (config.isMasterView()) {
-            camera = new OrthographicCamera(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
+            camera.setToOrtho(false, EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
         } else {
-            camera = new OrthographicCamera(WORLD_VIEW_WIDTH, WORLD_VIEW_HEIGHT);
+            camera.setToOrtho(false,
+                    Gdx.graphics.getWidth() / PIXELS_PER_METER,
+                    Gdx.graphics.getHeight() / PIXELS_PER_METER);
         }
         camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
-        LOG.info("Camera viewport: {} x {} units", camera.viewportHeight, camera.viewportHeight);
         camera.update();
+        LOG.info("Camera viewport: {} x {} units", camera.viewportHeight, camera.viewportHeight);
     }
 
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
+
+        if (spriteBatch == null) {
+            throw new IllegalStateException("configureOnInit must be called before rendering can start");
+        }
 
         spriteBatch.setProjectionMatrix(camera.combined);
         spriteBatch.enableBlending();
@@ -117,18 +129,18 @@ public class RenderingSystem
         camera.update();
     }
 
-    private void drawPositions(Entity entity, RenderComponent renderComponent) {
-        if (LOCAL_PLAYER_MAPPER.get(entity) != null) {
-            font.setColor(Color.BLUE);
-            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
-                    renderComponent.getPosition().x, renderComponent.getPosition().y);
-        }
-
-        if (REMOTE_PLAYER_MAPPER.get(entity) != null) {
-            font.setColor(Color.RED);
-            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
-                    renderComponent.getPosition().x, renderComponent.getPosition().y);
-        }
-
-    }
+//    private void drawPositions(Entity entity, RenderComponent renderComponent) {
+//        if (LOCAL_PLAYER_MAPPER.get(entity) != null) {
+//            font.setColor(Color.BLUE);
+//            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
+//                    renderComponent.getPosition().x, renderComponent.getPosition().y);
+//        }
+//
+//        if (REMOTE_PLAYER_MAPPER.get(entity) != null) {
+//            font.setColor(Color.RED);
+//            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
+//                    renderComponent.getPosition().x, renderComponent.getPosition().y);
+//        }
+//
+//    }
 }
