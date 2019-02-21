@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx.systems;
+package com.stefanolupo.ndngame.libgdx.systems.core;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -9,6 +9,7 @@ import com.stefanolupo.ndngame.libgdx.components.AnimationComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
+import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +20,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AnimationSystem
         extends IteratingSystem
-        implements HasComponentMappers{
+        implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(AnimationSystem.class);
 
@@ -35,17 +36,13 @@ public class AnimationSystem
 
         Animation<TextureRegion> animationToUse;
         if (stateComponent.isInAttackState()) {
-//            LOG.debug("Using attack animation as: {}", stateComponent.getAttackState());
             animationToUse = animationComponent.getAttackAnimations().get(stateComponent.getAttackState());
         } else if (stateComponent.isInInteractState()) {
             animationToUse = animationComponent.getInteractionAnimations().get(stateComponent.getInteractionState());
-//            LOG.debug("In interaction state");
         } else if (stateComponent.getVertState() != MotionState.REST) {
             animationToUse = animationComponent.getMotionAnimations().get(stateComponent.getVertState());
-//            LOG.debug("Using vertical animation as: {}", stateComponent.getVertState());
         } else {
             animationToUse = animationComponent.getMotionAnimations().get(stateComponent.getHozState());
-//            LOG.debug("Using horizontal animation as: {}", stateComponent.getHozState());
         }
 
         if (animationToUse == null) {
@@ -63,9 +60,6 @@ public class AnimationSystem
         if (textureRegion == null) {
             LOG.error("Texture region was null for\n{}\n{}", animation, stateComponent);
         }
-//        else {
-//            LOG.debug("Using texture region for: {} - kfi: {}", textureComponent, animation.getKeyFrameIndex(stateComponent.getTimeInState()));
-//        }
         textureComponent.setRegion(textureRegion);
     }
 

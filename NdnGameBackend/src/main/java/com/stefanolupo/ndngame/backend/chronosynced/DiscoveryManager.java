@@ -64,10 +64,6 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
         try {
             Set<Player> players = new HashSet<>(Players.parseFrom(data.getContent().getImmutableArray()).getPlayersList());
             Set<Player> newPlayers = new HashSet<>(Sets.difference(players, this.players));
-
-            // Make sure to re-add local player as remote may not have it
-//            this.players.clear();
-//            this.players.add(localPlayer);
             this.players.addAll(players);
 
             discoveryCallbacks.forEach(callback -> callback.onPlayersDiscovered(newPlayers));

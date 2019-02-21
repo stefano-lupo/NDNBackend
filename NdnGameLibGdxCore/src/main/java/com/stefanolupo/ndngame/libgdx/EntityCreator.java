@@ -32,8 +32,8 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityCreator.class);
 
-    public static final float WORLD_WIDTH = 200;
-    public static final float WORLD_HEIGHT = 200;
+    public static final float WORLD_WIDTH = 50;
+    public static final float WORLD_HEIGHT = 50;
 
     public static final float PLAYER_WIDTH = 1;
     public static final float PLAYER_HEIGHT = 1.5f;
@@ -79,6 +79,11 @@ public class EntityCreator implements OnPlayersDiscovered {
     @Override
     public void onPlayersDiscovered(Set<Player> players) {
         players.forEach(this::createRemotePlayer);
+    }
+
+    public void createInitialWorld() {
+        createWorldBoundary();
+        createLocalPlayer();
     }
 
     public void createLocalBlock(float x, float y) {
@@ -200,7 +205,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         engine.addEntity(entity);
     }
 
-    public void createWorldBoundary() {
+    private void createWorldBoundary() {
         Entity entity = engine.createEntity();
 
         Body body = bodyFactory.makeBoundary();

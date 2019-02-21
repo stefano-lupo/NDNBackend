@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx.systems;
+package com.stefanolupo.ndngame.libgdx.systems.core;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -6,6 +6,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
+import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 
 /**
  * Sets the velocities of all of the Body objects of entities with MotionStateComponents

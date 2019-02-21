@@ -72,7 +72,7 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
                 10,
-                10,
+                60,
                 TimeUnit.SECONDS
         );
     }

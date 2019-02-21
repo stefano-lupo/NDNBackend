@@ -48,6 +48,7 @@ public class AttackListener implements EntityListener, HasComponentMappers {
             if (intersectsWithBlock(attackComponent, bodyComponent)) {
                 if (blockComponent.isRemote()) {
                     // TODO: subscriber update
+                    blockSubscriber.interactWithBlock(blockComponent.getId());
                 } else {
                     blockComponent.setHealth(blockComponent.getHealth() - 1);
                     Block block = blockPublisher.getLocalBlocksById().get(blockComponent.getId());

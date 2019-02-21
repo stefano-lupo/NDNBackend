@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx.systems;
+package com.stefanolupo.ndngame.libgdx.systems.remote;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
@@ -6,6 +6,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

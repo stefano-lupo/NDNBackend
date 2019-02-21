@@ -15,7 +15,7 @@ public abstract class BaseName {
     protected final Name tailName;
 
     protected BaseName(String name) {
-        this(new Name(name));
+        this(new Name(GAME_BASE_NAME).append(name));
     }
 
     protected BaseName(Name name) {
@@ -36,14 +36,6 @@ public abstract class BaseName {
             name = name.append(arg);
         }
         return name;
-    }
-
-    protected Name getTailName() {
-        return tailName;
-    }
-
-    protected Name getFullName() {
-        return fullName;
     }
 
     protected void checkMatchesRegex(Name name, Pattern regex) {
