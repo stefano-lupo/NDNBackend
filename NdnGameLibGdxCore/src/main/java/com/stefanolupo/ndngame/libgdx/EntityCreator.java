@@ -148,7 +148,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         type.setType(Type.PLAYER);
         entity.add(type);
 
-        createPlayer(entity, 6);
+        createPlayer(entity);
     }
 
     public void createRemotePlayer(Player player) {
@@ -167,12 +167,14 @@ public class EntityCreator implements OnPlayersDiscovered {
         entity.add(type);
 
 
-        createPlayer(entity, 8);
+        createPlayer(entity);
     }
 
-    private void createPlayer(Entity entity, float x) {
+    private void createPlayer(Entity entity) {
+        float x = ThreadLocalRandom.current().nextInt(20, (int) WORLD_WIDTH - 20);
+        float y = ThreadLocalRandom.current().nextInt(20, (int) WORLD_HEIGHT - 20);
 
-        Body body = bodyFactory.makeBoxPolyBody(x, ThreadLocalRandom.current().nextInt((int)WORLD_HEIGHT-10), PLAYER_WIDTH, PLAYER_HEIGHT, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        Body body = bodyFactory.makeBoxPolyBody(x, y, PLAYER_WIDTH, PLAYER_HEIGHT, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);

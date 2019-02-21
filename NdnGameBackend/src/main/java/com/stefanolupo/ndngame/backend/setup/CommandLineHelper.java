@@ -8,6 +8,7 @@ public class CommandLineHelper {
     private final Option NAME_OF_PLAYER;
     private final Option AUTOMATED_MODE;
     private final Option GAME_ID;
+    private final Option IS_MASTER_VIEW;
 
     private final Options options;
 
@@ -21,12 +22,20 @@ public class CommandLineHelper {
 
         AUTOMATED_MODE = new Option("a", "automate", false, "use automated mode");
         AUTOMATED_MODE.setRequired(false);
+        AUTOMATED_MODE.setType(Boolean.class);
         options.addOption(AUTOMATED_MODE);
+
+
+        IS_MASTER_VIEW = new Option("m", "masterview", false, "master view switch");
+        IS_MASTER_VIEW.setRequired(false);
+        IS_MASTER_VIEW.setType(Boolean.class);
+        options.addOption(IS_MASTER_VIEW);
 
         GAME_ID = new Option("g", "gameid", true, "id of game to join");
         GAME_ID.setRequired(false);
         GAME_ID.setType(Long.class);
         options.addOption(GAME_ID);
+
     }
 
     public Config getConfig(String[] args) {
@@ -41,6 +50,7 @@ public class CommandLineHelper {
 
             Config.Builder builder = Config.builder()
                     .setPlayerName(playerName)
+                    .isMasterView(cmd.hasOption(IS_MASTER_VIEW.getOpt()))
                     .setIsAutomated(cmd.hasOption(AUTOMATED_MODE.getOpt()));
 
             if (cmd.hasOption(GAME_ID.getLongOpt())) {

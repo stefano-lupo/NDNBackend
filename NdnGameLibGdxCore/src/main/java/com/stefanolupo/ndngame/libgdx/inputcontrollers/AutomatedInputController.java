@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 public class AutomatedInputController implements InputController {
 
-    private static final int WALK_TIME_MS = 500;
+    private static final int WALK_TIME_MS = 300;
 
     private static int count = 0;
 

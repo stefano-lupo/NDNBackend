@@ -69,6 +69,7 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
             this.players.clear();
             this.players.add(localPlayer);
             this.players.addAll(players);
+            LOG.debug("Have {} players", players.size());
 
             discoveryCallbacks.forEach(callback -> callback.onPlayersDiscovered(newPlayers));
         } catch (InvalidProtocolBufferException e) {

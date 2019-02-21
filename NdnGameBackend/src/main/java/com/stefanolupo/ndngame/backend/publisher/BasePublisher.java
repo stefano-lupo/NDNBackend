@@ -29,6 +29,7 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
     private static final Double FRESHNESS_PERIOD_MS = 20.0;
 
     private final List<T> outstandingInterests = new ArrayList<>();
+    private long totalNumInterests = 0;
 
     private final SequenceNumberedName syncName;
     private final Function<Interest, T> interestTFunction;
@@ -68,6 +69,12 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
                 DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS,
                 DEFAULT_QUEUE_PROCESS_TIME_MS,
                 TimeUnit.MILLISECONDS);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
+                10,
+                10,
+                TimeUnit.SECONDS
+        );
     }
 
     /**
@@ -82,6 +89,7 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         T interestName = interestTFunction.apply(interest);
+        totalNumInterests++;
         outstandingInterests.add(interestName);
     }
 

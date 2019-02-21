@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
  */
 public class BlockName extends BaseName implements SequenceNumberedName {
 
-    private static final String BLOCK_LISTEN_PREFIX = GAME_BASE_NAME + "/%d/%s/blocks/";
     private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/blocks/\\d+");
 
     private long gameId;

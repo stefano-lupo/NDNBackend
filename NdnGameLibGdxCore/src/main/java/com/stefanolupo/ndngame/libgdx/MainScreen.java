@@ -87,7 +87,7 @@ public class MainScreen implements Screen {
 
         // Create what can't be created until LibGdx is loaded
         spriteBatch = new SpriteBatch();
-        RenderingSystem renderingSystem = new RenderingSystem(spriteBatch);
+        RenderingSystem renderingSystem = new RenderingSystem(spriteBatch, config);
 //        spriteBatch.setProjectionMatrix(renderingSystem.getCamera().combined);
 
         // Add all the relevant systems our engine should run

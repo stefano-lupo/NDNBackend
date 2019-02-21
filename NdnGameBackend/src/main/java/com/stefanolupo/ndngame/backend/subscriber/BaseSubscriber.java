@@ -17,7 +17,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     /**
      * The timeout of the interest
      */
-    private static final long INTEREST_LIFETIME_MS = 2000000;
+    private static final long INTEREST_LIFETIME_MS = 1000;
 
     /**
      * The time to wait between receiving data for an interest and queueing up the next one
@@ -72,7 +72,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
 
     @Override
     public void onTimeout(Interest interest) {
-        LOG.info("Timeout for {}, resending interest", interest.toUri());
+//        LOG.info("Timeout for {}, resending interest", interest.toUri());
         expressInterestSafe(buildInterest(name));
     }
 

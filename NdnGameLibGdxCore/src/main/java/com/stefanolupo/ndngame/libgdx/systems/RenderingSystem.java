@@ -9,6 +9,8 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
@@ -28,16 +30,23 @@ public class RenderingSystem
     private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getPosition().z);
 
     private final SpriteBatch spriteBatch;
+    private final Config config;
+
     private final Array<Entity> renderQueue;
     private final OrthographicCamera camera;
     private final BitmapFont font = new BitmapFont();
 
-    public RenderingSystem(SpriteBatch spriteBatch) {
+    public RenderingSystem(SpriteBatch spriteBatch, Config confg) {
         super(Family.all(RenderComponent.class, TextureComponent.class).get(), Z_COMPARATOR);
         this.spriteBatch = spriteBatch;
-        renderQueue = new Array<>();
+        this.config = confg;
 
-        camera = new OrthographicCamera(WORLD_VIEW_WIDTH, WORLD_VIEW_HEIGHT);
+        renderQueue = new Array<>();
+        if (config.isMasterView()) {
+            camera = new OrthographicCamera(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
+        } else {
+            camera = new OrthographicCamera(WORLD_VIEW_WIDTH, WORLD_VIEW_HEIGHT);
+        }
         camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
         LOG.info("Camera viewport: {} x {} units", camera.viewportHeight, camera.viewportHeight);
         camera.update();
@@ -101,7 +110,10 @@ public class RenderingSystem
             throw new IllegalStateException("Local player had no render component!");
         }
 
-        camera.position.set(renderComponent.getPosition().x, renderComponent.getPosition().y, 0);
+        if (!config.isMasterView()) {
+            camera.position.set(renderComponent.getPosition().x, renderComponent.getPosition().y, 0);
+        }
+
         camera.update();
     }
 
