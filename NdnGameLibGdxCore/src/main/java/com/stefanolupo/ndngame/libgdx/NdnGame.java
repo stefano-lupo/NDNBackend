@@ -4,6 +4,7 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.audio.Music;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
 
 public class NdnGame extends Game {
 

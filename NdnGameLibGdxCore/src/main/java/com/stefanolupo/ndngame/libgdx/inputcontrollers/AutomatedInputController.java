@@ -1,11 +1,11 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class AutomatedInputController implements InputController {
 
-    public static final int WALK_TIME_MS = 500;
+    private static final int WALK_TIME_MS = 300;
 
     private static int count = 0;
 
@@ -14,6 +14,7 @@ public class AutomatedInputController implements InputController {
     private boolean isUpPressed = false;
     private boolean isDownPressed = false;
     private boolean isSpacePressed = false;
+    private boolean isMouse1Pressed = false;
 
     public AutomatedInputController() {
         Executors.newSingleThreadScheduledExecutor()
@@ -47,7 +48,7 @@ public class AutomatedInputController implements InputController {
 
     @Override
     public boolean isMouse1Down() {
-        return false;
+        return isMouse1Pressed;
     }
 
     @Override
@@ -74,12 +75,22 @@ public class AutomatedInputController implements InputController {
 
         // Using 5 should make them stand still for a tick
         count = ++count % 5;
+
+        if (Math.random() > 0.95) {
+            isSpacePressed = true;
+        }
+
+        if (Math.random() > 0.95) {
+            isMouse1Pressed = true;
+        }
     }
 
     private void setAllFalse() {
+        isSpacePressed = false;
         isLeftPressed = false;
         isRightPressed = false;
         isUpPressed = false;
         isDownPressed = false;
+        isMouse1Pressed = false;
     }
 }

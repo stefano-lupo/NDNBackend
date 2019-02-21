@@ -6,18 +6,15 @@ import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.backend.chronosynced.AttackManager;
-import com.stefanolupo.ndngame.backend.chronosynced.PlayerStatusManager;
-import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
+import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.RemotePlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
-import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+//import com.stefanolupo.ndngame.backend.chronosynced.AttackManager;
 
 /**
  * Handles updates from remote players
@@ -33,18 +30,19 @@ public class RemotePlayerUpdateSystem
     private static long numberOfRemoteUpdates = 0;
     private static long numberOfNonUpdates = 0;
 
-    private final PlayerStatusManager playerStatusManager;
-    private final AttackManager attackManager;
+    private final PlayerStatusSubscriber playerStatusSubscriber;
+//    private final AttackManager attackManager;
     private final PooledEngine pooledEngine;
 
     @Inject
-    public RemotePlayerUpdateSystem(PlayerStatusManager playerStatusManager,
-                                    AttackManager attackManager,
+    public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber,
+//                                    AttackManager attackManager,
                                     PooledEngine pooledEngine) {
         super(Family.all(RemotePlayerComponent.class).get());
-        this.playerStatusManager = playerStatusManager;
-        this.attackManager = attackManager;
+        this.playerStatusSubscriber = playerStatusSubscriber;
+//        this.attackManager = attackManager;
         this.pooledEngine = pooledEngine;
+
 //        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::logStats, 10, 5, TimeUnit.SECONDS);
     }
 
@@ -66,14 +64,14 @@ public class RemotePlayerUpdateSystem
                                     float deltaTime) {
         PlayerStatusName playerStatusName = remotePlayerComponent.getPlayerStatusName();
 
-        long latestVersionForPlayer = playerStatusManager.getLatestVersionForPlayer(playerStatusName);
+        long latestVersionForPlayer = playerStatusSubscriber.getLatestVersionForPlayer(playerStatusName);
 
         if (latestVersionForPlayer <= remotePlayerComponent.getLatestVersionSeen()) {
             numberOfNonUpdates++;
             return;
         }
 
-        PlayerStatus latestStatus = playerStatusManager.getLatestStatus(playerStatusName);
+        PlayerStatus latestStatus = playerStatusSubscriber.getLatestStatusForPlayer(playerStatusName);
 
 
         // Update the motion state component for this entity according to latest status
@@ -85,23 +83,23 @@ public class RemotePlayerUpdateSystem
     }
 
     private void handleAttackUpdate(RemotePlayerComponent remotePlayerComponent) {
-        List<Attack> unprocessedAttacks = attackManager.getUnprocessedAttacks(remotePlayerComponent.getAttackName());
-
-        if (unprocessedAttacks.size() == 0) {
-            return;
-        }
-
-        // TODO: Should probably run all these through the backend but meh
-        if (unprocessedAttacks.size() > 1) {
-            LOG.error("Had more than one unprocessed attack for {}", remotePlayerComponent);
-        }
-
-        Attack attack = unprocessedAttacks.get(0);
-        Entity entity = pooledEngine.createEntity();
-        AttackComponent attackComponent = pooledEngine.createComponent(AttackComponent.class);
-        attackComponent.setAttackName(remotePlayerComponent.getAttackName());
-        attackComponent.setAttack(attack);
-        entity.add(attackComponent);
+//        List<Attack> unprocessedAttacks = attackManager.getUnprocessedAttacks(remotePlayerComponent.getAttackName());
+//
+//        if (unprocessedAttacks.size() == 0) {
+//            return;
+//        }
+//
+//        // TODO: Should probably run all these through the backend but meh
+//        if (unprocessedAttacks.size() > 1) {
+//            LOG.error("Had more than one unprocessed attack for {}", remotePlayerComponent);
+//        }
+//
+//        Attack attack = unprocessedAttacks.get(0);
+//        Entity entity = pooledEngine.createEntity();
+//        AttackComponent attackComponent = pooledEngine.createComponent(AttackComponent.class);
+//        attackComponent.setAttackName(remotePlayerComponent.getAttackName());
+//        attackComponent.setAttack(attack);
+//        entity.add(attackComponent);
     }
 
     private void logStats() {

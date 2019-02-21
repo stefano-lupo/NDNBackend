@@ -1,0 +1,66 @@
+ {
+   "width": 480,
+   "height": 240,
+    
+  "rowInfo":
+    [
+      {
+        "name": "grass",
+        "numCols": 1
+      },
+      {
+        "name": "dirt",
+        "numCols": 1
+      },
+      {
+        "name": "stone",
+        "numCols": 1
+      },
+      {
+        "name": "water",
+        "numCols": 1
+      },
+      {
+        "name": "sand",
+        "numCols": 1
+      },
+      {
+        "name": "clay",
+        "numCols": 1
+      },
+      {
+        "name": "emerald",
+        "numCols": 1
+      },
+      {
+        "name": "tnt",
+        "numCols": 1
+      },
+
+      {
+        "name": "ice",
+        "numCols": 1
+      },
+      {
+        "name": "gold",
+        "numCols": 1
+      },
+      {
+        "name": "diamond",
+        "numCols": 1
+      },
+      {
+        "name": "redstone",
+        "numCols": 1
+      },
+
+      {
+        "name": "wood",
+        "numCols": 1
+      },
+      {
+        "name": "coal",
+        "numCols": 1
+      }
+    ]
+}

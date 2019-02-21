@@ -9,9 +9,13 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.Array;
+import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.libgdx.EntityCreator;
+import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
-import com.stefanolupo.ndngame.libgdx.components.ZComparator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 
@@ -19,70 +23,68 @@ public class RenderingSystem
         extends SortedIteratingSystem
         implements HasComponentMappers {
 
-    private static final float PIXELS_PER_METER = 32f;
-
-    private static final float FRUSTRUM_WIDTH = Gdx.graphics.getWidth() / PIXELS_PER_METER;
-    private static final float FRUSTRUM_HEIGHT = Gdx.graphics.getHeight() / PIXELS_PER_METER;
-
-    private static final float PIXELS_TO_METERS = 1.0f / PIXELS_PER_METER;
-
-    private static final Comparator<Entity> zComparator = new ZComparator();
+    private static final Logger LOG = LoggerFactory.getLogger(RenderingSystem.class);
+    private static final float PIXELS_PER_METER = 20f;
+    private static final float WORLD_VIEW_WIDTH = Gdx.graphics.getWidth() / PIXELS_PER_METER;
+    private static final float WORLD_VIEW_HEIGHT = Gdx.graphics.getHeight() / PIXELS_PER_METER;
+    private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getPosition().z);
 
     private final SpriteBatch spriteBatch;
+    private final Config config;
+
     private final Array<Entity> renderQueue;
     private final OrthographicCamera camera;
-
     private final BitmapFont font = new BitmapFont();
 
-
-    public RenderingSystem(SpriteBatch spriteBatch) {
-        super(Family.all(RenderComponent.class, TextureComponent.class).get(), zComparator);
-
+    public RenderingSystem(SpriteBatch spriteBatch, Config confg) {
+        super(Family.all(RenderComponent.class, TextureComponent.class).get(), Z_COMPARATOR);
         this.spriteBatch = spriteBatch;
-        renderQueue = new Array<>();
-        camera = new OrthographicCamera(FRUSTRUM_WIDTH, FRUSTRUM_HEIGHT);
-        camera.position.set(FRUSTRUM_WIDTH / 2f, FRUSTRUM_HEIGHT / 2f, 0);
+        this.config = confg;
 
+        renderQueue = new Array<>();
+        if (config.isMasterView()) {
+            camera = new OrthographicCamera(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
+        } else {
+            camera = new OrthographicCamera(WORLD_VIEW_WIDTH, WORLD_VIEW_HEIGHT);
+        }
+        camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
+        LOG.info("Camera viewport: {} x {} units", camera.viewportHeight, camera.viewportHeight);
+        camera.update();
     }
 
     @Override
     public void update(float deltaTime) {
         super.update(deltaTime);
 
-        camera.update();
         spriteBatch.setProjectionMatrix(camera.combined);
         spriteBatch.enableBlending();
         spriteBatch.begin();
 
         for (Entity entity : renderQueue) {
             TextureComponent textureComponent = TEXTURE_MAPPER.get(entity);
-            RenderComponent renderComponent = TRANSFORM_MAPPER.get(entity);
+            RenderComponent renderComponent = RENDER_MAPPER.get(entity);
 
             if (textureComponent.getRegion() == null) {
                 continue;
             }
 
-            float width = textureComponent.getRegion().getRegionWidth();
-            float height = textureComponent.getRegion().getRegionHeight();
+            float worldX = renderComponent.getPosition().x;
+            float worldY = renderComponent.getPosition().y;
+            float worldWidth = renderComponent.getWidth();
+            float worldHeight = renderComponent.getHeight();
 
-            float originX = width / 2f;
-            float originY = height / 2f;
-
-//            drawPositions(entity, renderComponent);
+            // Want to draw to bottom left corner for sprites, but body uses the center
+            float drawX = worldX - (worldWidth / 2);
+            float drawY = worldY - (worldHeight / 2);
 
             spriteBatch.draw(textureComponent.getRegion(),
-                    renderComponent.getPosition().x - originX,
-                    renderComponent.getPosition().y - originY,
-                    originX,
-                    originY,
-                    width,
-                    height,
-                    pixelsToMeters(renderComponent.getScale().x),
-                    pixelsToMeters(renderComponent.getScale().y),
-                    renderComponent.getRotation()
-            );
+                    drawX, drawY,
+                    textureComponent.getRegion().getRegionX(), textureComponent.getRegion().getRegionY(),
+                    worldWidth, worldHeight,
+                    renderComponent.getScale().x, renderComponent.getScale().y,
+                    renderComponent.getRotation());
         }
-
+        updateCameraPosition();
         spriteBatch.end();
         renderQueue.clear();
     }
@@ -96,8 +98,23 @@ public class RenderingSystem
         return camera;
     }
 
-    public static float pixelsToMeters(float pixelValue) {
-        return pixelValue * PIXELS_TO_METERS;
+    private void updateCameraPosition() {
+
+        Entity localPlayerEntity = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
+        if (localPlayerEntity == null) {
+            throw new IllegalStateException("Renderer had no local player!");
+        }
+
+        RenderComponent renderComponent = RENDER_MAPPER.get(localPlayerEntity);
+        if (renderComponent == null) {
+            throw new IllegalStateException("Local player had no render component!");
+        }
+
+        if (!config.isMasterView()) {
+            camera.position.set(renderComponent.getPosition().x, renderComponent.getPosition().y, 0);
+        }
+
+        camera.update();
     }
 
     private void drawPositions(Entity entity, RenderComponent renderComponent) {

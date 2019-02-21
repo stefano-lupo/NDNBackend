@@ -2,26 +2,20 @@ package com.stefanolupo.ndngame.libgdx.components;
 
 import com.badlogic.ashley.core.Component;
 import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
+import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
 
 public class StateComponent implements Component {
 
-    public static final float ATTACK_STATE_ANIMATION_TIME_MS = 3;
+    public static final float ATTACK_STATE_ANIMATION_TIME_MS = 2;
+    public static final float INTERACT_STATE_ANIMATION_TIME_MS = 1.5f;
 
     private MotionState currentHozMotionState = MotionState.REST;
     private MotionState currentVertMotionState = MotionState.REST;
     private AttackState attackState = AttackState.REST;
-    private float timeInState = 0.0f;
+    private InteractionState interactionState = InteractionState.REST;
 
-    public void updateMotionState(MotionState hozMotionState, MotionState vertMotionState, float deltaTime){
-        if (!(hozMotionState == currentHozMotionState && vertMotionState == currentVertMotionState)) {
-            currentHozMotionState = hozMotionState;
-            currentVertMotionState = vertMotionState;
-            timeInState = 0;
-        } else {
-            timeInState += deltaTime;
-        }
-    }
+    private float timeInState = 0.0f;
 
     public void updateMotionState(float velX, float velY, float deltaTime) {
         MotionState newHozMotionState = MotionState.REST;
@@ -57,7 +51,15 @@ public class StateComponent implements Component {
         } else {
             timeInState += deltaTime;
         }
+    }
 
+    public void updateInteractionState(InteractionState interactionState, float deltaTime) {
+        if (this.interactionState != interactionState) {
+            this.interactionState = interactionState;
+            timeInState = 0;
+        } else {
+            timeInState += deltaTime;
+        }
     }
 
     public AttackState getAttackState() {
@@ -72,12 +74,34 @@ public class StateComponent implements Component {
         return currentVertMotionState;
     }
 
+    public InteractionState getInteractionState() {
+        return interactionState;
+    }
+
     public float getTimeInState() {
         return timeInState;
     }
 
-    public boolean isCurrentlyAttacking() {
+    public boolean isBusy() {
+        return  isInAttackState() || isInInteractState();
+    }
+
+    public boolean isInAttackState() {
         return attackState != AttackState.REST;
+    }
+
+    public boolean isInInteractState() {
+        return interactionState != InteractionState.REST;
+    }
+
+    private void updateMotionState(MotionState hozMotionState, MotionState vertMotionState, float deltaTime){
+        if (!(hozMotionState == currentHozMotionState && vertMotionState == currentVertMotionState)) {
+            currentHozMotionState = hozMotionState;
+            currentVertMotionState = vertMotionState;
+            timeInState = 0;
+        } else {
+            timeInState += deltaTime;
+        }
     }
 
 }

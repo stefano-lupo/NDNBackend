@@ -6,10 +6,12 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
-import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AttackSystem extends IteratingSystem implements HasComponentMappers {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AttackSystem.class);
 
     @Inject
     public AttackSystem(){
@@ -22,6 +24,7 @@ public class AttackSystem extends IteratingSystem implements HasComponentMappers
         AttackComponent attackComponent = ATTACK_MAPPER.get(entity);
         StateComponent stateComponent = STATE_MAPPER.get(entity);
 
-        stateComponent.updateAttackState(AttackState.fromAttackType(attackComponent.getAttack().getType()), deltaTime);
+//        stateComponent.updateAttackState(AttackState.fromAttackType(attackComponent.getAttack().getType()), deltaTime);
+        LOG.info("Got attack: {}", attackComponent.getAttack());
     }
 }

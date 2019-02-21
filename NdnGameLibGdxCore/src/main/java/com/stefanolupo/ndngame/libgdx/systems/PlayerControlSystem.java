@@ -7,15 +7,17 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.libgdx.InputController;
+import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
+import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
+import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.AttackType;
-import com.stefanolupo.ndngame.protos.ID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,15 +34,18 @@ public class PlayerControlSystem
 
     private final InputController inputController;
     private final PooledEngine pooledEngine;
+    private final EntityCreator entityCreator;
     private final Config config;
 
     @Inject
     public PlayerControlSystem(InputController inputController,
                                PooledEngine pooledEngine,
+                               EntityCreator entityCreator,
                                Config config) {
         super(Family.all(LocalPlayerComponent.class).get());
         this.inputController = inputController;
         this.pooledEngine = pooledEngine;
+        this.entityCreator = entityCreator;
         this.config = config;
     }
 
@@ -49,14 +54,19 @@ public class PlayerControlSystem
         StateComponent stateComponent = STATE_MAPPER.get(entity);
         Body body = BODY_MAPPER.get(entity).getBody();
 
-        // No input allowed if currently attacking
-        if (stateComponent.isCurrentlyAttacking()) {
+        // No input allowed if currently busy
+        if (stateComponent.isBusy()) {
             return;
         }
 
         // If attacking: don't allow movement
-        if (inputController.isMouseButtonDown()) {
+        if (inputController.isAttackButtonPressed()) {
             handleAttackCommand(stateComponent, deltaTime, body);
+            return;
+        }
+
+        if (inputController.isInteractButtonPressed()) {
+            handleInteractionCommand(stateComponent, deltaTime, body);
             return;
         }
 
@@ -66,26 +76,25 @@ public class PlayerControlSystem
     private void handleAttackCommand(StateComponent stateComponent,
                                      float deltaTime,
                                      Body body) {
-
-//        if (inputController.isMouse1Down) {
-//            stateComponent.updateAttackState(AttackState.SWING, deltaTime);
-//        } else if (inputController.isMouse2Down) {
-//            stateComponent.updateAttackState(AttackState.CAST, deltaTime);
-//        } else if (inputController.isMouse3Down) {
-//            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
-//        }
-
+        AttackComponent attackComponent = null;
         if (inputController.isMouse1Down()) {
-            buildAttackComponent(body, 3f, AttackType.SWING);
-//            stateComponent.updateAttackState(AttackState.SWING, deltaTime);
+            attackComponent = buildAttackComponent(body, 3f, AttackType.SWING);
+            stateComponent.updateAttackState(AttackState.SWING, deltaTime);
         } else if (inputController.isMouse2Down()) {
-            buildAttackComponent(body, 3f, AttackType.CAST);
-//            stateComponent.updateAttackState(AttackState.CAST, deltaTime);
+            attackComponent = buildAttackComponent(body, 3f, AttackType.CAST);
+            stateComponent.updateAttackState(AttackState.CAST, deltaTime);
         } else if (inputController.isMouse3Down()) {
-            buildAttackComponent(body, 3f, AttackType.SHIELD);
-//            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
+            attackComponent = buildAttackComponent(body, 3f, AttackType.SHIELD);
+            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
+        } else {
+            LOG.error("Unknown attack command: {}", stateComponent.getAttackState());
         }
 
+        Entity entity = pooledEngine.createEntity();
+        entity.add(attackComponent);
+        pooledEngine.addEntity(entity);
+
+        // TODO: I had started doing something for attacks with ChronoSync
 //        Entity entity = pooledEngine.createEntity();
 //        entity.add
     }
@@ -94,7 +103,7 @@ public class PlayerControlSystem
         AttackComponent attackComponent = pooledEngine.createComponent(AttackComponent.class);
         AttackName name = new AttackName(config.getGameId(), config.getPlayerName());
         Attack attack = Attack.newBuilder()
-                .setId(ID.newBuilder().setValue(UUID.randomUUID().toString()).build())
+                .setId(UUID.randomUUID().toString())
                 .setRadius(radius)
                 .setX(body.getPosition().x)
                 .setY(body.getPosition().y)
@@ -105,8 +114,17 @@ public class PlayerControlSystem
         return attackComponent;
     }
 
+    private void handleInteractionCommand(StateComponent stateComponent, float deltaTime, Body body) {
+        if (inputController.isSpacePressed()) {
+            stateComponent.updateInteractionState(InteractionState.PLACE_BLOCK, deltaTime);
+
+            // TODO: This really isnt the place to do this but meh
+            entityCreator.createLocalBlock(body.getPosition().x, body.getPosition().y);
+        }
+    }
+
     private void handleMovementCommand(StateComponent stateComponent, float deltaTime) {
-        if(inputController.isLeftPressed()){
+        if (inputController.isLeftPressed()){
             stateComponent.updateHozState(MotionState.MOVE_LEFT, deltaTime);
         } else if(inputController.isRightPressed()){
             stateComponent.updateHozState(MotionState.MOVE_RIGHT, deltaTime);
@@ -114,7 +132,7 @@ public class PlayerControlSystem
             stateComponent.updateHozState(MotionState.REST, deltaTime);
         }
 
-        if(inputController.isUpPressed()){
+        if (inputController.isUpPressed()){
             stateComponent.updateVertState(MotionState.MOVE_UP, deltaTime);
         } else if(inputController.isDownPressed()){
             stateComponent.updateVertState(MotionState.MOVE_DOWN, deltaTime);

@@ -55,8 +55,9 @@ public class PhysicsSystem
             Body body = BODY_MAPPER.get(entity).getBody();
             Vector2 bodyPosition = body.getPosition();
 
-            RenderComponent renderComponent = TRANSFORM_MAPPER.get(entity);
+            RenderComponent renderComponent = RENDER_MAPPER.get(entity);
             renderComponent.setPosition(bodyPosition.x, bodyPosition.y);
+
             renderComponent.setRotation(body.getAngle() * MathUtils.radiansToDegrees);
         }
 

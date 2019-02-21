@@ -4,8 +4,12 @@ option java_multiple_files = true;
 option java_outer_classname = "NDNGameProtos";
 option java_package = "com.stefanolupo.ndngame.protos";
 
-message ID {
-    string value = 1;
+message Player {
+    string name = 1;
+}
+
+message Players {
+    repeated Player players = 1;
 }
 
 message PlayerStatus {
@@ -16,7 +20,7 @@ message PlayerStatus {
 }
 
 message Attack {
-    ID id = 1;
+    string id = 1;
     int64 timestamp = 2;
     float x = 3;
     float y = 4;
@@ -29,6 +33,11 @@ enum AttackType {
     CAST = 1;
     SHIELD = 2;
     DANCE = 4;
+}
+
+enum InteractionType {
+    PLACE_BLOCK = 0;
+    DOOR_TOGGLE = 1;
 }
 
 message BulletStatus {
@@ -47,4 +56,17 @@ message BulletsList {
 
 message BulletRemove {
     int64 id = 1;
+}
+
+message Block {
+    string id = 1;
+    float x = 2;
+    float y = 3;
+    float width = 4;
+    float height = 5;
+    int32 health = 6;
+}
+
+message Blocks {
+    map<string, Block> blocksById = 1;
 }

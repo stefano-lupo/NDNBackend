@@ -42,7 +42,7 @@ public class BulletsName extends BaseName {
                 .append("bullets");
     }
 
-    @Override
+
     public Interest toInterest() {
         return new Interest(getListenName().append(String.valueOf(sequenceNumber)));
     }

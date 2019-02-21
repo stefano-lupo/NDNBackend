@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.assets;
 
 public enum SpriteSheet {
     PLAYER("dude"),

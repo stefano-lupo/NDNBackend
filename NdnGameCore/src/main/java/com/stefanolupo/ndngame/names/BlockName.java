@@ -7,46 +7,31 @@ import net.named_data.jndn.Name;
 import java.util.regex.Pattern;
 
 /**
- * Schema: base_name/|game_id|/|player_name|/status/|sequence_number|/|next_seqeunce_number|
+ * Schema: base_name/|game_id|/|name|/blocks/|sequence_number|/\next_sequence_number|
  */
-public class PlayerStatusName
-        extends BaseName
-        implements SequenceNumberedName {
+public class BlockName extends BaseName implements SequenceNumberedName {
 
-    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/status/\\d+");
+    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/blocks/\\d+");
 
     private long gameId;
     private String playerName;
     private long sequenceNumber;
     private long nextSequenceNumber = sequenceNumber;
 
-    /**
-     * Create a PlayerStatusName using the components
-     * Initialize both sequence numbers to zero
-     * Used on discovery
-     */
-    public PlayerStatusName(long gameId, String playerName) {
-        super(String.valueOf(gameId), playerName, "status");
+    public BlockName(long gameId, String playerName) {
+        super(String.valueOf(gameId), playerName, "blocks");
         this.gameId = gameId;
         this.playerName = playerName;
         this.sequenceNumber = 0;
-        this.nextSequenceNumber = this.sequenceNumber;
+        this.nextSequenceNumber = sequenceNumber;
     }
 
-    /**
-     * Create Name from received interest
-     * Used by Producer
-     */
-    public PlayerStatusName(Interest interest) {
+    public BlockName(Interest interest) {
         super(interest.getName());
         parse();
     }
 
-    /**
-     * Create Name from data sent back from producer
-     * This is the name that contains the updated next sequence number
-     */
-    public PlayerStatusName(Data data) {
+    public BlockName(Data data) {
         super(data.getName());
         parse();
     }
@@ -77,7 +62,7 @@ public class PlayerStatusName
         return new Name(GAME_BASE_NAME)
                 .append(String.valueOf(gameId))
                 .append(playerName)
-                .append("status");
+                .append("blocks");
     }
 
     /**
@@ -106,6 +91,7 @@ public class PlayerStatusName
         return playerName;
     }
 
+
     private void parse() {
 //        Preconditions.checkArgument(tailName.size() == 4);
         checkMatchesRegex(tailName, NAME_PATTERN);
@@ -117,29 +103,5 @@ public class PlayerStatusName
         if (tailName.size() == 5) {
             nextSequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
         }
-    }
-
-
-    /**
-     * equals which ignores the sequence number
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof PlayerStatusName)) {
-            return false;
-        }
-
-        PlayerStatusName other = (PlayerStatusName) obj;
-
-        return other.playerName.equals(playerName) &&
-                other.gameId == gameId;
-    }
-
-    /**
-     * hashCode which ignores the sequence number
-     */
-    @Override
-    public int hashCode() {
-        return 31 * playerName.hashCode() + Long.hashCode(gameId);
     }
 }

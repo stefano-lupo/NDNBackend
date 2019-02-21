@@ -3,17 +3,15 @@ package com.stefanolupo.ndngame.config;
 public class Config {
 
     private final String playerName;
+    private final boolean isMasterView;
     private final boolean isAutomated;
     private final long gameId;
-    private final int width;
-    private final int height;
 
-    private Config(String playerName, boolean isAutomated, long gameId, int width, int height) {
+    private Config(String playerName, boolean isAutomated, long gameId, boolean isMasterView) {
         this.playerName = playerName;
         this.isAutomated = isAutomated;
         this.gameId = gameId;
-        this.width = width;
-        this.height = height;
+        this.isMasterView = isMasterView;
     }
 
     public String getPlayerName() {
@@ -24,16 +22,12 @@ public class Config {
         return isAutomated;
     }
 
+    public boolean isMasterView() {
+        return isMasterView;
+    }
+
     public long getGameId() {
         return gameId;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
     }
 
     public static Builder builder() {
@@ -44,8 +38,7 @@ public class Config {
         private String playerName;
         private boolean isAutomated = false;
         private long gameId = 0;
-        private int width = 500;
-        private int height = 500;
+        private boolean isMasterView = false;
 
         public Builder setPlayerName(String playerName) {
             this.playerName = playerName;
@@ -62,13 +55,8 @@ public class Config {
             return this;
         }
 
-        public Builder setWidth(int width) {
-            this.width = width;
-            return this;
-        }
-
-        public Builder setHeight(int height) {
-            this.height = height;
+        public Builder isMasterView(boolean isMasterView) {
+            this.isMasterView = isMasterView;
             return this;
         }
 
@@ -76,8 +64,7 @@ public class Config {
             return new Config(playerName,
                     isAutomated,
                     gameId,
-                    width,
-                    height);
+                    isMasterView);
         }
 
     }

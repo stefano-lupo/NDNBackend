@@ -1,0 +1,103 @@
+blocks.png
+size: 480,240
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+grass_00000
+	rotate: false
+	xy: 0, 0
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+dirt_00000
+	rotate: false
+	xy: 80, 0
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+stone_00000
+	rotate: false
+	xy: 160, 0
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+water_00000
+	rotate: false
+	xy: 240, 0
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+sand_00000
+	rotate: false
+	xy: 320, 0
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+clay_00000
+	rotate: false
+	xy: 400, 0
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+emerald_00000
+	rotate: false
+	xy: 0, 80
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+tnt_00000
+	rotate: false
+	xy: 80, 80
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+ice_00000
+	rotate: false
+	xy: 160, 80
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+gold_00000
+	rotate: false
+	xy: 240, 80
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+diamond_00000
+	rotate: false
+	xy: 320, 80
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+redstone_00000
+	rotate: false
+	xy: 400, 80
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+wood_00000
+	rotate: false
+	xy: 0, 160
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
+coal_00000
+	rotate: false
+	xy: 80, 160
+	size: 80, 80
+	orig: 80, 80
+	offset: 0, 0
+	index: -1
