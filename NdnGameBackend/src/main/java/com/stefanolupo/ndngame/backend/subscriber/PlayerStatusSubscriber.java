@@ -58,10 +58,6 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
             throw new RuntimeException("Couldn't parse data for " + data.getName().toUri(), e);
         }
     }
-//
-//    private Long sequenceNumberExtractor(Interest interest, Data data) {
-//        return new PlayerStatusName(interest).getSequenceNumber();
-//    }
 
     @Override
     public void onPlayersDiscovered(Set<Player> players) {

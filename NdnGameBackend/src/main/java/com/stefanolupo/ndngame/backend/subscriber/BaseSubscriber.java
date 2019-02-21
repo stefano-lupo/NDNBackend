@@ -24,6 +24,9 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
      */
     private static final long WAIT_TIME_BETWEEN_INTERESTS_MS = 10;
 
+    private static final long FACE_POLL_WAIT_TIME_MS = 0;
+    private static final long FACE_POLL_PERIOD_MS = 10;
+
     private SequenceNumberedName name;
     private D entity;
     private final Function<Data, D> dataFunction;
@@ -37,12 +40,15 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
                           Function<Data, D> dataFunction,
                           Function<Data, SequenceNumberedName> nameExtractor) {
         this.name = name;
-//        this.face = new Face(new UdpTransport(), new UdpTransport.ConnectionInfo("localhost", 6363));
         this.face = new Face();
         this.dataFunction = dataFunction;
         this.nameExtractor = nameExtractor;
         expressInterestSafe(buildInterest(name));
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::pollFace, 500, 10, TimeUnit.MILLISECONDS);
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                this::pollFace,
+                FACE_POLL_WAIT_TIME_MS,
+                FACE_POLL_PERIOD_MS,
+                TimeUnit.MILLISECONDS);
     }
 
 
@@ -81,10 +87,6 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     }
 
     private Interest buildInterest(SequenceNumberedName name) {
-        // We wan't routers on the way to provide cached copies if applicable (obviously)
-        // But our sequence number can fall behind potentially
-        // If falls pretty far behind, cached ones in routers will no longer be fresh and we will go to producer
-        // They will send the LATEST SEQUENCE number which we will then jump to
         return name.buildInterest()
                 .setMustBeFresh(true)
                 .setInterestLifetimeMilliseconds(INTEREST_LIFETIME_MS)

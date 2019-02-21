@@ -2,7 +2,6 @@ package com.stefanolupo.ndngame.libgdx.systems.remote;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
-import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
@@ -30,19 +29,11 @@ public class RemotePlayerUpdateSystem
     private static long numberOfNonUpdates = 0;
 
     private final PlayerStatusSubscriber playerStatusSubscriber;
-//    private final AttackManager attackManager;
-    private final PooledEngine pooledEngine;
 
     @Inject
-    public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber,
-//                                    AttackManager attackManager,
-                                    PooledEngine pooledEngine) {
+    public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber) {
         super(Family.all(RemotePlayerComponent.class).get());
         this.playerStatusSubscriber = playerStatusSubscriber;
-//        this.attackManager = attackManager;
-        this.pooledEngine = pooledEngine;
-
-//        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::logStats, 10, 5, TimeUnit.SECONDS);
     }
 
     @Override
@@ -103,6 +94,7 @@ public class RemotePlayerUpdateSystem
 
     private void logStats() {
         LOG.debug("{} remote updates, {} non updates = {}%",
-                numberOfRemoteUpdates, numberOfNonUpdates, (numberOfRemoteUpdates) * 100 / (numberOfRemoteUpdates + numberOfNonUpdates + 0f));
+                numberOfRemoteUpdates, numberOfNonUpdates,
+                (numberOfRemoteUpdates) * 100 / (numberOfRemoteUpdates + numberOfNonUpdates + 0f));
     }
 }

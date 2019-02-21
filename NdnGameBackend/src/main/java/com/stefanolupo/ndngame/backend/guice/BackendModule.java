@@ -3,9 +3,12 @@ package com.stefanolupo.ndngame.backend.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.stefanolupo.ndngame.backend.chronosynced.DiscoveryManager;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
+import com.stefanolupo.ndngame.backend.publisher.BasePublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.config.Config;
@@ -34,6 +37,10 @@ public class BackendModule extends AbstractModule {
         PLAYER_DISCOVERY_CALLBACKS.forEach(pdc -> onDiscoveryBinder.addBinding().to(pdc));
 
         bind(DiscoveryManager.class).asEagerSingleton();
+
+        install(new FactoryModuleBuilder()
+                .implement(BasePublisher.class, BasePublisher.class)
+                .build(BasePublisherFactory.class));
     }
 
     @Provides

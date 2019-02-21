@@ -1,16 +1,14 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.*;
-import net.named_data.jndn.encoding.EncodingException;
-import net.named_data.jndn.security.KeyChain;
-import net.named_data.jndn.security.SecurityException;
-import net.named_data.jndn.security.pib.PibImpl;
 import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -19,51 +17,31 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
-public class BasePublisher <T extends SequenceNumberedName> implements OnInterestCallback {
+public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
-    private static final Long DEFAULT_FACE_POLL_TIME_MS = 10L;
-    private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 1000L;
     private static final Long DEFAULT_QUEUE_PROCESS_TIME_MS = 10L;
     private static final Long DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS = 1000L;
     private static final Double FRESHNESS_PERIOD_MS = 20.0;
 
-    private final List<T> outstandingInterests = new ArrayList<>();
+    private final List<SequenceNumberedName> outstandingInterests = new ArrayList<>();
     private long totalNumInterests = 0;
 
-    private final SequenceNumberedName syncName;
-    private final Function<Interest, T> interestTFunction;
+    private final Function<Interest, SequenceNumberedName> interestTFunction;
+    private final Face face;
 
     private Blob latestBlob;
     private AtomicBoolean hasUpdate = new AtomicBoolean(false);
     private long sequenceNumber = 0;
 
-    private final Face face;
-    private final KeyChain keyChain;
-    private final Name certificateName;
 
-    public BasePublisher(SequenceNumberedName syncName, Function<Interest, T> interestTFunction) {
-        this.syncName = syncName;
+    @Inject
+    public BasePublisher(FaceManager faceManager,
+                         @Assisted SequenceNumberedName syncName,
+                         @Assisted Function<Interest, SequenceNumberedName> interestTFunction) {
         this.interestTFunction = interestTFunction;
-
-        try {
-            keyChain = new KeyChain();
-            certificateName = keyChain.getDefaultCertificateName();
-//            this.face = new Face(new UdpTransport(), new UdpTransport.ConnectionInfo("localhost", 6363));
-            this.face = new Face();
-            face.setCommandSigningInfo(keyChain, certificateName);
-            LOG.debug("Registering {}", syncName.getListenName());
-            face.registerPrefix(syncName.getListenName(), this, this::registerPrefixFailure);
-        } catch (SecurityException | KeyChain.Error | PibImpl.Error | IOException e) {
-            String errorMessage = String.format("Could not initialize Producer (Prefix: %s)", syncName);
-            throw new RuntimeException(errorMessage, e);
-        }
-
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                this::pollFace,
-                DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
-                DEFAULT_FACE_POLL_TIME_MS,
-                TimeUnit.MILLISECONDS);
+        this.face = faceManager.getBasicFace(syncName.getListenName(), this);
+        LOG.debug("Registering {}", syncName.getListenName());
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 this::processQueue,
                 DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS,
@@ -88,7 +66,7 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
 
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        T interestName = interestTFunction.apply(interest);
+        SequenceNumberedName interestName = interestTFunction.apply(interest);
         totalNumInterests++;
         outstandingInterests.add(interestName);
     }
@@ -108,8 +86,8 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
         }
 
         // Get all interests with sequence number < current sequence number
-        for (Iterator<T> i = outstandingInterests.iterator(); i.hasNext();) {
-            T t = i.next();
+        for (Iterator<SequenceNumberedName> i = outstandingInterests.iterator(); i.hasNext();) {
+            SequenceNumberedName t = i.next();
             if (t.getLatestSequenceNumberSeen() <= sequenceNumber) {
                 sendData(t);
                 i.remove();
@@ -128,28 +106,15 @@ public class BasePublisher <T extends SequenceNumberedName> implements OnInteres
     // If we're always sending back newest one --> we don't need sequence numbers
 
     private void sendData(SequenceNumberedName name) {
-//        nameWithSequenceNumber.setSequenceNumber(sequenceNumber);
-//        Name name = new Name(name.getNameWithSequenceNumber()).append(String.valueOf(sequenceNumber));
         name.setNextSequenceNumber(sequenceNumber);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(FRESHNESS_PERIOD_MS);
         try {
-            keyChain.sign(data, certificateName);
+//            keyChain.sign(data, certificateName);
             face.putData(data);
         } catch (Exception e) {
             LOG.error("Unable to send data to satisfy interest " + name.getFullName(), e);
         }
     }
 
-    private void registerPrefixFailure(Name prefix) {
-        throw new RuntimeException("Unable to register prefx: " + prefix);
-    }
-
-    private void pollFace() {
-        try {
-            face.processEvents();
-        } catch (IOException | EncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
 }
