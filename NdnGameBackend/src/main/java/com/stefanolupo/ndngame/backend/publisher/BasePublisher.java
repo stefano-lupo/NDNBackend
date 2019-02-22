@@ -9,9 +9,9 @@ import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,11 +24,10 @@ public class BasePublisher implements OnInterestCallback {
     private static final Long DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS = 1000L;
     private static final Double FRESHNESS_PERIOD_MS = 20.0;
 
-    private final List<SequenceNumberedName> outstandingInterests = new ArrayList<>();
+    private final Map<SequenceNumberedName, Face> outstandingInterests = new HashMap<>();
     private long totalNumInterests = 0;
 
     private final Function<Interest, SequenceNumberedName> interestTFunction;
-    private final Face face;
 
     private Blob latestBlob;
     private AtomicBoolean hasUpdate = new AtomicBoolean(false);
@@ -40,7 +39,7 @@ public class BasePublisher implements OnInterestCallback {
                          @Assisted SequenceNumberedName syncName,
                          @Assisted Function<Interest, SequenceNumberedName> interestTFunction) {
         this.interestTFunction = interestTFunction;
-        this.face = faceManager.getBasicFace(syncName.getListenName(), this);
+        faceManager.registerBasicPrefix(syncName.getListenName(), this);
         LOG.debug("Registering {}", syncName.getListenName());
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 this::processQueue,
@@ -68,7 +67,7 @@ public class BasePublisher implements OnInterestCallback {
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         SequenceNumberedName interestName = interestTFunction.apply(interest);
         totalNumInterests++;
-        outstandingInterests.add(interestName);
+        outstandingInterests.put(interestName, face);
     }
 
     // TODO: Maybe multithread this?
@@ -85,14 +84,18 @@ public class BasePublisher implements OnInterestCallback {
             return;
         }
 
-        // Get all interests with sequence number < current sequence number
-        for (Iterator<SequenceNumberedName> i = outstandingInterests.iterator(); i.hasNext();) {
-            SequenceNumberedName t = i.next();
-            if (t.getLatestSequenceNumberSeen() <= sequenceNumber) {
-                sendData(t);
+
+        // Send any interests with sequenceNumber <= currentSequenceNumber
+        for (Iterator<Map.Entry<SequenceNumberedName, Face>> i = outstandingInterests.entrySet().iterator(); i.hasNext();) {
+            Map.Entry<SequenceNumberedName, Face> entry = i.next();
+            SequenceNumberedName sequenceNumberedName = entry.getKey();
+            Face face = entry.getValue();
+
+            if (sequenceNumberedName.getLatestSequenceNumberSeen() <= sequenceNumber) {
+                sendData(sequenceNumberedName, face);
                 i.remove();
             } else {
-                LOG.debug("Had Update but {} already had sn {}", t.getFullName(), sequenceNumber);
+                LOG.debug("Had Update but {} already had sn {}", sequenceNumberedName.getFullName(), sequenceNumber);
             }
         }
     }
@@ -105,7 +108,7 @@ public class BasePublisher implements OnInterestCallback {
         // Can use freshness to control this somewhat
     // If we're always sending back newest one --> we don't need sequence numbers
 
-    private void sendData(SequenceNumberedName name) {
+    private void sendData(SequenceNumberedName name, Face face) {
         name.setNextSequenceNumber(sequenceNumber);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(FRESHNESS_PERIOD_MS);

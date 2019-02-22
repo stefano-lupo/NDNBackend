@@ -26,7 +26,6 @@ public class BlockPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(BlockPublisher.class);
 
     private final BasePublisher publisher;
-    private final Face interactionFace;
     private final Map<String, Block> localBlocksById = new HashMap<>();
 
     @Inject
@@ -34,8 +33,8 @@ public class BlockPublisher {
                           BasePublisherFactory factory,
                           FaceManager faceManager) {
         publisher = factory.create(new BlockName(config.getGameId(), config.getPlayerName()), BlockName::new);
-        BlockInteractionName blockInteractionName = new BlockInteractionName(config.getGameId());
-        interactionFace = faceManager.getBasicFace(blockInteractionName.getListenPrefix(), this::onInteractionInterest);
+        BlockInteractionName blockInteractionName = new BlockInteractionName(config.getGameId(), config.getPlayerName());
+        faceManager.registerBasicPrefix(blockInteractionName.getListenPrefix(), this::onInteractionInterest);
     }
 
     public void updateBlock(String blockId, Block block) {
@@ -70,7 +69,7 @@ public class BlockPublisher {
                     .setHealth(block.getHealth() - 1)
                     .build();
             updateBlock(blockInteractionName.getBlockId(), updatedBlock);
-            LOG.info("Updated block: {}", updatedBlock);
+            LOG.debug("Updated block: {}", updatedBlock.getId());
         }
 
     }

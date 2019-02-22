@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.BlockInteractionName;
 import com.stefanolupo.ndngame.names.BlockName;
@@ -11,12 +12,10 @@ import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import com.stefanolupo.ndngame.protos.Player;
 import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 @Singleton
@@ -26,20 +25,23 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     private final List<BaseSubscriber<Map<String, Block>>> subscribersList = new ArrayList<>();
     private final Config config;
+    private final FaceManager faceManager;
 
     @Inject
-    public BlockSubscriber(Config config) {
+    public BlockSubscriber(Config config,
+                           FaceManager faceManager) {
         this.config = config;
+        this.faceManager = faceManager;
     }
 
     public void addSubscription(BlockName blockName) {
         LOG.info("Adding subscription for {}", blockName);
-        BaseSubscriber<Map<String, Block>> subscriber =
-                new BaseSubscriber<>(
-                        blockName,
-                        this::typeFromData,
-                        BlockName::new
-                );
+        BaseSubscriber<Map<String, Block>> subscriber = new BaseSubscriber<>(
+                faceManager,
+                blockName,
+                this::typeFromData,
+                BlockName::new
+        );
         subscribersList.add(subscriber);
     }
 
@@ -64,15 +66,11 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     public void interactWithBlock(String blockId) {
         for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
             if (subscriber.getEntity().containsKey(blockId)) {
-                BlockInteractionName name = new BlockInteractionName(config.getGameId(), blockId);
-                Face face = new Face();
+                BlockInteractionName name = new BlockInteractionName(config.getGameId(), "desktop", blockId);
                 Interest interest = name.toInterest();
                 LOG.info("Interacting with block: {}", interest.toUri());
-                try {
-                    face.expressInterest(interest, (i, d) -> LOG.debug("Got data"));
-                } catch (IOException e) {
-                    LOG.error("Unable to express interest when interacting with block: {}", name.toInterest().toUri());
-                }
+                faceManager.expressInterestSafe(interest);
+                return;
             }
         }
     }
