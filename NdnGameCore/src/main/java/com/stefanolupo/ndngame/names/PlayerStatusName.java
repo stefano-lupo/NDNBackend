@@ -7,13 +7,13 @@ import net.named_data.jndn.Name;
 import java.util.regex.Pattern;
 
 /**
- * Schema: base_name/|game_id|/|player_name|/status/|sequence_number|/|next_seqeunce_number|
+ * Schema: base_name/|game_id|/|player_name|/status/sync/|sequence_number|/|next_seqeunce_number|
  */
 public class PlayerStatusName
         extends BaseName
         implements SequenceNumberedName {
 
-    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/status/\\d+");
+    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/status/sync/\\d+");
 
     private long gameId;
     private String playerName;
@@ -26,7 +26,7 @@ public class PlayerStatusName
      * Used on discovery
      */
     public PlayerStatusName(long gameId, String playerName) {
-        super(String.valueOf(gameId), playerName, "status");
+        super(String.valueOf(gameId), playerName, "status", "sync");
         this.gameId = gameId;
         this.playerName = playerName;
         this.sequenceNumber = 0;
@@ -77,7 +77,8 @@ public class PlayerStatusName
         return new Name(GAME_BASE_NAME)
                 .append(String.valueOf(gameId))
                 .append(playerName)
-                .append("status");
+                .append("status")
+                .append("sync");
     }
 
     /**
@@ -112,10 +113,10 @@ public class PlayerStatusName
 
         gameId = Long.valueOf(tailName.get(0).toEscapedString());
         playerName = tailName.get(1).toEscapedString();
-        sequenceNumber = Long.valueOf(tailName.get(3).toEscapedString());
+        sequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
 
-        if (tailName.size() == 5) {
-            nextSequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
+        if (tailName.size() == 6) {
+            nextSequenceNumber = Long.valueOf(tailName.get(5).toEscapedString());
         }
     }
 

@@ -49,8 +49,10 @@ public class BlockInteractionName extends BaseName {
     }
 
     private void parse() {
-        Preconditions.checkArgument(tailName.size() == 5,
-               "Invalid tailName: %s, should have 4 components", tailName);
+        int numTailComponents = 5;
+        Preconditions.checkArgument(tailName.size() == numTailComponents,
+               "Invalid tailName: %s, should have {} components", tailName, numTailComponents);
+        checkMatchesRegex(tailName, PATTERN);
 
         gameId = Long.valueOf(tailName.get(0).toEscapedString());
         playerName = tailName.getSubName(1).toUri();

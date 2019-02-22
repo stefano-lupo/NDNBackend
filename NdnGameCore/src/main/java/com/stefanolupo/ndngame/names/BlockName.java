@@ -7,19 +7,22 @@ import net.named_data.jndn.Name;
 import java.util.regex.Pattern;
 
 /**
- * Schema: base_name/|game_id|/|name|/blocks/|sequence_number|/\next_sequence_number|
+ * Schema: base_name/|game_id|/|name|/blocks/sync/|sequence_number|/\next_sequence_number|
  */
 public class BlockName extends BaseName implements SequenceNumberedName {
 
-    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/blocks/\\d+");
+    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/blocks/sync/\\d+");
 
     private long gameId;
     private String playerName;
     private long sequenceNumber;
     private long nextSequenceNumber = sequenceNumber;
 
+    // Eek
+    private String id = null;
+
     public BlockName(long gameId, String playerName) {
-        super(String.valueOf(gameId), playerName, "blocks");
+        super(String.valueOf(gameId), playerName, "blocks", "sync");
         this.gameId = gameId;
         this.playerName = playerName;
         this.sequenceNumber = 0;
@@ -62,7 +65,8 @@ public class BlockName extends BaseName implements SequenceNumberedName {
         return new Name(GAME_BASE_NAME)
                 .append(String.valueOf(gameId))
                 .append(playerName)
-                .append("blocks");
+                .append("blocks")
+                .append("sync");
     }
 
     /**
@@ -98,10 +102,20 @@ public class BlockName extends BaseName implements SequenceNumberedName {
 
         gameId = Long.valueOf(tailName.get(0).toEscapedString());
         playerName = tailName.get(1).toEscapedString();
-        sequenceNumber = Long.valueOf(tailName.get(3).toEscapedString());
+        sequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
 
-        if (tailName.size() == 5) {
-            nextSequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
+        if (tailName.size() == 6) {
+            nextSequenceNumber = Long.valueOf(tailName.get(5).toEscapedString());
         }
+    }
+
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    //TODO: Need to implement
+    public String getId() {
+        return id;
     }
 }

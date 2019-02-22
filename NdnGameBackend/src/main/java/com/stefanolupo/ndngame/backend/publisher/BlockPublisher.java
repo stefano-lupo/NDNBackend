@@ -37,7 +37,7 @@ public class BlockPublisher {
         faceManager.registerBasicPrefix(blockInteractionName.getListenPrefix(), this::onInteractionInterest);
     }
 
-    public void updateBlock(String blockId, Block block) {
+    public void upsertBlock(String blockId, Block block) {
         localBlocksById.put(blockId, block);
         updateBlob();
     }
@@ -68,7 +68,7 @@ public class BlockPublisher {
             Block updatedBlock = block.toBuilder()
                     .setHealth(block.getHealth() - 1)
                     .build();
-            updateBlock(blockInteractionName.getBlockId(), updatedBlock);
+            upsertBlock(blockInteractionName.getBlockId(), updatedBlock);
             LOG.debug("Updated block: {}", updatedBlock.getId());
         }
 

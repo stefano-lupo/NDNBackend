@@ -12,6 +12,7 @@ import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
+import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
@@ -58,7 +59,7 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
         Map<String, Entity> entityMap = new HashMap<>();
         for (Entity e : blockEntities) {
             BlockComponent blockComponent = BLOCK_MAPPER.get(e);
-            entityMap.put(blockComponent.getId(), e);
+            entityMap.put(blockComponent.getBlockName().getId(), e);
         }
 
         // Create missing remote blocks
@@ -77,9 +78,9 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
         // Update existing blockEntities
         for (Entity blockEntity : blockEntities) {
             BlockComponent blockComponent = BLOCK_MAPPER.get(blockEntity);
-            String id = blockComponent.getId();
+            String id = blockComponent.getBlockName().getId();
             Block block = blockComponent.isRemote() ? remoteBlocksById.get(id) : localBlocksById.get(id);
-            blockComponent.setHealth(block.getHealth());
+            BlockConverter.reconcileRemoteBlock(blockEntity, block);
         }
     }
 }

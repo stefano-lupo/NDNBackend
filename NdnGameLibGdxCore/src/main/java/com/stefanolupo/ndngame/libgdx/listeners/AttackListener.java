@@ -12,8 +12,8 @@ import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
 import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
 import com.stefanolupo.ndngame.libgdx.components.RemotePlayerComponent;
+import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
-import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,15 +52,12 @@ public class AttackListener implements EntityListener, HasComponentMappers {
 
             if (intersectsWithBlock(attackComponent, bodyComponent)) {
                 if (blockComponent.isRemote()) {
-                    blockSubscriber.interactWithBlock(blockComponent.getId());
+                    blockSubscriber.interactWithBlock(blockComponent.getBlockName().getId());
                 } else {
+                    // Perform engine updates
                     blockComponent.setHealth(blockComponent.getHealth() - 1);
-                    Block block = blockPublisher.getLocalBlocksById().get(blockComponent.getId());
-                    block = block.toBuilder()
-                            .setHealth(blockComponent.getHealth())
-                            .build();
-                    blockPublisher.updateBlock(blockComponent.getId(), block);
-                    LOG.info("Published block update for {}", block.getId());
+                    blockPublisher.upsertBlock(blockComponent.getBlockName().getId(), BlockConverter.blockEntityToProto(blockEntity));
+                    LOG.info("Published block update for {}", blockComponent.getBlockName().getId());
                 }
             }
         }

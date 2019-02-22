@@ -1,18 +1,23 @@
 package com.stefanolupo.ndngame.libgdx.components;
 
 import com.badlogic.ashley.core.Component;
+import com.stefanolupo.ndngame.names.BlockName;
 
+/**
+ * Contains the blocks remote name object and extra non game engine fields
+ */
 public class BlockComponent implements Component {
-    private String id;
+
+    private BlockName blockName;
     private boolean isRemote = false;
     private int health;
 
-    public String getId() {
-        return id;
+    public BlockName getBlockName() {
+        return blockName;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setBlockName(BlockName blockName) {
+        this.blockName = blockName;
     }
 
     public boolean isRemote() {

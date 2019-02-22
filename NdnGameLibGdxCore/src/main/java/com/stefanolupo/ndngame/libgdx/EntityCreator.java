@@ -17,6 +17,7 @@ import com.stefanolupo.ndngame.libgdx.assets.Textures;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.names.AttackName;
+import com.stefanolupo.ndngame.names.BlockName;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Player;
@@ -95,7 +96,8 @@ public class EntityCreator implements OnPlayersDiscovered {
                 .setHeight(BLOCK_HEIGHT)
                 .setHealth(5)
                 .build();
-        Entity entity = createBlockEntity(block, false);
+        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName());
+        Entity entity = createBlockEntity(block, blockName, false);
         blockPublisher.addBlock(block);
         engine.addEntity(entity);
     }
@@ -105,7 +107,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         engine.addEntity(entity);
     }
 
-    private Entity createBlockEntity(Block block, boolean isRemote) {
+    private Entity createBlockEntity(Block block, BlockName blockName, boolean isRemote) {
         LOG.debug("Creating a block at {}, {}, isRemote: {}", block.getX(), block.getY(), isRemote);
 
         Entity entity = engine.createEntity();
@@ -133,7 +135,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         entity.add(renderComponent);
 
         BlockComponent blockComponent = engine.createComponent(BlockComponent.class);
-        blockComponent.setId(block.getId());
+        blockComponent.setBlockName(blockName);
         blockComponent.setRemote(isRemote);
         blockComponent.setHealth(block.getHealth());
         entity.add(blockComponent);

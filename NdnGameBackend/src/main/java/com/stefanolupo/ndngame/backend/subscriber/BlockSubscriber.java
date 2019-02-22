@@ -1,18 +1,17 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.names.BlockInteractionName;
 import com.stefanolupo.ndngame.names.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import com.stefanolupo.ndngame.protos.Player;
 import net.named_data.jndn.Data;
-import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +22,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockSubscriber.class);
 
-    private final List<BaseSubscriber<Map<String, Block>>> subscribersList = new ArrayList<>();
+    private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
     private final Config config;
     private final FaceManager faceManager;
 
@@ -36,7 +35,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     public void addSubscription(BlockName blockName) {
         LOG.info("Adding subscription for {}", blockName);
-        BaseSubscriber<Map<String, Block>> subscriber = new BaseSubscriber<>(
+        BaseSubscriber<Map<BlockName, Block>> subscriber = new BaseSubscriber<>(
                 faceManager,
                 blockName,
                 this::typeFromData,
@@ -45,18 +44,20 @@ public class BlockSubscriber implements OnPlayersDiscovered {
         subscribersList.add(subscriber);
     }
 
-    public Map<String, Block> getBlocksById() {
-        Map<String, Block> map = new HashMap<>();
+    public Map<BlockName, Block> getBlocksById() {
+        Map<BlockName, Block> map = new HashMap<>();
 
-        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
+        for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {
             // Can be null before first remote receipt of entity
             if (subscriber.getEntity() == null) {
                 continue;
             }
-            for (String id : subscriber.getEntity().keySet()) {
-                Block block = subscriber.getEntity().get(id);
-                map.put(id, block);
-            }
+
+            map.putAll(subscriber.getEntity());
+//            for (String id : subscriber.getEntity().keySet()) {
+//                Block block = subscriber.getEntity().get(id);
+//                map.put(id, block);
+//            }
         }
 
         return map;
@@ -64,21 +65,25 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
 
     public void interactWithBlock(String blockId) {
-        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
-            if (subscriber.getEntity().containsKey(blockId)) {
-                BlockInteractionName name = new BlockInteractionName(config.getGameId(), "desktop", blockId);
-                Interest interest = name.toInterest();
-                LOG.info("Interacting with block: {}", interest.toUri());
-                faceManager.expressInterestSafe(interest);
-                return;
-            }
-        }
+//        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
+//            if (subscriber.getEntity().containsKey(blockId)) {
+//                BlockInteractionName name = new BlockInteractionName(config.getGameId(), "desktop", blockId);
+//                Interest interest = name.toInterest();
+//                LOG.info("Interacting with block: {}", interest.toUri());
+//                faceManager.expressInterestSafe(interest);
+//                return;
+//            }
+//        }
     }
 
-    private Map<String, Block> typeFromData(Data data) {
+    private Map<BlockName, Block> typeFromData(Data data) {
         try {
-            Blocks remoteBlocks = Blocks.parseFrom(data.getContent().getImmutableArray());
-            return new HashMap<>(remoteBlocks.getBlocksByIdMap());
+            List<Block> blocks = Blocks.parseFrom(data.getContent().getImmutableArray()).getBlocksList();
+            return Maps.uniqueIndex(blocks, b -> {
+                BlockName name = new BlockName(data);
+                name.setId(b.getId());
+                return name;
+            });
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse Block for %s" + data.getName().toUri(), e);
         }
