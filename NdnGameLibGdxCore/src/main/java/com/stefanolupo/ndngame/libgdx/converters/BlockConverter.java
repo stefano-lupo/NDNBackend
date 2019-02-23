@@ -1,56 +1,41 @@
 package com.stefanolupo.ndngame.libgdx.converters;
 
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
-import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
-import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.protos.Block;
-import com.stefanolupo.ndngame.protos.Transform;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Maps to and from BlockProto and Game engine entities
  */
 public class BlockConverter implements HasComponentMappers {
 
-    public static Block blockEntityToProto(Entity entity) {
+    private static final Logger LOG = LoggerFactory.getLogger(BlockConverter.class);
 
-        // TODO: Some code to pull or throw from entity would be nice
+    /**
+     * Builds Block based on current state of entity
+     */
+    public static Block protoFromEntity(Entity entity) {
+
         BlockComponent blockComponent = BLOCK_MAPPER.get(entity);
-        BodyComponent bodyComponent = BODY_MAPPER.get(entity);
-        RenderComponent renderComponent = RENDER_MAPPER.get(entity);
 
         return Block.newBuilder()
                 .setId(blockComponent.getBlockName().getId())
-                .setTransform(buildTransform(bodyComponent, renderComponent))
+                .setGameObject(GameObjectConverter.protoFromEntity(entity))
                 .setHealth(blockComponent.getHealth())
                 .build();
     }
 
+    /**
+     * Update the entities state based on the remote block
+     * The PhysicsSystem updates the render component based on the Body state
+     * so only need to update the body
+     */
     public static void reconcileRemoteBlock(Entity entity, Block block) {
-        BodyComponent bodyComponent = BODY_MAPPER.get(entity);
         BlockComponent blockComponent = BLOCK_MAPPER.get(entity);
-
-        setTransform(bodyComponent, block.getTransform());
+        GameObjectConverter.reconcileGameObject(entity, block.getGameObject());
         blockComponent.setHealth(block.getHealth());
-    }
-
-    private static void setTransform(BodyComponent bodyComponent, Transform transform) {
-        bodyComponent.getBody()
-                .setTransform(transform.getX(), transform.getY(), transform.getRotation());
-    }
-
-    private static Transform buildTransform(BodyComponent bodyComponent, RenderComponent renderComponent) {
-        Body body = bodyComponent.getBody();
-        return Transform.newBuilder()
-                .setX(body.getPosition().x)
-                .setY(body.getPosition().y)
-                .setWidth(renderComponent.getWidth())
-                .setHeight(renderComponent.getHeight())
-                .setRotation(renderComponent.getRotation())
-                .setScaleX(renderComponent.getScale().x)
-                .setScaleY(renderComponent.getScale().y)
-                .build();
     }
 }

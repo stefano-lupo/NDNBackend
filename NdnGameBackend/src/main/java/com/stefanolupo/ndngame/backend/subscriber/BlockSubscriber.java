@@ -44,7 +44,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
         subscribersList.add(subscriber);
     }
 
-    public Map<BlockName, Block> getBlocksById() {
+    public Map<BlockName, Block> getRemoteBlocks() {
         Map<BlockName, Block> map = new HashMap<>();
 
         for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {

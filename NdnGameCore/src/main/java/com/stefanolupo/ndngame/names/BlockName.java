@@ -118,4 +118,31 @@ public class BlockName extends BaseName implements SequenceNumberedName {
     public String getId() {
         return id;
     }
+
+    @Override
+    public int hashCode() {
+        int hash = 31 * Long.hashCode(gameId) * playerName.hashCode();
+        return id == null ? hash : hash * id.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof BlockName)) {
+            return false;
+        }
+
+        BlockName other = (BlockName) obj;
+        return other.playerName.equals(playerName) &&
+                other.gameId == gameId &&
+                stringCompareWithNull(other.getId(), id);
+    }
+
+    private boolean stringCompareWithNull(String s1, String s2) {
+
+        if (s1 == null && s2 == null) return true;
+
+        if (s1 == null || s2 == null) return false;
+
+        return s1.equals(s2);
+    }
 }

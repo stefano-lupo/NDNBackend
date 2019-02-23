@@ -56,7 +56,7 @@ public class AttackListener implements EntityListener, HasComponentMappers {
                 } else {
                     // Perform engine updates
                     blockComponent.setHealth(blockComponent.getHealth() - 1);
-                    blockPublisher.upsertBlock(blockComponent.getBlockName().getId(), BlockConverter.blockEntityToProto(blockEntity));
+                    blockPublisher.upsertBlock(blockComponent.getBlockName(), BlockConverter.protoFromEntity(blockEntity));
                     LOG.info("Published block update for {}", blockComponent.getBlockName().getId());
                 }
             }

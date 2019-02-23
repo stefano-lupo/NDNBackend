@@ -26,7 +26,7 @@ public class BlockPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(BlockPublisher.class);
 
     private final BasePublisher publisher;
-    private final Map<String, Block> localBlocksById = new HashMap<>();
+    private final Map<BlockName, Block> localBlocksById = new HashMap<>();
 
     @Inject
     public BlockPublisher(Config config,
@@ -37,40 +37,35 @@ public class BlockPublisher {
         faceManager.registerBasicPrefix(blockInteractionName.getListenPrefix(), this::onInteractionInterest);
     }
 
-    public void upsertBlock(String blockId, Block block) {
-        localBlocksById.put(blockId, block);
+    public void upsertBlock(BlockName blockName, Block block) {
+        localBlocksById.put(blockName, block);
         updateBlob();
     }
 
-    public void removeBlock(String blockId) {
-        localBlocksById.remove(blockId);
+    public void removeBlock(BlockName blockName) {
+        localBlocksById.remove(blockName);
         updateBlob();
     }
 
-    public void addBlock(Block block) {
-        localBlocksById.put(block.getId(), block);
-        updateBlob();
-    }
-
-    public Map<String, Block> getLocalBlocksById() {
+    public Map<BlockName, Block> getLocalBlocks() {
         return localBlocksById;
     }
 
     private void updateBlob() {
-        Blocks blocks = Blocks.newBuilder().putAllBlocksById(localBlocksById).build();
+        Blocks blocks = Blocks.newBuilder().addAllBlocks(localBlocksById.values()).build();
         publisher.updateLatestBlob(new Blob(blocks.toByteArray()));
     }
 
     public void onInteractionInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-        BlockInteractionName blockInteractionName = new BlockInteractionName(interest);
-        Block block = localBlocksById.get(blockInteractionName.getBlockId());
-        if (block != null) {
-            Block updatedBlock = block.toBuilder()
-                    .setHealth(block.getHealth() - 1)
-                    .build();
-            upsertBlock(blockInteractionName.getBlockId(), updatedBlock);
-            LOG.debug("Updated block: {}", updatedBlock.getId());
-        }
+//        BlockInteractionName blockInteractionName = new BlockInteractionName(interest);
+//        Block block = localBlocksById.get(blockInteractionName.getBlockId());
+//        if (block != null) {
+//            Block updatedBlock = block.toBuilder()
+//                    .setHealth(block.getHealth() - 1)
+//                    .build();
+//            upsertBlock(blockInteractionName.getBlockId(), updatedBlock);
+//            LOG.debug("Updated block: {}", updatedBlock.getId());
+//        }
 
     }
 

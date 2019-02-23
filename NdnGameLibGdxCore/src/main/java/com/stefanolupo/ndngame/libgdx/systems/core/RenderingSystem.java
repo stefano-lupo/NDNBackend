@@ -14,6 +14,7 @@ import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
+import com.stefanolupo.ndngame.protos.GameObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public class RenderingSystem
         implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderingSystem.class);
-    private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getPosition().z);
+    private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getGameObject().getZ());
     private static final float PIXELS_PER_METER = 40f;
 
     private final Config config;
@@ -80,10 +81,11 @@ public class RenderingSystem
                 continue;
             }
 
-            float worldX = renderComponent.getPosition().x;
-            float worldY = renderComponent.getPosition().y;
-            float worldWidth = renderComponent.getWidth();
-            float worldHeight = renderComponent.getHeight();
+            GameObject gameObject = renderComponent.getGameObject();
+            float worldX = gameObject.getX();
+            float worldY = gameObject.getY();
+            float worldWidth = gameObject.getWidth();
+            float worldHeight = gameObject.getHeight();
 
             // Want to draw to bottom left corner for sprites, but body uses the center
             float drawX = worldX - (worldWidth / 2);
@@ -93,8 +95,8 @@ public class RenderingSystem
                     drawX, drawY,
                     textureComponent.getRegion().getRegionX(), textureComponent.getRegion().getRegionY(),
                     worldWidth, worldHeight,
-                    renderComponent.getScale().x, renderComponent.getScale().y,
-                    renderComponent.getRotation());
+                    gameObject.getScaleX(), gameObject.getScaleY(),
+                    gameObject.getAngle());
         }
         updateCameraPosition();
         spriteBatch.end();
@@ -123,7 +125,7 @@ public class RenderingSystem
         }
 
         if (!config.isMasterView()) {
-            camera.position.set(renderComponent.getPosition().x, renderComponent.getPosition().y, 0);
+            camera.position.set(renderComponent.getGameObject().getX(), renderComponent.getGameObject().getY(), 0);
         }
 
         camera.update();

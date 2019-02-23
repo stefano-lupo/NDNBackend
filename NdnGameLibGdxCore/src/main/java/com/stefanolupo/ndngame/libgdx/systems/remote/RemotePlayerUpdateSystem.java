@@ -3,11 +3,10 @@ package com.stefanolupo.ndngame.libgdx.systems.remote;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.RemotePlayerComponent;
-import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
@@ -38,22 +37,16 @@ public class RemotePlayerUpdateSystem
 
     @Override
     protected void processEntity(Entity entity, float deltaTime) {
-        Body body = BODY_MAPPER.get(entity).getBody();
-        StateComponent stateComponent = STATE_MAPPER.get(entity);
-        RemotePlayerComponent remotePlayerComponent = REMOTE_PLAYER_MAPPER.get(entity);
 
-        handleStatusUpdate(remotePlayerComponent, stateComponent, body, deltaTime);
-        handleAttackUpdate(remotePlayerComponent);
-
+        handleStatusUpdate(entity, deltaTime);
         numberOfRemoteUpdates++;
     }
 
-    private void handleStatusUpdate(RemotePlayerComponent remotePlayerComponent,
-                                    StateComponent stateComponent,
-                                    Body body,
+    private void handleStatusUpdate(Entity entity,
                                     float deltaTime) {
-        PlayerStatusName playerStatusName = remotePlayerComponent.getPlayerStatusName();
+        RemotePlayerComponent remotePlayerComponent = REMOTE_PLAYER_MAPPER.get(entity);
 
+        PlayerStatusName playerStatusName = remotePlayerComponent.getPlayerStatusName();
         long latestVersionForPlayer = playerStatusSubscriber.getLatestVersionForPlayer(playerStatusName);
 
         if (latestVersionForPlayer <= remotePlayerComponent.getLatestVersionSeen()) {
@@ -62,14 +55,7 @@ public class RemotePlayerUpdateSystem
         }
 
         PlayerStatus latestStatus = playerStatusSubscriber.getLatestStatusForPlayer(playerStatusName);
-
-
-        // Update the motion state component for this entity according to latest status
-        stateComponent.updateMotionState(latestStatus.getVelX(), latestStatus.getVelY(), deltaTime);
-
-        // Rectify discrepancy in calculated vs actual position since last status update
-        body.setTransform(latestStatus.getX(), latestStatus.getY(), body.getAngle());
-        remotePlayerComponent.setLatestVersionSeen(latestVersionForPlayer);
+        PlayerStatusConverter.reconcileRemotePlayer(entity, latestStatus, latestVersionForPlayer, deltaTime);
     }
 
     private void handleAttackUpdate(RemotePlayerComponent remotePlayerComponent) {

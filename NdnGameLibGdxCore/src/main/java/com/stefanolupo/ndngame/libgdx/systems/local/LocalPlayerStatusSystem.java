@@ -3,12 +3,11 @@ package com.stefanolupo.ndngame.libgdx.systems.local;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IntervalSystem;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.publisher.PlayerStatusPublisher;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
+import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
-import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,14 +32,7 @@ public class LocalPlayerStatusSystem
     @Override
     protected void updateInterval() {
         Entity playerEntity = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
-        Body body = BODY_MAPPER.get(playerEntity).getBody();
-        PlayerStatus newPlayerStatus = PlayerStatus.newBuilder()
-                .setX(body.getPosition().x)
-                .setY(body.getPosition().y)
-                .setVelX(body.getLinearVelocity().x)
-                .setVelY(body.getLinearVelocity().y)
-                .build();
-        playerStatusPublisher.updateLocalPlayerStatus(newPlayerStatus);
+        playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
     }
 
 }
