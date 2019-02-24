@@ -6,6 +6,7 @@ import com.badlogic.ashley.systems.SortedIteratingSystem;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.Config;
@@ -30,10 +31,12 @@ public class RenderingSystem
 
     private final Config config;
     private final OrthographicCamera camera;
-
     private final Array<Entity> renderQueue;
-//    private final BitmapFont font = new BitmapFont();
+
+    //    private final BitmapFont font = new BitmapFont();
+
     private SpriteBatch spriteBatch;
+    private ShapeRenderer shapeRenderer;
 
     @Inject
     public RenderingSystem(Config config,
@@ -59,6 +62,9 @@ public class RenderingSystem
         camera.position.set(camera.viewportWidth / 2f, camera.viewportHeight / 2f, 0);
         camera.update();
         LOG.info("Camera viewport: {} x {} units", camera.viewportHeight, camera.viewportHeight);
+
+        shapeRenderer = new ShapeRenderer();
+        shapeRenderer.setProjectionMatrix(camera.combined);
     }
 
     @Override
@@ -72,6 +78,7 @@ public class RenderingSystem
         spriteBatch.setProjectionMatrix(camera.combined);
         spriteBatch.enableBlending();
         spriteBatch.begin();
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 
         for (Entity entity : renderQueue) {
             TextureComponent textureComponent = TEXTURE_MAPPER.get(entity);
@@ -97,9 +104,13 @@ public class RenderingSystem
                     worldWidth, worldHeight,
                     gameObject.getScaleX(), gameObject.getScaleY(),
                     gameObject.getAngle());
-        }
+
+
+            shapeRenderer.circle(drawX, drawY, 10);
+    }
         updateCameraPosition();
         spriteBatch.end();
+        shapeRenderer.end();
         renderQueue.clear();
     }
 
