@@ -1,48 +1,61 @@
 package com.stefanolupo.ndngame.names;
 
-import com.google.common.base.Preconditions;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 import net.named_data.jndn.sync.ChronoSync2013;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 /**
- * Schema: base_name/|game_id|/discovery/|name|/|sequence_number|
+ * Schema: /discovery/
+ *      - broadcast: /broadcast
+ *      - interest/data: |name|/|sequence_number|
  */
-public class DiscoveryName extends BaseName {
+public class DiscoveryName implements AsPrefix {
 
-    private static final String DISCOVERY_BROADCAST = GAME_BASE_NAME + "/%d/discovery/broadcast";
-    private static final String DISCOVERY_DATA = GAME_BASE_NAME + "/%d/discovery/%s/";
-    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/discovery/[a-z]+/\\d+");
+    private static final Pattern NAME_PATTERN = Pattern.compile("^/discovery/" + PlayerName.PLAYER_NAME_REGEX);
+    private static final String DISCOVERY = "discovery";
+    private static final String BROADCAST = "broadcast";
 
-    private long gameId;
+    private BaseName baseName;
+    // This name scheme is the exception to the rule
+    // So better off just managing the name here rather than using PlayerName
     private String playerName;
     private long sequenceNumber;
 
     public DiscoveryName(ChronoSync2013.SyncState syncState) {
-        super(new Name(syncState.getDataPrefix()).append(String.valueOf(syncState.getSequenceNo())));
-        parse();
+        String name = syncState.getDataPrefix();
+        baseName = BaseName.parseFrom(name);
+        sequenceNumber = syncState.getSequenceNo();
+        parse(baseName.getRemainder());
+    }
+
+    public DiscoveryName(long gameId, String playerName) {
+        baseName = new BaseName(gameId);
+        this.playerName = playerName;
+    }
+
+    @Override
+    public Name getAsPrefix() {
+        return baseName.getAsPrefix()
+                .append(DISCOVERY)
+                .append(playerName);
+    }
+
+    public static Name getBroadcastName(long gameId) {
+        return new BaseName(gameId).getAsPrefix()
+                .append(DISCOVERY)
+                .append(BROADCAST);
     }
 
     public Interest toInterest() {
-        return new Interest(getDataListenPrefix(gameId, playerName).append(String.valueOf(sequenceNumber)));
+        return new Interest(getAsPrefix().append(String.valueOf(sequenceNumber)));
     }
 
-    public static Name getDataListenPrefix(long gameId, String playerName) {
-        return new Name(String.format(DISCOVERY_DATA, gameId, playerName));
-    }
-
-    public static Name getBroadcastPrefix(long gameId) {
-        return new Name(String.format(DISCOVERY_BROADCAST, gameId));
-    }
-
-    private void parse() {
-        Preconditions.checkArgument(tailName.size() == 4, "Invalid tail name size (should be four) - %s" + tailName);
-        checkMatchesRegex(tailName, NAME_PATTERN);
-
-        gameId = Long.valueOf(tailName.get(0).toEscapedString());
-        playerName = tailName.get(2).toEscapedString();
-        sequenceNumber = Long.valueOf(tailName.get(3).toEscapedString());
+    private void parse(String remainder) {
+        Matcher matcher = BaseName.matchOrThrow(remainder, NAME_PATTERN);
+        playerName = matcher.group(1);
     }
 }

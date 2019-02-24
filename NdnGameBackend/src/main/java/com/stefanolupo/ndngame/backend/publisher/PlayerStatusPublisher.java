@@ -16,7 +16,8 @@ public class PlayerStatusPublisher {
     @Inject
     public PlayerStatusPublisher(Config config,
                                  BasePublisherFactory factory) {
-        publisher = factory.create(new PlayerStatusName(config.getGameId(), config.getPlayerName()), PlayerStatusName::new);
+        PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), config.getPlayerName());
+        publisher = factory.create(playerStatusName.getListenName(), PlayerStatusName::new);
     }
 
     public void updateLocalPlayerStatus(PlayerStatus playerStatus) {

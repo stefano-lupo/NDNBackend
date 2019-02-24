@@ -12,7 +12,9 @@ import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
+import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,36 +52,42 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
 
     @Override
     protected void updateInterval() {
-        Map<String, Block> remoteBlocksById = blockSubscriber.getBlocksById();
-        Map<String, Block> localBlocksById = blockPublisher.getLocalBlocksById();
-        ImmutableArray<Entity> blockEntities = engine.getEntitiesFor(Family.all(BlockComponent.class).get());
-
-        // Index blockEntities for later
-        Map<String, Entity> entityMap = new HashMap<>();
-        for (Entity e : blockEntities) {
-            BlockComponent blockComponent = BLOCK_MAPPER.get(e);
-            entityMap.put(blockComponent.getId(), e);
-        }
+        Map<BlockName, Block> remoteBlocks = blockSubscriber.getRemoteBlocks();
+        Map<BlockName, Block> localBlocks = blockPublisher.getLocalBlocks();
+        Map<BlockName, Entity> entitiesByBlockName = getEntitiesByBlockName();
 
         // Create missing remote blocks
-        Set<String> blocksToCreate = Sets.difference(remoteBlocksById.keySet(), entityMap.keySet());
-        for (String id : blocksToCreate) {
-            Block block = remoteBlocksById.get(id);
-            entityCreator.createRemoteBlock(block);
+        Set<BlockName> blocksToCreate = Sets.difference(remoteBlocks.keySet(), entitiesByBlockName.keySet());
+        for (BlockName blocksName : blocksToCreate) {
+            Block block = remoteBlocks.get(blocksName);
+            entityCreator.createRemoteBlock(blocksName, block);
         }
 
         // Destroy old blocks
-        Set<String> blocksToDestroy = Sets.difference(entityMap.keySet(), Sets.union(remoteBlocksById.keySet(), localBlocksById.keySet()));
-        for (String id : blocksToDestroy) {
-            engine.removeEntity(entityMap.get(id));
+        Set<BlockName> blocksToDestroy = Sets.difference(entitiesByBlockName.keySet(), Sets.union(remoteBlocks.keySet(), localBlocks.keySet()));
+        for (BlockName blocksName : blocksToDestroy) {
+            engine.removeEntity(entitiesByBlockName.get(blocksName));
         }
 
-        // Update existing blockEntities
-        for (Entity blockEntity : blockEntities) {
-            BlockComponent blockComponent = BLOCK_MAPPER.get(blockEntity);
-            String id = blockComponent.getId();
-            Block block = blockComponent.isRemote() ? remoteBlocksById.get(id) : localBlocksById.get(id);
-            blockComponent.setHealth(block.getHealth());
+        // Reconcile updated remote blocks
+        for (BlockName blocksName : entitiesByBlockName.keySet()) {
+            BlockComponent blockComponent = BLOCK_MAPPER.get(entitiesByBlockName.get(blocksName));
+            if (!blockComponent.isRemote()) {
+                continue;
+            }
+
+            BlockConverter.reconcileRemoteBlock(entitiesByBlockName.get(blocksName), remoteBlocks.get(blocksName));
         }
+    }
+
+    private Map<BlockName, Entity> getEntitiesByBlockName() {
+        ImmutableArray<Entity> blockEntities = engine.getEntitiesFor(Family.all(BlockComponent.class).get());
+        Map<BlockName, Entity> entityMap = new HashMap<>();
+        for (Entity e : blockEntities) {
+            BlockComponent blockComponent = BLOCK_MAPPER.get(e);
+            entityMap.put(blockComponent.getBlockName(), e);
+        }
+
+        return entityMap;
     }
 }

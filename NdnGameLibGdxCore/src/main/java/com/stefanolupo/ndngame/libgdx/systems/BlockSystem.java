@@ -11,6 +11,7 @@ import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 
 /**
  * Ticks blocks
+ * Blocks don't really need to be ticket atm, but this is where they would be ticked
  */
 public class BlockSystem extends IteratingSystem implements HasComponentMappers {
 

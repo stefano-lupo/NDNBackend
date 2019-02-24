@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.stefanolupo.ndngame.protos.GameObject;
 
 @Singleton
 public class BodyFactory {
@@ -36,28 +37,24 @@ public class BodyFactory {
         return body;
     }
 
-    public Body makeBoxPolyBody(float x, float y, float width, float height, int material, BodyDef.BodyType bodyType, boolean fixedRotation){
+    public Body makeBoxPolyBody(GameObject gameObject, int material, BodyDef.BodyType bodyType) {
         // create a definition
         BodyDef boxBodyDef = new BodyDef();
         boxBodyDef.type = bodyType;
-        boxBodyDef.position.x = x;
-        boxBodyDef.position.y = y;
-        boxBodyDef.fixedRotation = fixedRotation;
+        boxBodyDef.position.x = gameObject.getX();
+        boxBodyDef.position.y = gameObject.getY();
+        boxBodyDef.angle = gameObject.getAngle();
+        boxBodyDef.fixedRotation = gameObject.getIsFixedRotation();
 
         //create the body to attach said definition
         Body boxBody = world.createBody(boxBodyDef);
         PolygonShape poly = new PolygonShape();
-        poly.setAsBox(width / 2, height / 2);
+        poly.setAsBox(gameObject.getWidth() / 2, gameObject.getHeight() / 2);
         boxBody.createFixture(makeFixture(material,poly));
         poly.dispose();
 
         return boxBody;
     }
-
-    public Body makeBoxPolyBody(float x, float y, float width, float height, int material, BodyDef.BodyType bodyType) {
-        return makeBoxPolyBody(x, y, width, height, material, bodyType, false);
-    }
-
 
     public Body makePolygonBody(Vector2[] vertices, float x, float y, int material, BodyDef.BodyType bodyType) {
         BodyDef bodyDef = new BodyDef();

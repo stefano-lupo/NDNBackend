@@ -3,7 +3,6 @@ package com.stefanolupo.ndngame.libgdx.systems.core;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.World;
@@ -59,9 +58,13 @@ public class PhysicsSystem
             Vector2 bodyPosition = body.getPosition();
 
             RenderComponent renderComponent = RENDER_MAPPER.get(entity);
-            renderComponent.setPosition(bodyPosition.x, bodyPosition.y);
-
-            renderComponent.setRotation(body.getAngle() * MathUtils.radiansToDegrees);
+            renderComponent.setGameObject(renderComponent.getGameObject().toBuilder()
+                    .setX(bodyPosition.x)
+                    .setY(bodyPosition.y)
+                    .setVelX(body.getLinearVelocity().x)
+                    .setVelY(body.getLinearVelocity().y)
+                    .setAngle(body.getAngle())
+                    .build());
         }
 
         bodiesQueue.clear();

@@ -15,7 +15,6 @@ import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
 import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
-import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.AttackType;
 import org.slf4j.Logger;
@@ -101,7 +100,7 @@ public class PlayerControlSystem
 
     private AttackComponent buildAttackComponent(Body body, float radius, AttackType type) {
         AttackComponent attackComponent = pooledEngine.createComponent(AttackComponent.class);
-        AttackName name = new AttackName(config.getGameId(), config.getPlayerName());
+//        AttackName name = new AttackName(config.getGameId(), config.getPlayerName());
         Attack attack = Attack.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setRadius(radius)
@@ -109,7 +108,7 @@ public class PlayerControlSystem
                 .setY(body.getPosition().y)
                 .setType(type)
                 .build();
-        attackComponent.setAttackName(name);
+//        attackComponent.setAttackName(name);
         attackComponent.setAttack(attack);
         return attackComponent;
     }

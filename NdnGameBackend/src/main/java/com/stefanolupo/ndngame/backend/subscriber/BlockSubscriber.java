@@ -1,22 +1,22 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.names.BlockInteractionName;
-import com.stefanolupo.ndngame.names.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import com.stefanolupo.ndngame.protos.Player;
 import net.named_data.jndn.Data;
-import net.named_data.jndn.Face;
 import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.*;
 
 @Singleton
@@ -24,63 +24,60 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockSubscriber.class);
 
-    private final List<BaseSubscriber<Map<String, Block>>> subscribersList = new ArrayList<>();
+    private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
     private final Config config;
+    private final FaceManager faceManager;
 
     @Inject
-    public BlockSubscriber(Config config) {
+    public BlockSubscriber(Config config,
+                           FaceManager faceManager) {
         this.config = config;
+        this.faceManager = faceManager;
     }
 
-    public void addSubscription(BlockName blockName) {
-        LOG.info("Adding subscription for {}", blockName);
-        BaseSubscriber<Map<String, Block>> subscriber =
-                new BaseSubscriber<>(
-                        blockName,
-                        this::typeFromData,
-                        BlockName::new
-                );
+    public void addSubscription(BlocksSyncName blockSyncName) {
+        LOG.info("Adding subscription for {}", blockSyncName);
+        BaseSubscriber<Map<BlockName, Block>> subscriber = new BaseSubscriber<>(
+                faceManager,
+                blockSyncName,
+                this::typeFromData,
+                BlocksSyncName::new
+        );
         subscribersList.add(subscriber);
     }
 
-    public Map<String, Block> getBlocksById() {
-        Map<String, Block> map = new HashMap<>();
+    public Map<BlockName, Block> getRemoteBlocks() {
+        Map<BlockName, Block> map = new HashMap<>();
 
-        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
+        for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {
             // Can be null before first remote receipt of entity
             if (subscriber.getEntity() == null) {
                 continue;
             }
-            for (String id : subscriber.getEntity().keySet()) {
-                Block block = subscriber.getEntity().get(id);
-                map.put(id, block);
-            }
+
+            map.putAll(subscriber.getEntity());
         }
 
         return map;
     }
 
 
-    public void interactWithBlock(String blockId) {
-        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
-            if (subscriber.getEntity().containsKey(blockId)) {
-                BlockInteractionName name = new BlockInteractionName(config.getGameId(), blockId);
-                Face face = new Face();
-                Interest interest = name.toInterest();
+    public void interactWithBlock(BlockName blockName) {
+        for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {
+            if (subscriber.getEntity().containsKey(blockName)) {
+                Interest interest = blockName.buildInterest();
                 LOG.info("Interacting with block: {}", interest.toUri());
-                try {
-                    face.expressInterest(interest, (i, d) -> LOG.debug("Got data"));
-                } catch (IOException e) {
-                    LOG.error("Unable to express interest when interacting with block: {}", name.toInterest().toUri());
-                }
+                faceManager.expressInterestSafe(interest);
+                return;
             }
         }
     }
 
-    private Map<String, Block> typeFromData(Data data) {
+    private Map<BlockName, Block> typeFromData(Data data) {
         try {
-            Blocks remoteBlocks = Blocks.parseFrom(data.getContent().getImmutableArray());
-            return new HashMap<>(remoteBlocks.getBlocksByIdMap());
+            List<Block> blocks = Blocks.parseFrom(data.getContent().getImmutableArray()).getBlocksList();
+            BlocksSyncName blocksSyncName = new BlocksSyncName(data);
+            return Maps.uniqueIndex(blocks, b -> BlockName.fromBlockSyncNameAndId(blocksSyncName, b.getId()));
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse Block for %s" + data.getName().toUri(), e);
         }
@@ -88,6 +85,6 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     @Override
     public void onPlayersDiscovered(Set<Player> players) {
-        players.forEach(p -> this.addSubscription(new BlockName(config.getGameId(), p.getName())));
+        players.forEach(p -> this.addSubscription(new BlocksSyncName(config.getGameId(), p.getName())));
     }
 }

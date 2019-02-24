@@ -12,11 +12,30 @@ message Players {
     repeated Player players = 1;
 }
 
-message PlayerStatus {
+message GameObject {
     float x = 1;
     float y = 2;
-    float velX = 3;
-    float velY = 4;
+    float z = 3;
+    float velX = 4;
+    float velY = 5;
+    float width = 6;
+    float height = 7;
+    float angle = 8;
+    bool isFixedRotation = 9;
+    float scaleX = 10;
+    float scaleY = 11;
+}
+
+message Status {
+    int32 health = 1;
+    int32 mana = 2;
+    int32 ammo = 3;
+    int32 xp = 4;
+}
+
+message PlayerStatus {
+    GameObject gameObject = 1;
+    Status status = 2;
 }
 
 message Attack {
@@ -27,6 +46,26 @@ message Attack {
     float radius = 5;
     AttackType type = 6;
 }
+
+
+
+
+message Block {
+    string id = 1;
+    GameObject gameObject = 2;
+    int32 health = 3;
+}
+
+message Blocks {
+    repeated Block blocks = 1;
+}
+
+
+
+
+
+
+
 
 enum AttackType {
     SWING = 0;
@@ -56,17 +95,4 @@ message BulletsList {
 
 message BulletRemove {
     int64 id = 1;
-}
-
-message Block {
-    string id = 1;
-    float x = 2;
-    float y = 3;
-    float width = 4;
-    float height = 5;
-    int32 health = 6;
-}
-
-message Blocks {
-    map<string, Block> blocksById = 1;
 }

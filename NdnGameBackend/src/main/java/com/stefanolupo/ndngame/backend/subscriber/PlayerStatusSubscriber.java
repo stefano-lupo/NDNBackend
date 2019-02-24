@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.Player;
@@ -23,16 +24,19 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
 
     private final Map<PlayerStatusName, BaseSubscriber<PlayerStatus>> subscriberMap = new HashMap<>();
     private final Config config;
+    private final FaceManager faceManager;
 
     @Inject
-    public PlayerStatusSubscriber(Config config) {
+    public PlayerStatusSubscriber(Config config,
+                                  FaceManager faceManager) {
         this.config = config;
+        this.faceManager = faceManager;
     }
 
     public void addSubscription(PlayerStatusName name) {
-        // TODO: Factory
         LOG.info("Adding subscription for {}", name.getPlayerName());
         BaseSubscriber<PlayerStatus> subscriber = new BaseSubscriber<>(
+                faceManager,
                 name,
                 this::typeFromData,
                 PlayerStatusName::new);

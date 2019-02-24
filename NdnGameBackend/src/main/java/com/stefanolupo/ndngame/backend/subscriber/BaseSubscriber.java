@@ -1,14 +1,14 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
-import net.named_data.jndn.*;
-import net.named_data.jndn.encoding.EncodingException;
+import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
+import net.named_data.jndn.OnData;
+import net.named_data.jndn.OnTimeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class BaseSubscriber<D> implements OnData, OnTimeout {
@@ -24,33 +24,25 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
      */
     private static final long WAIT_TIME_BETWEEN_INTERESTS_MS = 10;
 
-    private static final long FACE_POLL_WAIT_TIME_MS = 0;
-    private static final long FACE_POLL_PERIOD_MS = 10;
-
     private SequenceNumberedName name;
     private D entity;
     private final Function<Data, D> dataFunction;
     private final Function<Data, SequenceNumberedName> nameExtractor;
 
-    private final Face face;
+    private final FaceManager faceManager;
     private long lastInterestExpressTime = 0;
 
 
-    public BaseSubscriber(SequenceNumberedName name,
+    public BaseSubscriber(FaceManager faceManager,
+                          SequenceNumberedName name,
                           Function<Data, D> dataFunction,
                           Function<Data, SequenceNumberedName> nameExtractor) {
+        this.faceManager = faceManager;
         this.name = name;
-        this.face = new Face();
         this.dataFunction = dataFunction;
         this.nameExtractor = nameExtractor;
         expressInterestSafe(buildInterest(name));
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                this::pollFace,
-                FACE_POLL_WAIT_TIME_MS,
-                FACE_POLL_PERIOD_MS,
-                TimeUnit.MILLISECONDS);
     }
-
 
     @Override
     public void onData(Interest interest, Data data) {
@@ -95,18 +87,6 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
 
     private void expressInterestSafe(Interest i) {
         lastInterestExpressTime = System.currentTimeMillis();
-        try {
-            face.expressInterest(i, this, this);
-        } catch (IOException e) {
-            LOG.error("Unable to express interest for {}", i.toUri(), e);
-        }
-    }
-
-    private void pollFace() {
-        try {
-            face.processEvents();
-        } catch (IOException | EncodingException e) {
-            throw new RuntimeException(e);
-        }
+        faceManager.expressInterestSafe(i, this, this);
     }
 }

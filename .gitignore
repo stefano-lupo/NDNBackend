@@ -9,5 +9,11 @@ target
 gradle
 out
 build/*
+*/build
 .gradle
-NdnGameCore/build/*
+NdnGameCore/build
+NdnGameBackend/build
+NdnGameLibGdxCore/build
+NdnGameLibGdxDesktop/build
+*.class
+*.bat

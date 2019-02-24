@@ -16,10 +16,12 @@ import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
 import com.stefanolupo.ndngame.libgdx.assets.Textures;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
-import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
+import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
+import com.stefanolupo.ndngame.protos.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,30 +89,30 @@ public class EntityCreator implements OnPlayersDiscovered {
     }
 
     public void createLocalBlock(float x, float y) {
+        String id = UUID.randomUUID().toString();
+        GameObject gameObject = buildGameObject(x, y, BLOCK_WIDTH, BLOCK_HEIGHT);
         Block block = Block.newBuilder()
-                .setId(UUID.randomUUID().toString())
-                .setX(x)
-                .setY(y)
-                .setWidth(BLOCK_WIDTH)
-                .setHeight(BLOCK_HEIGHT)
+                .setId(id)
+                .setGameObject(gameObject)
                 .setHealth(5)
                 .build();
-        Entity entity = createBlockEntity(block, false);
-        blockPublisher.addBlock(block);
+        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName(), id);
+        Entity entity = createBlockEntity(blockName, block, false);
+        blockPublisher.upsertBlock(blockName, block);
         engine.addEntity(entity);
     }
 
-    public void createRemoteBlock(Block block) {
-        Entity entity = createBlockEntity(block, true);
+    public void createRemoteBlock(BlockName blockName, Block block) {
+        Entity entity = createBlockEntity(blockName, block, true);
         engine.addEntity(entity);
     }
 
-    private Entity createBlockEntity(Block block, boolean isRemote) {
-        LOG.debug("Creating a block at {}, {}, isRemote: {}", block.getX(), block.getY(), isRemote);
+    private Entity createBlockEntity(BlockName blockName, Block block, boolean isRemote) {
+        GameObject gameObject = block.getGameObject();
+        LOG.debug("Creating a block at {}, {}, isRemote: {}", gameObject.getX(), gameObject.getY(), isRemote);
 
         Entity entity = engine.createEntity();
-
-        Body body = bodyFactory.makeBoxPolyBody(block.getX(), block.getY(), block.getWidth(), block.getHeight(), BodyFactory.STONE, BodyDef.BodyType.StaticBody);
+        Body body = bodyFactory.makeBoxPolyBody(gameObject, BodyFactory.STONE, BodyDef.BodyType.KinematicBody);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
@@ -128,12 +130,11 @@ public class EntityCreator implements OnPlayersDiscovered {
         entity.add(textureComponent);
 
         RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
-        renderComponent.setWidth(BLOCK_WIDTH);
-        renderComponent.setHeight(BLOCK_HEIGHT);
+        renderComponent.setGameObject(gameObject);
         entity.add(renderComponent);
 
         BlockComponent blockComponent = engine.createComponent(BlockComponent.class);
-        blockComponent.setId(block.getId());
+        blockComponent.setBlockName(blockName);
         blockComponent.setRemote(isRemote);
         blockComponent.setHealth(block.getHealth());
         entity.add(blockComponent);
@@ -153,16 +154,22 @@ public class EntityCreator implements OnPlayersDiscovered {
         type.setType(Type.PLAYER);
         entity.add(type);
 
+        StatusComponent statusComponent = engine.createComponent(StatusComponent.class);
+        statusComponent.setStatus(buildStatus());
+        entity.add(statusComponent);
+
         createPlayer(entity);
     }
 
     public void createRemotePlayer(Player player) {
         LOG.debug("Creating remote player: {}", player);
         PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), player.getName());
+
         Entity entity = engine.createEntity();
+
         RemotePlayerComponent remotePlayerComponent = engine.createComponent(RemotePlayerComponent.class);
         remotePlayerComponent.setPlayerStatusName(playerStatusName);
-        remotePlayerComponent.setAttackName(new AttackName(config.getGameId(), playerStatusName.getPlayerName()));
+//        remotePlayerComponent.setAttackName(new AttackName(config.getGameId(), playerStatusName.getPlayerName()));
         entity.add(remotePlayerComponent);
 
         entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));
@@ -170,6 +177,11 @@ public class EntityCreator implements OnPlayersDiscovered {
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.REMOTE_PLAYER);
         entity.add(type);
+
+        // We don't know their status just yet as this is just discovery
+        StatusComponent statusComponent = engine.createComponent(StatusComponent.class);
+        statusComponent.setStatus(buildStatus());
+        entity.add(statusComponent);
 
 
         createPlayer(entity);
@@ -179,7 +191,8 @@ public class EntityCreator implements OnPlayersDiscovered {
         float x = ThreadLocalRandom.current().nextInt(20, (int) WORLD_WIDTH - 20);
         float y = ThreadLocalRandom.current().nextInt(20, (int) WORLD_HEIGHT - 20);
 
-        Body body = bodyFactory.makeBoxPolyBody(x, y, PLAYER_WIDTH, PLAYER_HEIGHT, BodyFactory.STONE, BodyDef.BodyType.DynamicBody, true);
+        GameObject gameObject = buildGameObject(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
+        Body body = bodyFactory.makeBoxPolyBody(gameObject, BodyFactory.STONE, BodyDef.BodyType.DynamicBody);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
@@ -187,10 +200,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         entity.add(bodyComponent);
 
         RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
-        renderComponent.setWidth(PLAYER_WIDTH);
-        renderComponent.setHeight(PLAYER_HEIGHT);
-        renderComponent.setScale(PLAYER_SCALE_X, PLAYER_SCALE_Y);
-        renderComponent.setRotation(5);
+        renderComponent.setGameObject(gameObject);
         entity.add(renderComponent);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);
@@ -214,7 +224,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         bodyComponent.setBody(body);
         entity.add(bodyComponent);
 
-        TypeComponent typeComponent =engine.createComponent(TypeComponent.class);
+        TypeComponent typeComponent = engine.createComponent(TypeComponent.class);
         typeComponent.setType(Type.BOUNDARY);
         entity.add(typeComponent);
 
@@ -222,5 +232,28 @@ public class EntityCreator implements OnPlayersDiscovered {
         entity.add(collisionComponent);
 
         engine.addEntity(entity);
+    }
+
+    private static GameObject buildGameObject(float x, float y, float width, float height) {
+        return GameObject.newBuilder()
+                .setX(x)
+                .setY(y)
+                .setZ(0)
+                .setWidth(width)
+                .setHeight(height)
+                .setAngle(0)
+                .setIsFixedRotation(true)
+                .setScaleX(PLAYER_SCALE_X)
+                .setScaleY(PLAYER_SCALE_Y)
+                .build();
+    }
+
+    private static Status buildStatus() {
+        return Status.newBuilder()
+                .setAmmo(100)
+                .setHealth(100)
+                .setMana(100)
+                .setXp(0)
+                .build();
     }
 }
