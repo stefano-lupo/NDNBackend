@@ -35,8 +35,8 @@ public class BlockPublisher {
         BlocksSyncName blockSyncName = new BlocksSyncName(config.getGameId(), config.getPlayerName());
         publisher = factory.create(blockSyncName.getAsPrefix(), BlocksSyncName::new);
 
-        BlockName blockInteractionName = new BlockName(config.getGameId(), config.getPlayerName());
-        faceManager.registerBasicPrefix(blockInteractionName.getAsPrefix(), this::onInteractionInterest);
+        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName());
+        faceManager.registerBasicPrefix(blockName.getAsPrefix(), this::onInteractionInterest);
     }
 
     public void upsertBlock(BlockName blockName, Block block) {
@@ -58,17 +58,15 @@ public class BlockPublisher {
         publisher.updateLatestBlob(new Blob(blocks.toByteArray()));
     }
 
-    public void onInteractionInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-//        BlockName blockInteractionName = new BlockName(interest);
-//        Block block = localBlocksByName.get(blockInteractionName.getBlockId());
-//        if (block != null) {
-//            Block updatedBlock = block.toBuilder()
-//                    .setHealth(block.getHealth() - 1)
-//                    .build();
-//            upsertBlock(blockInteractionName.getBlockId(), updatedBlock);
-//            LOG.debug("Updated block: {}", updatedBlock.getId());
-//        }
-
+    private void onInteractionInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+        BlockName blockInteractionName = new BlockName(interest);
+        Block block = localBlocksByName.get(blockInteractionName);
+        if (block != null) {
+            Block updatedBlock = block.toBuilder()
+                    .setHealth(block.getHealth() - 1)
+                    .build();
+            upsertBlock(blockInteractionName, updatedBlock);
+            LOG.debug("Updated block: {}", updatedBlock.getId());
+        }
     }
-
 }

@@ -59,7 +59,8 @@ public class BlockName
     }
 
     public Interest buildInterest() {
-        return new Interest(getAsPrefix().append(id));
+        return new Interest(getAsPrefix()
+                .append(id));
     }
 
     public static BlockName fromBlockSyncNameAndId(BlocksSyncName syncName, String id) {

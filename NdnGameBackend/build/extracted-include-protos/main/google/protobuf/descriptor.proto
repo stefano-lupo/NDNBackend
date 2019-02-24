@@ -62,7 +62,7 @@ message FileDescriptorProto {
   optional string name = 1;       // file name, relative to root of source tree
   optional string package = 2;    // e.g. "foo", "foo.bar", etc.
 
-  // AsPrefix of files imported by this file.
+  // Names of files imported by this file.
   repeated string dependency = 3;
   // Indexes of the public imported files in the dependency list above.
   repeated int32 public_dependency = 10;

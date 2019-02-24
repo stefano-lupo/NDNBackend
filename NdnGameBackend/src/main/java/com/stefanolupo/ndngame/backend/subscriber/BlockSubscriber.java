@@ -13,6 +13,7 @@ import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import com.stefanolupo.ndngame.protos.Player;
 import net.named_data.jndn.Data;
+import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,26 +56,21 @@ public class BlockSubscriber implements OnPlayersDiscovered {
             }
 
             map.putAll(subscriber.getEntity());
-//            for (String id : subscriber.getEntity().keySet()) {
-//                Block block = subscriber.getEntity().get(id);
-//                map.put(id, block);
-//            }
         }
 
         return map;
     }
 
 
-    public void interactWithBlock(String blockId) {
-//        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
-//            if (subscriber.getEntity().containsKey(blockId)) {
-//                BlockName name = new BlockName(config.getGameId(), "desktop", blockId);
-//                Interest interest = name.toInterest();
-//                LOG.info("Interacting with block: {}", interest.toUri());
-//                faceManager.expressInterestSafe(interest);
-//                return;
-//            }
-//        }
+    public void interactWithBlock(BlockName blockName) {
+        for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {
+            if (subscriber.getEntity().containsKey(blockName)) {
+                Interest interest = blockName.buildInterest();
+                LOG.info("Interacting with block: {}", interest.toUri());
+                faceManager.expressInterestSafe(interest);
+                return;
+            }
+        }
     }
 
     private Map<BlockName, Block> typeFromData(Data data) {
