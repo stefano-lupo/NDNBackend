@@ -16,3 +16,4 @@ NdnGameBackend/build
 NdnGameLibGdxCore/build
 NdnGameLibGdxDesktop/build
 *.class
+*.bat
