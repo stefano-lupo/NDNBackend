@@ -17,7 +17,7 @@ public class BlockSyncNameTest {
 
     @Test
     public void itShouldProduceCorrectPrefixes() {
-        BlockSyncName name = new BlockSyncName(0, "test");
+        BlocksSyncName name = new BlocksSyncName(0, "test");
         name.setNextSequenceNumber(99);
         assertEquals(new Name(BASE_PREFIX), name.getAsPrefix());
         assertEquals(FULL_NAME, name.getFullName().toUri());
@@ -26,7 +26,7 @@ public class BlockSyncNameTest {
 
     @Test
     public void itShouldParseInterestNames() {
-        BlockSyncName name = new BlockSyncName(new Interest(new Name(BASE_PREFIX + "/0")));
+        BlocksSyncName name = new BlocksSyncName(new Interest(new Name(BASE_PREFIX + "/0")));
         name.setNextSequenceNumber(99);
 
         assertEquals(new Name(FULL_NAME), name.getFullName());

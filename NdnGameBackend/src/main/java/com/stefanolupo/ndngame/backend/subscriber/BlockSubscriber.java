@@ -8,6 +8,7 @@ import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import com.stefanolupo.ndngame.protos.Player;
@@ -33,13 +34,13 @@ public class BlockSubscriber implements OnPlayersDiscovered {
         this.faceManager = faceManager;
     }
 
-    public void addSubscription(BlockName blockName) {
-        LOG.info("Adding subscription for {}", blockName);
+    public void addSubscription(BlocksSyncName blockSyncName) {
+        LOG.info("Adding subscription for {}", blockSyncName);
         BaseSubscriber<Map<BlockName, Block>> subscriber = new BaseSubscriber<>(
                 faceManager,
-                blockName,
+                blockSyncName,
                 this::typeFromData,
-                BlockName::new
+                BlocksSyncName::new
         );
         subscribersList.add(subscriber);
     }
@@ -67,7 +68,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     public void interactWithBlock(String blockId) {
 //        for (BaseSubscriber<Map<String, Block>> subscriber : subscribersList) {
 //            if (subscriber.getEntity().containsKey(blockId)) {
-//                BlockInteractionName name = new BlockInteractionName(config.getGameId(), "desktop", blockId);
+//                BlockName name = new BlockName(config.getGameId(), "desktop", blockId);
 //                Interest interest = name.toInterest();
 //                LOG.info("Interacting with block: {}", interest.toUri());
 //                faceManager.expressInterestSafe(interest);
@@ -79,11 +80,8 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     private Map<BlockName, Block> typeFromData(Data data) {
         try {
             List<Block> blocks = Blocks.parseFrom(data.getContent().getImmutableArray()).getBlocksList();
-            return Maps.uniqueIndex(blocks, b -> {
-                BlockName name = new BlockName(data);
-                name.setId(b.getId());
-                return name;
-            });
+            BlocksSyncName blocksSyncName = new BlocksSyncName(data);
+            return Maps.uniqueIndex(blocks, b -> BlockName.fromBlockSyncNameAndId(blocksSyncName, b.getId()));
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse Block for %s" + data.getName().toUri(), e);
         }
@@ -91,6 +89,6 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     @Override
     public void onPlayersDiscovered(Set<Player> players) {
-        players.forEach(p -> this.addSubscription(new BlockName(config.getGameId(), p.getName())));
+        players.forEach(p -> this.addSubscription(new BlocksSyncName(config.getGameId(), p.getName())));
     }
 }

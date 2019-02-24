@@ -13,6 +13,9 @@ import com.stefanolupo.ndngame.protos.PlayerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Handles updates from remote players
  * Note if this class gets out of hand it would make a lot of sense to split
@@ -33,6 +36,7 @@ public class RemotePlayerUpdateSystem
     public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber) {
         super(Family.all(RemotePlayerComponent.class).get());
         this.playerStatusSubscriber = playerStatusSubscriber;
+        runLogStats();
     }
 
     @Override
@@ -76,6 +80,15 @@ public class RemotePlayerUpdateSystem
 //        attackComponent.setAttackName(remotePlayerComponent.getAttackName());
 //        attackComponent.setAttack(attack);
 //        entity.add(attackComponent);
+    }
+
+    private void runLogStats() {
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                this::logStats,
+                0,
+                20,
+                TimeUnit.SECONDS
+        );
     }
 
     private void logStats() {

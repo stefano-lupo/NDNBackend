@@ -9,7 +9,7 @@
 ///**
 // * Schema: |base_name|/|game_id|/|name|/blocks/interact/|block_id|
 // */
-//public class BlockInteractionName extends BaseName {
+//public class BlockName extends BaseName {
 //
 //    private static final String LISTEN_FORMAT = GAME_BASE_NAME + "/%d/%s/blocks/interact";
 //    private static final Pattern PATTERN = Pattern.compile("\\d/[a-z]+/blocks/interact/.*");
@@ -18,20 +18,20 @@
 //    private long gameId;
 //    private String blockId;
 //
-//    public BlockInteractionName(long gameId, String playerName, String blockId) {
+//    public BlockName(long gameId, String playerName, String blockId) {
 //        super(String.valueOf(gameId), playerName, blockId);
 //        this.playerName = playerName;
 //        this.gameId = gameId;
 //        this.blockId = blockId;
 //    }
 //
-//    public BlockInteractionName(long gameId, String playerName) {
+//    public BlockName(long gameId, String playerName) {
 //        super(String.valueOf(gameId), playerName);
 //        this.gameId = gameId;
 //        this.playerName = playerName;
 //    }
 //
-//    public BlockInteractionName(Interest interest) {
+//    public BlockName(Interest interest) {
 //        super(interest.getName());
 //        parse();
 //    }

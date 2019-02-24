@@ -16,7 +16,6 @@ import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
 import com.stefanolupo.ndngame.libgdx.assets.Textures;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
-import com.stefanolupo.ndngame.names.AttackName;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -97,8 +96,7 @@ public class EntityCreator implements OnPlayersDiscovered {
                 .setGameObject(gameObject)
                 .setHealth(5)
                 .build();
-        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName());
-        blockName.setId(id);
+        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName(), id);
         Entity entity = createBlockEntity(blockName, block, false);
         blockPublisher.upsertBlock(blockName, block);
         engine.addEntity(entity);
@@ -171,7 +169,7 @@ public class EntityCreator implements OnPlayersDiscovered {
 
         RemotePlayerComponent remotePlayerComponent = engine.createComponent(RemotePlayerComponent.class);
         remotePlayerComponent.setPlayerStatusName(playerStatusName);
-        remotePlayerComponent.setAttackName(new AttackName(config.getGameId(), playerStatusName.getPlayerName()));
+//        remotePlayerComponent.setAttackName(new AttackName(config.getGameId(), playerStatusName.getPlayerName()));
         entity.add(remotePlayerComponent);
 
         entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));

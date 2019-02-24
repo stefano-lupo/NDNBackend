@@ -58,25 +58,25 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
 
         // Create missing remote blocks
         Set<BlockName> blocksToCreate = Sets.difference(remoteBlocks.keySet(), entitiesByBlockName.keySet());
-        for (BlockName blockName : blocksToCreate) {
-            Block block = remoteBlocks.get(blockName);
-            entityCreator.createRemoteBlock(blockName, block);
+        for (BlockName blocksName : blocksToCreate) {
+            Block block = remoteBlocks.get(blocksName);
+            entityCreator.createRemoteBlock(blocksName, block);
         }
 
         // Destroy old blocks
         Set<BlockName> blocksToDestroy = Sets.difference(entitiesByBlockName.keySet(), Sets.union(remoteBlocks.keySet(), localBlocks.keySet()));
-        for (BlockName blockName : blocksToDestroy) {
-            engine.removeEntity(entitiesByBlockName.get(blockName));
+        for (BlockName blocksName : blocksToDestroy) {
+            engine.removeEntity(entitiesByBlockName.get(blocksName));
         }
 
         // Reconcile updated remote blocks
-        for (BlockName blockName : entitiesByBlockName.keySet()) {
-            BlockComponent blockComponent = BLOCK_MAPPER.get(entitiesByBlockName.get(blockName));
+        for (BlockName blocksName : entitiesByBlockName.keySet()) {
+            BlockComponent blockComponent = BLOCK_MAPPER.get(entitiesByBlockName.get(blocksName));
             if (!blockComponent.isRemote()) {
                 continue;
             }
 
-            BlockConverter.reconcileRemoteBlock(entitiesByBlockName.get(blockName), remoteBlocks.get(blockName));
+            BlockConverter.reconcileRemoteBlock(entitiesByBlockName.get(blocksName), remoteBlocks.get(blocksName));
         }
     }
 

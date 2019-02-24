@@ -34,7 +34,6 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     }
 
     public void addSubscription(PlayerStatusName name) {
-        // TODO: Factory
         LOG.info("Adding subscription for {}", name.getPlayerName());
         BaseSubscriber<PlayerStatus> subscriber = new BaseSubscriber<>(
                 faceManager,

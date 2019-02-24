@@ -5,8 +5,8 @@ import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
-import com.stefanolupo.ndngame.names.BlockInteractionName;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import net.named_data.jndn.Face;
@@ -25,40 +25,42 @@ public class BlockPublisher {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockPublisher.class);
 
+    private final Map<BlockName, Block> localBlocksByName = new HashMap<>();
     private final BasePublisher publisher;
-    private final Map<BlockName, Block> localBlocksById = new HashMap<>();
 
     @Inject
     public BlockPublisher(Config config,
                           BasePublisherFactory factory,
                           FaceManager faceManager) {
-        publisher = factory.create(BlockName.), BlockName::new);
-        BlockInteractionName blockInteractionName = new BlockInteractionName(config.getGameId(), config.getPlayerName());
-        faceManager.registerBasicPrefix(blockInteractionName.getListenPrefix(), this::onInteractionInterest);
+        BlocksSyncName blockSyncName = new BlocksSyncName(config.getGameId(), config.getPlayerName());
+        publisher = factory.create(blockSyncName.getAsPrefix(), BlocksSyncName::new);
+
+        BlockName blockInteractionName = new BlockName(config.getGameId(), config.getPlayerName());
+        faceManager.registerBasicPrefix(blockInteractionName.getAsPrefix(), this::onInteractionInterest);
     }
 
     public void upsertBlock(BlockName blockName, Block block) {
-        localBlocksById.put(blockName, block);
+        localBlocksByName.put(blockName, block);
         updateBlob();
     }
 
     public void removeBlock(BlockName blockName) {
-        localBlocksById.remove(blockName);
+        localBlocksByName.remove(blockName);
         updateBlob();
     }
 
     public Map<BlockName, Block> getLocalBlocks() {
-        return localBlocksById;
+        return localBlocksByName;
     }
 
     private void updateBlob() {
-        Blocks blocks = Blocks.newBuilder().addAllBlocks(localBlocksById.values()).build();
+        Blocks blocks = Blocks.newBuilder().addAllBlocks(localBlocksByName.values()).build();
         publisher.updateLatestBlob(new Blob(blocks.toByteArray()));
     }
 
     public void onInteractionInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
-//        BlockInteractionName blockInteractionName = new BlockInteractionName(interest);
-//        Block block = localBlocksById.get(blockInteractionName.getBlockId());
+//        BlockName blockInteractionName = new BlockName(interest);
+//        Block block = localBlocksByName.get(blockInteractionName.getBlockId());
 //        if (block != null) {
 //            Block updatedBlock = block.toBuilder()
 //                    .setHealth(block.getHealth() - 1)

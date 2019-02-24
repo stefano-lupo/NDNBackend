@@ -8,8 +8,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PlayerName implements AsPrefix {
-    public static final String PLAYER_NAME_REGEX = "/([a-zA-Z0-9]+)";
-    private static final Pattern PATTERN = Pattern.compile("^" + PLAYER_NAME_REGEX + "(.*)");
+    public static final String PLAYER_NAME_REGEX = "([a-zA-Z0-9]+)";
+    private static final Pattern PATTERN = Pattern.compile("^/" + PLAYER_NAME_REGEX + "(.*)");
 
     private String remainder;
     private String playerName;
@@ -41,6 +41,10 @@ public class PlayerName implements AsPrefix {
 
     public String getRemainder() {
         return remainder;
+    }
+
+    public BaseName getBaseName() {
+        return baseName;
     }
 
     private void parse(String remainder) {

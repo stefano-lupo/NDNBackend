@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.names;
 
+import com.google.common.annotations.VisibleForTesting;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
@@ -10,21 +11,21 @@ import java.util.regex.Pattern;
 
 /**
  * Schema
- * Prefix: |player_name|/status
+ * Prefix: /status
  *  - Express interest: /sync/|sequence_number|
  *  - Reply to interest: /sync/|sequence_number|/|next_sequence_number|
  */
 public class PlayerStatusName implements SequenceNumberedName {
 
-    private static final String BASE_PATTERN = "^/([a-zA-Z0-9]+)/status";
-    private static final Pattern EXPRESS_PATTERN = Pattern.compile(BASE_PATTERN + "/sync/(\\d)$");
-    private static final Pattern DATA_NAME_PATTERN = Pattern.compile(BASE_PATTERN + "/sync/\\d/(\\d)$");
+    private static final String BASE_PATTERN = "^/status/sync";
+
+    @VisibleForTesting
+    static final Pattern PATTERN = Pattern.compile(BASE_PATTERN + "/(\\d+)/?(\\d+)?");
 
     private static final String STATUS = "status";
     private static final String SYNC = "sync";
 
-    private BaseName baseName;
-    private String playerName;
+    private PlayerName playerName;
     private long sequenceNumber = 0;
     private long nextSequenceNumber = 0;
 
@@ -34,9 +35,7 @@ public class PlayerStatusName implements SequenceNumberedName {
      * Used on discovery
      */
     public PlayerStatusName(long gameId, String playerName) {
-//        buildNonPrefixedName(String.valueOf(gameId), playerName, STATUS, SYNC);
-        this.baseName = new BaseName(gameId);
-        this.playerName = playerName;
+        this.playerName = new PlayerName(gameId, playerName);
     }
 
     /**
@@ -44,8 +43,8 @@ public class PlayerStatusName implements SequenceNumberedName {
      * Used by Producer
      */
     public PlayerStatusName(Interest interest) {
-        baseName = BaseName.parseFrom(interest);
-        parse(baseName.getRemainder());
+        playerName = new PlayerName(interest);
+        parse(playerName.getRemainder());
     }
 
     /**
@@ -53,8 +52,8 @@ public class PlayerStatusName implements SequenceNumberedName {
      * This is the name that contains the updated next sequence number
      */
     public PlayerStatusName(Data data) {
-        baseName = BaseName.parseFrom(data);
-        parse(baseName.getRemainder());
+        playerName = new PlayerName(data);
+        parse(playerName.getRemainder());
     }
 
     @Override
@@ -79,8 +78,7 @@ public class PlayerStatusName implements SequenceNumberedName {
      * @return the name to accept interests for
      */
     public Name getListenName() {
-        return baseName.getAsPrefix()
-                .append(playerName)
+        return playerName.getAsPrefix()
                 .append(STATUS)
                 .append(SYNC);
     }
@@ -105,22 +103,18 @@ public class PlayerStatusName implements SequenceNumberedName {
         return sequenceNumber;
     }
 
-//    public long getGameId() {
-//        return gameId;
-//    }
-
-    public String getPlayerName() {
+    public PlayerName getPlayerName() {
         return playerName;
     }
 
     private void parse(String remainder) {
-        Matcher matcher = BaseName.matchOrThrow(remainder, EXPRESS_PATTERN);
-        playerName = matcher.group(1);
-        sequenceNumber = Long.valueOf(matcher.group(2));
+        Matcher matcher = BaseName.matchOrThrow(remainder, PATTERN);
+        sequenceNumber = Long.valueOf(matcher.group(1));
 
-        Matcher dataNameMatcher = DATA_NAME_PATTERN.matcher(remainder);
-        if (dataNameMatcher.matches()) {
-            nextSequenceNumber = Long.valueOf(dataNameMatcher.group(1));
+        String nextSequenceNumber = matcher.group(2);
+
+        if (nextSequenceNumber != null) {
+            this.nextSequenceNumber = Long.valueOf(nextSequenceNumber);
         }
     }
 

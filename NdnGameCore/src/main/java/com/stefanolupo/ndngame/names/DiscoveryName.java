@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
  */
 public class DiscoveryName implements AsPrefix {
 
-    private static final Pattern NAME_PATTERN = Pattern.compile("^/discovery/" + PlayerName.PLAYER_NAME_REGEX + "/\\d+");
+    private static final Pattern NAME_PATTERN = Pattern.compile("^/discovery/" + PlayerName.PLAYER_NAME_REGEX);
     private static final String DISCOVERY = "discovery";
     private static final String BROADCAST = "broadcast";
 
@@ -39,11 +39,15 @@ public class DiscoveryName implements AsPrefix {
 
     @Override
     public Name getAsPrefix() {
-        return baseName.getAsPrefix().append(playerName);
+        return baseName.getAsPrefix()
+                .append(DISCOVERY)
+                .append(playerName);
     }
 
     public static Name getBroadcastName(long gameId) {
-        return new BaseName(gameId).getAsPrefix().append(BROADCAST);
+        return new BaseName(gameId).getAsPrefix()
+                .append(DISCOVERY)
+                .append(BROADCAST);
     }
 
     public Interest toInterest() {
@@ -52,7 +56,6 @@ public class DiscoveryName implements AsPrefix {
 
     private void parse(String remainder) {
         Matcher matcher = BaseName.matchOrThrow(remainder, NAME_PATTERN);
-        playerName = matcher.group(2);
-        sequenceNumber = Long.valueOf(matcher.group(3));
+        playerName = matcher.group(1);
     }
 }
