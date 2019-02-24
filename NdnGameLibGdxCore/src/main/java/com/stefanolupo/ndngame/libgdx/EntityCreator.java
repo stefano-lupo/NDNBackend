@@ -17,8 +17,8 @@ import com.stefanolupo.ndngame.libgdx.assets.Textures;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.names.AttackName;
-import com.stefanolupo.ndngame.names.BlockName;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
@@ -114,7 +114,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         LOG.debug("Creating a block at {}, {}, isRemote: {}", gameObject.getX(), gameObject.getY(), isRemote);
 
         Entity entity = engine.createEntity();
-        Body body = bodyFactory.makeBoxPolyBody(gameObject, BodyFactory.STONE, BodyDef.BodyType.StaticBody);
+        Body body = bodyFactory.makeBoxPolyBody(gameObject, BodyFactory.STONE, BodyDef.BodyType.KinematicBody);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);

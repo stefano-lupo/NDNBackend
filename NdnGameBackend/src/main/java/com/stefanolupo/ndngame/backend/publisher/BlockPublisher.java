@@ -6,7 +6,7 @@ import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.BlockInteractionName;
-import com.stefanolupo.ndngame.names.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
 import com.stefanolupo.ndngame.protos.Blocks;
 import net.named_data.jndn.Face;
@@ -32,7 +32,7 @@ public class BlockPublisher {
     public BlockPublisher(Config config,
                           BasePublisherFactory factory,
                           FaceManager faceManager) {
-        publisher = factory.create(new BlockName(config.getGameId(), config.getPlayerName()), BlockName::new);
+        publisher = factory.create(BlockName.), BlockName::new);
         BlockInteractionName blockInteractionName = new BlockInteractionName(config.getGameId(), config.getPlayerName());
         faceManager.registerBasicPrefix(blockInteractionName.getListenPrefix(), this::onInteractionInterest);
     }

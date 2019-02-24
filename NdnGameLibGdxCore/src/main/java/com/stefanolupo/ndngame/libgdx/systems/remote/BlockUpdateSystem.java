@@ -14,7 +14,7 @@ import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
 import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
-import com.stefanolupo.ndngame.names.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

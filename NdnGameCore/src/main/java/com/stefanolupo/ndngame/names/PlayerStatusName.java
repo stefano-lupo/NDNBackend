@@ -4,21 +4,29 @@ import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+
 /**
- * Schema: base_name/|game_id|/|player_name|/status/sync/|sequence_number|/|next_seqeunce_number|
+ * Schema
+ * Prefix: |player_name|/status
+ *  - Express interest: /sync/|sequence_number|
+ *  - Reply to interest: /sync/|sequence_number|/|next_sequence_number|
  */
-public class PlayerStatusName
-        extends BaseName
-        implements SequenceNumberedName {
+public class PlayerStatusName implements SequenceNumberedName {
 
-    private static final Pattern NAME_PATTERN = Pattern.compile("/\\d+/[a-z]+/status/sync/\\d+");
+    private static final String BASE_PATTERN = "^/([a-zA-Z0-9]+)/status";
+    private static final Pattern EXPRESS_PATTERN = Pattern.compile(BASE_PATTERN + "/sync/(\\d)$");
+    private static final Pattern DATA_NAME_PATTERN = Pattern.compile(BASE_PATTERN + "/sync/\\d/(\\d)$");
 
-    private long gameId;
+    private static final String STATUS = "status";
+    private static final String SYNC = "sync";
+
+    private BaseName baseName;
     private String playerName;
-    private long sequenceNumber;
-    private long nextSequenceNumber = sequenceNumber;
+    private long sequenceNumber = 0;
+    private long nextSequenceNumber = 0;
 
     /**
      * Create a PlayerStatusName using the components
@@ -26,11 +34,9 @@ public class PlayerStatusName
      * Used on discovery
      */
     public PlayerStatusName(long gameId, String playerName) {
-        super(String.valueOf(gameId), playerName, "status", "sync");
-        this.gameId = gameId;
+//        buildNonPrefixedName(String.valueOf(gameId), playerName, STATUS, SYNC);
+        this.baseName = new BaseName(gameId);
         this.playerName = playerName;
-        this.sequenceNumber = 0;
-        this.nextSequenceNumber = this.sequenceNumber;
     }
 
     /**
@@ -38,8 +44,8 @@ public class PlayerStatusName
      * Used by Producer
      */
     public PlayerStatusName(Interest interest) {
-        super(interest.getName());
-        parse();
+        baseName = BaseName.parseFrom(interest);
+        parse(baseName.getRemainder());
     }
 
     /**
@@ -47,8 +53,8 @@ public class PlayerStatusName
      * This is the name that contains the updated next sequence number
      */
     public PlayerStatusName(Data data) {
-        super(data.getName());
-        parse();
+        baseName = BaseName.parseFrom(data);
+        parse(baseName.getRemainder());
     }
 
     @Override
@@ -72,13 +78,11 @@ public class PlayerStatusName
      * Used by producers to register prefix
      * @return the name to accept interests for
      */
-    @Override
     public Name getListenName() {
-        return new Name(GAME_BASE_NAME)
-                .append(String.valueOf(gameId))
+        return baseName.getAsPrefix()
                 .append(playerName)
-                .append("status")
-                .append("sync");
+                .append(STATUS)
+                .append(SYNC);
     }
 
     /**
@@ -87,7 +91,9 @@ public class PlayerStatusName
      */
     @Override
     public Name getFullName() {
-        return getListenName().append(String.valueOf(sequenceNumber)).append(String.valueOf(nextSequenceNumber));
+        return getListenName()
+                .append(String.valueOf(sequenceNumber))
+                .append(String.valueOf(nextSequenceNumber));
     }
 
 
@@ -99,24 +105,22 @@ public class PlayerStatusName
         return sequenceNumber;
     }
 
-    public long getGameId() {
-        return gameId;
-    }
+//    public long getGameId() {
+//        return gameId;
+//    }
 
     public String getPlayerName() {
         return playerName;
     }
 
-    private void parse() {
-//        Preconditions.checkArgument(tailName.size() == 4);
-        checkMatchesRegex(tailName, NAME_PATTERN);
+    private void parse(String remainder) {
+        Matcher matcher = BaseName.matchOrThrow(remainder, EXPRESS_PATTERN);
+        playerName = matcher.group(1);
+        sequenceNumber = Long.valueOf(matcher.group(2));
 
-        gameId = Long.valueOf(tailName.get(0).toEscapedString());
-        playerName = tailName.get(1).toEscapedString();
-        sequenceNumber = Long.valueOf(tailName.get(4).toEscapedString());
-
-        if (tailName.size() == 6) {
-            nextSequenceNumber = Long.valueOf(tailName.get(5).toEscapedString());
+        Matcher dataNameMatcher = DATA_NAME_PATTERN.matcher(remainder);
+        if (dataNameMatcher.matches()) {
+            nextSequenceNumber = Long.valueOf(dataNameMatcher.group(1));
         }
     }
 
@@ -132,8 +136,7 @@ public class PlayerStatusName
 
         PlayerStatusName other = (PlayerStatusName) obj;
 
-        return other.playerName.equals(playerName) &&
-                other.gameId == gameId;
+        return other.playerName.equals(playerName);
     }
 
     /**
@@ -141,6 +144,6 @@ public class PlayerStatusName
      */
     @Override
     public int hashCode() {
-        return 31 * playerName.hashCode() + Long.hashCode(gameId);
+        return 31 * playerName.hashCode();
     }
 }

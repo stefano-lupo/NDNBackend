@@ -73,10 +73,10 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
     }
 
     private static Name buildBroadcastPrefix(Config config) {
-        return DiscoveryName.getBroadcastPrefix(config.getGameId());
+        return DiscoveryName.getBroadcastName(config.getGameId());
     }
 
     private static Name buildDataPrefix(Config config) {
-        return DiscoveryName.getDataListenPrefix(config.getGameId(), config.getPlayerName());
+        return new DiscoveryName(config.getGameId(), config.getPlayerName()).getAsPrefix();
     }
 }

@@ -1,7 +1,7 @@
 package com.stefanolupo.ndngame.libgdx.components;
 
 import com.badlogic.ashley.core.Component;
-import com.stefanolupo.ndngame.names.BlockName;
+import com.stefanolupo.ndngame.names.blocks.BlockName;
 
 /**
  * Contains the blocks remote name object and extra non game engine fields

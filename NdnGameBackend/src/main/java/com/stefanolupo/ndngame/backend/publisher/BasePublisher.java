@@ -36,11 +36,11 @@ public class BasePublisher implements OnInterestCallback {
 
     @Inject
     public BasePublisher(FaceManager faceManager,
-                         @Assisted SequenceNumberedName syncName,
+                         @Assisted Name listenName,
                          @Assisted Function<Interest, SequenceNumberedName> interestTFunction) {
         this.interestTFunction = interestTFunction;
-        faceManager.registerBasicPrefix(syncName.getListenName(), this);
-        LOG.debug("Registering {}", syncName.getListenName());
+        faceManager.registerBasicPrefix(listenName, this);
+        LOG.debug("Registering {}", listenName);
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 this::processQueue,
                 DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS,
