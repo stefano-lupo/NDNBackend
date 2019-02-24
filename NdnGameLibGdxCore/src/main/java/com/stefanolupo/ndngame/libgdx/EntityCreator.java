@@ -34,8 +34,8 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityCreator.class);
 
-    public static final float WORLD_WIDTH = 50;
-    public static final float WORLD_HEIGHT = 50;
+    public static final float WORLD_WIDTH = 150;
+    public static final float WORLD_HEIGHT = 150;
 
     public static final float PLAYER_WIDTH = 1;
     public static final float PLAYER_HEIGHT = 1.5f;

@@ -77,13 +77,13 @@ public class PlayerControlSystem
                                      Body body) {
         AttackComponent attackComponent = null;
         if (inputController.isMouse1Down()) {
-            attackComponent = buildAttackComponent(body, 3f, AttackType.SWING);
+            attackComponent = buildAttackComponent(body, 1f, AttackType.SWING);
             stateComponent.updateAttackState(AttackState.SWING, deltaTime);
         } else if (inputController.isMouse2Down()) {
-            attackComponent = buildAttackComponent(body, 3f, AttackType.CAST);
+            attackComponent = buildAttackComponent(body, 1f, AttackType.CAST);
             stateComponent.updateAttackState(AttackState.CAST, deltaTime);
         } else if (inputController.isMouse3Down()) {
-            attackComponent = buildAttackComponent(body, 3f, AttackType.SHIELD);
+            attackComponent = buildAttackComponent(body, 1f, AttackType.SHIELD);
             stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
         } else {
             LOG.error("Unknown attack command: {}", stateComponent.getAttackState());
@@ -93,9 +93,7 @@ public class PlayerControlSystem
         entity.add(attackComponent);
         pooledEngine.addEntity(entity);
 
-        // TODO: I had started doing something for attacks with ChronoSync
-//        Entity entity = pooledEngine.createEntity();
-//        entity.add
+        stateComponent.updateMotionState(0, 0, deltaTime);
     }
 
     private AttackComponent buildAttackComponent(Body body, float radius, AttackType type) {
@@ -116,9 +114,10 @@ public class PlayerControlSystem
     private void handleInteractionCommand(StateComponent stateComponent, float deltaTime, Body body) {
         if (inputController.isSpacePressed()) {
             stateComponent.updateInteractionState(InteractionState.PLACE_BLOCK, deltaTime);
-
-            // TODO: This really isnt the place to do this but meh
             entityCreator.createLocalBlock(body.getPosition().x, body.getPosition().y);
+
+            // Force velocity to 0 when placing
+            stateComponent.updateMotionState(0, 0, deltaTime);
         }
     }
 

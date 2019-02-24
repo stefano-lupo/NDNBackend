@@ -17,9 +17,12 @@ import java.util.concurrent.ScheduledExecutorService;
 public class FaceManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(FaceManager.class);
+    private static final int THREAD_POOL_SIZE = 20;
 
-    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(20);
-    private static final ThreadPoolFace THREAD_POOL_FACE = new ThreadPoolFace(EXECUTOR_SERVICE, new AsyncTcpTransport(EXECUTOR_SERVICE),
+    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
+    private static final ThreadPoolFace THREAD_POOL_FACE = new ThreadPoolFace(
+            EXECUTOR_SERVICE,
+            new AsyncTcpTransport(EXECUTOR_SERVICE),
             new AsyncTcpTransport.ConnectionInfo("localhost"));
     @Inject
     public FaceManager(KeyChain keyChain) {

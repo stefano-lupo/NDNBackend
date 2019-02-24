@@ -9,10 +9,15 @@ import net.named_data.jndn.OnTimeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class BaseSubscriber<D> implements OnData, OnTimeout {
     private static final Logger LOG = LoggerFactory.getLogger(BaseSubscriber.class);
+
+    private final int[] HISTOGRAM = {0, 0, 0, 0, 0};
+    private static final int HISTOGRAM_BIN_SIZE_MS = 20;
 
     /**
      * The timeout of the interest
@@ -42,17 +47,23 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
         this.dataFunction = dataFunction;
         this.nameExtractor = nameExtractor;
         expressInterestSafe(buildInterest(name));
+        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::logHistogram, 10, 20, TimeUnit.SECONDS);
     }
 
     @Override
     public void onData(Interest interest, Data data) {
+        long now = System.currentTimeMillis();
+        long delta = now - lastInterestExpressTime;
+        long bin = delta / HISTOGRAM_BIN_SIZE_MS;
+        updateHistogram(bin);
+
         entity = dataFunction.apply(data);
 
         // Setup the name for the next data based on what came from publisher
         name = nameExtractor.apply(data);
 
-        long now = System.currentTimeMillis();
-        long sleepTime = WAIT_TIME_BETWEEN_INTERESTS_MS - (now - lastInterestExpressTime);
+
+        long sleepTime = WAIT_TIME_BETWEEN_INTERESTS_MS - delta;
         if (sleepTime > 10) {
             try {
                 Thread.sleep(sleepTime);
@@ -88,5 +99,20 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     private void expressInterestSafe(Interest i) {
         lastInterestExpressTime = System.currentTimeMillis();
         faceManager.expressInterestSafe(i, this, this);
+    }
+
+    private void updateHistogram(long bin) {
+        int safeBin = (int) Math.max(0, Math.min(bin, HISTOGRAM.length - 1));
+        HISTOGRAM[safeBin] = ++HISTOGRAM[safeBin];
+    }
+
+    private void logHistogram() {
+        StringBuilder stringBuilder = new StringBuilder(HISTOGRAM.length);
+        String format = "[%d - %d]: %d\t\t";
+        for (int i=0; i<HISTOGRAM.length; i++) {
+            stringBuilder.append(String.format(format, i*HISTOGRAM_BIN_SIZE_MS, (i+1)*HISTOGRAM_BIN_SIZE_MS, HISTOGRAM[i]));
+        }
+
+        LOG.debug("{}", stringBuilder.toString());
     }
 }

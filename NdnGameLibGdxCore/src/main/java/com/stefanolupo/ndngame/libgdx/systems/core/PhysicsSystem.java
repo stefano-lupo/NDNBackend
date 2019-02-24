@@ -8,6 +8,7 @@ import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.World;
 import com.badlogic.gdx.utils.Array;
 import com.google.inject.Inject;
+import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
@@ -56,6 +57,13 @@ public class PhysicsSystem
         for (Entity entity : bodiesQueue) {
             Body body = BODY_MAPPER.get(entity).getBody();
             Vector2 bodyPosition = body.getPosition();
+
+            float x = body.getPosition().x;
+            float y = body.getPosition().y;
+
+            if (x > EntityCreator.WORLD_WIDTH || x < 0 || y > EntityCreator.WORLD_HEIGHT || y < 0) {
+                body.setTransform(EntityCreator.WORLD_WIDTH / 2, EntityCreator.WORLD_HEIGHT / 2, body.getAngle());
+            }
 
             RenderComponent renderComponent = RENDER_MAPPER.get(entity);
             renderComponent.setGameObject(renderComponent.getGameObject().toBuilder()

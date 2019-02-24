@@ -44,6 +44,11 @@ public class BlockPublisher {
         updateBlob();
     }
 
+    public void upsertBatch(Map<BlockName, Block> blockUpdates) {
+        localBlocksByName.putAll(blockUpdates);
+        updateBlob();
+    }
+
     public void removeBlock(BlockName blockName) {
         localBlocksByName.remove(blockName);
         updateBlob();

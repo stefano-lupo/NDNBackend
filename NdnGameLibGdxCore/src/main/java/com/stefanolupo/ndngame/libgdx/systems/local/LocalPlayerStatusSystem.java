@@ -34,5 +34,4 @@ public class LocalPlayerStatusSystem
         Entity playerEntity = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
         playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
     }
-
 }
