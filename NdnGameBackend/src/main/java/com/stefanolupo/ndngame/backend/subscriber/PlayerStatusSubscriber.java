@@ -3,10 +3,13 @@ package com.stefanolupo.ndngame.backend.subscriber;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.stefanolupo.ndngame.backend.LocalPlayerReference;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
+import com.stefanolupo.ndngame.backend.filters.LinearInterestZoneFilter;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.Config;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
+import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import net.named_data.jndn.Data;
@@ -21,16 +24,20 @@ import java.util.Set;
 public class PlayerStatusSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusSubscriber.class);
+    private static final long MAX_TIME_BETWEEN_INTERESTS_MS = 2000;
 
     private final Map<PlayerStatusName, BaseSubscriber<PlayerStatus>> subscriberMap = new HashMap<>();
     private final Config config;
     private final FaceManager faceManager;
+    private final LocalPlayerReference localPlayerReference;
 
     @Inject
     public PlayerStatusSubscriber(Config config,
-                                  FaceManager faceManager) {
+                                  FaceManager faceManager,
+                                  LocalPlayerReference localPlayerReference) {
         this.config = config;
         this.faceManager = faceManager;
+        this.localPlayerReference = localPlayerReference;
     }
 
     public void addSubscription(PlayerStatusName name) {
@@ -39,7 +46,8 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                 faceManager,
                 name,
                 this::typeFromData,
-                PlayerStatusName::new);
+                PlayerStatusName::new,
+                this::sleepTimeFromPosition);
         subscriberMap.put(name, subscriber);
     }
 
@@ -61,6 +69,17 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Couldn't parse data for " + data.getName().toUri(), e);
         }
+    }
+
+    private long sleepTimeFromPosition(PlayerStatus playerStatus) {
+        GameObject localPlayer = localPlayerReference.getPlayerStatus().getGameObject();
+        GameObject remotePlayer = playerStatus.getGameObject();
+        double weight = LinearInterestZoneFilter.getSleepTimeFactor(
+                localPlayer.getX(), localPlayer.getY(),
+                remotePlayer.getX(), remotePlayer.getY());
+        long sleepTime = Math.round(MAX_TIME_BETWEEN_INTERESTS_MS * weight);
+//        LOG.debug("Sleeping for {}", sleepTime);
+        return sleepTime;
     }
 
     @Override

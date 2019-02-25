@@ -29,9 +29,12 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
      */
     private static final long WAIT_TIME_BETWEEN_INTERESTS_MS = 10;
 
+    private static final long MIN_SLEEP_TIME_TO_BOTHER_MS = 10;
+
     private SequenceNumberedName name;
     private D entity;
     private final Function<Data, D> dataFunction;
+    private final Function<D, Long> sleepTimeFunction;
     private final Function<Data, SequenceNumberedName> nameExtractor;
 
     private final FaceManager faceManager;
@@ -41,13 +44,26 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     public BaseSubscriber(FaceManager faceManager,
                           SequenceNumberedName name,
                           Function<Data, D> dataFunction,
-                          Function<Data, SequenceNumberedName> nameExtractor) {
+                          Function<Data, SequenceNumberedName> nameExtractor,
+                          Function<D, Long> sleepTimeFunction) {
         this.faceManager = faceManager;
         this.name = name;
         this.dataFunction = dataFunction;
         this.nameExtractor = nameExtractor;
+        this.sleepTimeFunction = sleepTimeFunction;
         expressInterestSafe(buildInterest(name));
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(this::logHistogram, 10, 20, TimeUnit.SECONDS);
+    }
+
+    public BaseSubscriber(FaceManager faceManager,
+                          SequenceNumberedName name,
+                          Function<Data, D> dataFunction,
+                          Function<Data, SequenceNumberedName> nameExtractor) {
+        this(faceManager,
+                name,
+                dataFunction,
+                nameExtractor,
+                l -> WAIT_TIME_BETWEEN_INTERESTS_MS);
     }
 
     @Override
@@ -62,9 +78,10 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
         // Setup the name for the next data based on what came from publisher
         name = nameExtractor.apply(data);
 
+        long targetSleepTime = sleepTimeFunction.apply(entity);
 
-        long sleepTime = WAIT_TIME_BETWEEN_INTERESTS_MS - delta;
-        if (sleepTime > 10) {
+        long sleepTime = targetSleepTime - delta;
+        if (sleepTime > MIN_SLEEP_TIME_TO_BOTHER_MS) {
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException e) {

@@ -4,7 +4,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IntervalSystem;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.backend.publisher.PlayerStatusPublisher;
+import com.stefanolupo.ndngame.backend.LocalPlayerReference;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
@@ -21,17 +21,17 @@ public class LocalPlayerStatusSystem
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayerStatusSystem.class);
     private static final Float UPDATE_INTERVAL_SEC = 20f / 1000;
 
-    private final PlayerStatusPublisher playerStatusPublisher;
+    private final LocalPlayerReference localPlayerReference;
 
     @Inject
-    public LocalPlayerStatusSystem(PlayerStatusPublisher playerStatusPublisher) {
+    public LocalPlayerStatusSystem(LocalPlayerReference localPlayerReference) {
         super(UPDATE_INTERVAL_SEC);
-        this.playerStatusPublisher = playerStatusPublisher;
+        this.localPlayerReference = localPlayerReference;
     }
 
     @Override
     protected void updateInterval() {
         Entity playerEntity = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
-        playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
+        localPlayerReference.setPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
     }
 }
