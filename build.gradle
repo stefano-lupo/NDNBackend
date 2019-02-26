@@ -76,6 +76,8 @@ subprojects {
         compileOnly 'org.immutables:value:2.7.5'
         compile group: 'com.google.inject.extensions', name: 'guice-multibindings', version: '4.0'
         compile group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: '4.0'
+        compile group: 'com.hubspot.liveconfig', name: 'live-config', version: '1.0.0'
+
     }
 
     sourceCompatibility = '1.8'

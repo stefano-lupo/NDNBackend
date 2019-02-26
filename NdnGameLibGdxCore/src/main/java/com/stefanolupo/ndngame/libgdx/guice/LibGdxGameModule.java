@@ -8,6 +8,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
+import com.hubspot.liveconfig.LiveConfig;
+import com.hubspot.liveconfig.LiveConfigModule;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.guice.BackendModule;
 import com.stefanolupo.ndngame.config.Config;
@@ -15,6 +17,9 @@ import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.AutomatedInputController;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.RealInputController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class LibGdxGameModule extends AbstractModule {
 
@@ -29,6 +34,10 @@ public class LibGdxGameModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new BackendModule(config));
+        Map<String, String> test = new HashMap<>();
+        test.put("key", "val");
+        LiveConfig liveConfig = LiveConfig.fromMap(test);
+        install(new LiveConfigModule(liveConfig));
 
         // Mutlibinders are additive so these will add to the ones set in the backend module
         Multibinder<OnPlayersDiscovered> onDiscoveryBinder =
