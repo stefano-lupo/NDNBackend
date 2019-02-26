@@ -3,20 +3,20 @@ package com.stefanolupo.ndngame.libgdx;
 import com.badlogic.gdx.Game;
 import com.badlogic.gdx.audio.Music;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
 
 public class NdnGame extends Game {
 
 
-	private final Config config;
+	private final LocalConfig localConfig;
 	private final GameAssetManager gameAssetManager;
 	private final MainScreen mainScreen;
 	private Music music;
 
 	@Inject
-	public NdnGame(Config config, GameAssetManager gameAssetManager, MainScreen mainScreen) {
-		this.config = config;
+	public NdnGame(LocalConfig localConfig, GameAssetManager gameAssetManager, MainScreen mainScreen) {
+		this.localConfig = localConfig;
 		this.gameAssetManager = gameAssetManager;
 		this.mainScreen = mainScreen;
 	}

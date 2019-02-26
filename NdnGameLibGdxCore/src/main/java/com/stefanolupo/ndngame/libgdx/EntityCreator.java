@@ -9,7 +9,7 @@ import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheet;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
@@ -46,7 +46,7 @@ public class EntityCreator implements OnPlayersDiscovered {
     public static final float BLOCK_HEIGHT = 2;
 
 
-    private final Config config;
+    private final LocalConfig localConfig;
     private final PooledEngine engine;
     private final SpriteSheetLoader spriteSheetLoader;
     private final BodyFactory bodyFactory;
@@ -57,7 +57,7 @@ public class EntityCreator implements OnPlayersDiscovered {
     private final BlockSubscriber blockSubscriber;
 
     @Inject
-    public EntityCreator(Config config,
+    public EntityCreator(LocalConfig localConfig,
                          PooledEngine engine,
                          SpriteSheetLoader spriteSheetLoader,
                          BodyFactory bodyFactory,
@@ -67,7 +67,7 @@ public class EntityCreator implements OnPlayersDiscovered {
                          BlockPublisher blockPublisher,
                          BlockSubscriber blockSubscriber) {
 
-        this.config = config;
+        this.localConfig = localConfig;
         this.engine = engine;
         this.spriteSheetLoader = spriteSheetLoader;
         this.bodyFactory = bodyFactory;
@@ -96,7 +96,7 @@ public class EntityCreator implements OnPlayersDiscovered {
                 .setGameObject(gameObject)
                 .setHealth(5)
                 .build();
-        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName(), id);
+        BlockName blockName = new BlockName(localConfig.getGameId(), localConfig.getPlayerName(), id);
         Entity entity = createBlockEntity(blockName, block, false);
         blockPublisher.upsertBlock(blockName, block);
         engine.addEntity(entity);
@@ -163,13 +163,13 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     public void createRemotePlayer(Player player) {
         LOG.debug("Creating remote player: {}", player);
-        PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), player.getName());
+        PlayerStatusName playerStatusName = new PlayerStatusName(localConfig.getGameId(), player.getName());
 
         Entity entity = engine.createEntity();
 
         RemotePlayerComponent remotePlayerComponent = engine.createComponent(RemotePlayerComponent.class);
         remotePlayerComponent.setPlayerStatusName(playerStatusName);
-//        remotePlayerComponent.setAttackName(new AttackName(config.getGameId(), playerStatusName.getPlayerName()));
+//        remotePlayerComponent.setAttackName(new AttackName(localConfig.getGameId(), playerStatusName.getPlayerName()));
         entity.add(remotePlayerComponent);
 
         entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));

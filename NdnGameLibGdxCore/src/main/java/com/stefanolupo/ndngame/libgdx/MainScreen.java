@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.contactlisteners.MyContactListener;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
@@ -27,7 +27,7 @@ public class MainScreen implements Screen {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainScreen.class);
 
-    private final Config config;
+    private final LocalConfig localConfig;
     private final InputController inputController;
     private final PooledEngine engine;
     private final World world;
@@ -54,7 +54,7 @@ public class MainScreen implements Screen {
     private SpriteBatch spriteBatch = null;
 
     @Inject
-    public MainScreen(Config config,
+    public MainScreen(LocalConfig localConfig,
                       InputController inputController,
                       PooledEngine engine,
                       MyContactListener myContactListener,
@@ -77,7 +77,7 @@ public class MainScreen implements Screen {
 
                       // Listeners
                       AttackListener attackListener) {
-        this.config = config;
+        this.localConfig = localConfig;
         this.inputController = inputController;
         this.engine = engine;
         this.world = world;
@@ -105,7 +105,7 @@ public class MainScreen implements Screen {
 
     @Override
     public void show() {
-        if (!config.isAutomated()) {
+        if (!localConfig.isAutomated()) {
             Gdx.input.setInputProcessor((InputProcessor) inputController);
         }
 

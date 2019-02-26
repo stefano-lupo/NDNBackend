@@ -3,7 +3,7 @@ package com.stefanolupo.ndngame.backend.publisher;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import net.named_data.jndn.util.Blob;
@@ -14,9 +14,9 @@ public class PlayerStatusPublisher {
     private final BasePublisher publisher;
 
     @Inject
-    public PlayerStatusPublisher(Config config,
+    public PlayerStatusPublisher(LocalConfig localConfig,
                                  BasePublisherFactory factory) {
-        PlayerStatusName playerStatusName = new PlayerStatusName(config.getGameId(), config.getPlayerName());
+        PlayerStatusName playerStatusName = new PlayerStatusName(localConfig.getGameId(), localConfig.getPlayerName());
         publisher = factory.create(playerStatusName.getListenName(), PlayerStatusName::new);
     }
 

@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -29,13 +29,13 @@ public class BlockPublisher {
     private final BasePublisher publisher;
 
     @Inject
-    public BlockPublisher(Config config,
+    public BlockPublisher(LocalConfig localConfig,
                           BasePublisherFactory factory,
                           FaceManager faceManager) {
-        BlocksSyncName blockSyncName = new BlocksSyncName(config.getGameId(), config.getPlayerName());
+        BlocksSyncName blockSyncName = new BlocksSyncName(localConfig.getGameId(), localConfig.getPlayerName());
         publisher = factory.create(blockSyncName.getAsPrefix(), BlocksSyncName::new);
 
-        BlockName blockName = new BlockName(config.getGameId(), config.getPlayerName());
+        BlockName blockName = new BlockName(localConfig.getGameId(), localConfig.getPlayerName());
         faceManager.registerBasicPrefix(blockName.getAsPrefix(), this::onInteractionInterest);
     }
 

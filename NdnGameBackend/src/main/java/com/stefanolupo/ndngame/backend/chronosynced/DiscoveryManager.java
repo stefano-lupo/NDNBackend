@@ -4,7 +4,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.DiscoveryName;
 import com.stefanolupo.ndngame.protos.Player;
 import com.stefanolupo.ndngame.protos.Players;
@@ -29,11 +29,11 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
     private final Set<OnPlayersDiscovered> discoveryCallbacks;
 
     @Inject
-    public DiscoveryManager(Config config,
+    public DiscoveryManager(LocalConfig localConfig,
                             Set<OnPlayersDiscovered> discoveryCallbacks) {
-        super(buildBroadcastPrefix(config), buildDataPrefix(config));
+        super(buildBroadcastPrefix(localConfig), buildDataPrefix(localConfig));
         this.localPlayer = Player.newBuilder()
-                .setName(config.getPlayerName())
+                .setName(localConfig.getPlayerName())
                 .build();
         this.discoveryCallbacks = discoveryCallbacks;
     }
@@ -72,11 +72,11 @@ public class DiscoveryManager extends ChronoSyncedDataStructure {
         }
     }
 
-    private static Name buildBroadcastPrefix(Config config) {
-        return DiscoveryName.getBroadcastName(config.getGameId());
+    private static Name buildBroadcastPrefix(LocalConfig localConfig) {
+        return DiscoveryName.getBroadcastName(localConfig.getGameId());
     }
 
-    private static Name buildDataPrefix(Config config) {
-        return new DiscoveryName(config.getGameId(), config.getPlayerName()).getAsPrefix();
+    private static Name buildDataPrefix(LocalConfig localConfig) {
+        return new DiscoveryName(localConfig.getGameId(), localConfig.getPlayerName()).getAsPrefix();
     }
 }

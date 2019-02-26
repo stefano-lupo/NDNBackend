@@ -7,7 +7,7 @@ import com.stefanolupo.ndngame.backend.LocalPlayerReference;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.filters.LinearInterestZoneFilter;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
@@ -27,17 +27,20 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     private static final long MAX_TIME_BETWEEN_INTERESTS_MS = 2000;
 
     private final Map<PlayerStatusName, BaseSubscriber<PlayerStatus>> subscriberMap = new HashMap<>();
-    private final Config config;
+    private final LocalConfig localConfig;
     private final FaceManager faceManager;
     private final LocalPlayerReference localPlayerReference;
+    private final LinearInterestZoneFilter linearInterestZoneFilter;
 
     @Inject
-    public PlayerStatusSubscriber(Config config,
+    public PlayerStatusSubscriber(LocalConfig localConfig,
                                   FaceManager faceManager,
-                                  LocalPlayerReference localPlayerReference) {
-        this.config = config;
+                                  LocalPlayerReference localPlayerReference,
+                                  LinearInterestZoneFilter linearInterestZoneFilter) {
+        this.localConfig = localConfig;
         this.faceManager = faceManager;
         this.localPlayerReference = localPlayerReference;
+        this.linearInterestZoneFilter = linearInterestZoneFilter;
     }
 
     public void addSubscription(PlayerStatusName name) {
@@ -74,7 +77,7 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     private long sleepTimeFromPosition(PlayerStatus playerStatus) {
         GameObject localPlayer = localPlayerReference.getPlayerStatus().getGameObject();
         GameObject remotePlayer = playerStatus.getGameObject();
-        double weight = LinearInterestZoneFilter.getSleepTimeFactor(
+        double weight = linearInterestZoneFilter.getSleepTimeFactor(
                 localPlayer.getX(), localPlayer.getY(),
                 remotePlayer.getX(), remotePlayer.getY());
         long sleepTime = Math.round(MAX_TIME_BETWEEN_INTERESTS_MS * weight);
@@ -84,6 +87,6 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
 
     @Override
     public void onPlayersDiscovered(Set<Player> players) {
-        players.forEach(p -> this.addSubscription(new PlayerStatusName(config.getGameId(), p.getName())));
+        players.forEach(p -> this.addSubscription(new PlayerStatusName(localConfig.getGameId(), p.getName())));
     }
 }

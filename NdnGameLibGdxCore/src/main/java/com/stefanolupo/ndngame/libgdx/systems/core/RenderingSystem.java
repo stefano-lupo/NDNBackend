@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
@@ -29,7 +29,7 @@ public class RenderingSystem
     private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getGameObject().getZ());
     private static final float PIXELS_PER_METER = 40f;
 
-    private final Config config;
+    private final LocalConfig localConfig;
     private final OrthographicCamera camera;
     private final Array<Entity> renderQueue;
 
@@ -39,10 +39,10 @@ public class RenderingSystem
     private ShapeRenderer shapeRenderer;
 
     @Inject
-    public RenderingSystem(Config config,
+    public RenderingSystem(LocalConfig localConfig,
                            OrthographicCamera camera) {
         super(Family.all(RenderComponent.class, TextureComponent.class).get(), Z_COMPARATOR);
-        this.config = config;
+        this.localConfig = localConfig;
         this.camera = camera;
         renderQueue = new Array<>();
     }
@@ -52,7 +52,7 @@ public class RenderingSystem
      */
     public void configureOnInit(SpriteBatch spriteBatch) {
         this.spriteBatch = spriteBatch;
-        if (config.isMasterView()) {
+        if (localConfig.isMasterView()) {
             camera.setToOrtho(false, EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
         } else {
             camera.setToOrtho(false,
@@ -135,7 +135,7 @@ public class RenderingSystem
             throw new IllegalStateException("Local player had no render component!");
         }
 
-        if (!config.isMasterView()) {
+        if (!localConfig.isMasterView()) {
             camera.position.set(renderComponent.getGameObject().getX(), renderComponent.getGameObject().getY(), 0);
         }
 

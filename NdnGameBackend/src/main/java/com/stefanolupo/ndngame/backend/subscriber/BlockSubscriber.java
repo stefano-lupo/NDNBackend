@@ -6,7 +6,7 @@ import com.google.inject.Singleton;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -25,13 +25,13 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     private static final Logger LOG = LoggerFactory.getLogger(BlockSubscriber.class);
 
     private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
-    private final Config config;
+    private final LocalConfig localConfig;
     private final FaceManager faceManager;
 
     @Inject
-    public BlockSubscriber(Config config,
+    public BlockSubscriber(LocalConfig localConfig,
                            FaceManager faceManager) {
-        this.config = config;
+        this.localConfig = localConfig;
         this.faceManager = faceManager;
     }
 
@@ -85,6 +85,6 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     @Override
     public void onPlayersDiscovered(Set<Player> players) {
-        players.forEach(p -> this.addSubscription(new BlocksSyncName(config.getGameId(), p.getName())));
+        players.forEach(p -> this.addSubscription(new BlocksSyncName(localConfig.getGameId(), p.getName())));
     }
 }

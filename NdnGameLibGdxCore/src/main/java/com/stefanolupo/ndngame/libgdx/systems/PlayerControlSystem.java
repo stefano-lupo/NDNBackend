@@ -6,7 +6,7 @@ import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
@@ -34,18 +34,18 @@ public class PlayerControlSystem
     private final InputController inputController;
     private final PooledEngine pooledEngine;
     private final EntityCreator entityCreator;
-    private final Config config;
+    private final LocalConfig localConfig;
 
     @Inject
     public PlayerControlSystem(InputController inputController,
                                PooledEngine pooledEngine,
                                EntityCreator entityCreator,
-                               Config config) {
+                               LocalConfig localConfig) {
         super(Family.all(LocalPlayerComponent.class).get());
         this.inputController = inputController;
         this.pooledEngine = pooledEngine;
         this.entityCreator = entityCreator;
-        this.config = config;
+        this.localConfig = localConfig;
     }
 
     @Override
@@ -98,7 +98,7 @@ public class PlayerControlSystem
 
     private AttackComponent buildAttackComponent(Body body, float radius, AttackType type) {
         AttackComponent attackComponent = pooledEngine.createComponent(AttackComponent.class);
-//        AttackName name = new AttackName(config.getGameId(), config.getPlayerName());
+//        AttackName name = new AttackName(localConfig.getGameId(), localConfig.getPlayerName());
         Attack attack = Attack.newBuilder()
                 .setId(UUID.randomUUID().toString())
                 .setRadius(radius)

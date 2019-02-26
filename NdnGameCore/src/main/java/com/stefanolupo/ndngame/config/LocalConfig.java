@@ -1,6 +1,6 @@
 package com.stefanolupo.ndngame.config;
 
-public class Config {
+public class LocalConfig {
 
     private static final int DEFAULT_SCREEN_WIDTH = 400;
     private static final int DEFAULT_SCREEN_HEIGHT = DEFAULT_SCREEN_WIDTH;
@@ -12,12 +12,12 @@ public class Config {
     private final int screenWidth;
     private final int screenHeight;
 
-    private Config(String playerName,
-                   boolean isAutomated,
-                   long gameId,
-                   boolean isMasterView,
-                   int screenWidth,
-                   int screenHeight) {
+    private LocalConfig(String playerName,
+                        boolean isAutomated,
+                        long gameId,
+                        boolean isMasterView,
+                        int screenWidth,
+                        int screenHeight) {
         this.playerName = playerName;
         this.isAutomated = isAutomated;
         this.gameId = gameId;
@@ -90,8 +90,8 @@ public class Config {
             this.screenHeight = screenHeight;
         }
 
-        public Config build() {
-            return new Config(playerName,
+        public LocalConfig build() {
+            return new LocalConfig(playerName,
                     isAutomated,
                     gameId,
                     isMasterView,

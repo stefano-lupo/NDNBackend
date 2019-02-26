@@ -1,6 +1,6 @@
 package com.stefanolupo.ndngame.backend.setup;
 
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import org.apache.commons.cli.*;
 
 public class CommandLineHelper {
@@ -50,7 +50,7 @@ public class CommandLineHelper {
 
     }
 
-    public Config getConfig(String[] args) {
+    public LocalConfig getConfig(String[] args) {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -60,7 +60,7 @@ public class CommandLineHelper {
 
             String playerName = cmd.getOptionValue(NAME_OF_PLAYER.getLongOpt());
 
-            Config.Builder builder = Config.builder()
+            LocalConfig.Builder builder = LocalConfig.builder()
                     .setPlayerName(playerName)
                     .isMasterView(cmd.hasOption(IS_MASTER_VIEW.getOpt()))
                     .setIsAutomated(cmd.hasOption(AUTOMATED_MODE.getOpt()));

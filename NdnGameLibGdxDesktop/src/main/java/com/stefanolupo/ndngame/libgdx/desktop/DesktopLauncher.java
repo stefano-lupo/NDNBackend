@@ -5,34 +5,34 @@ import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.stefanolupo.ndngame.backend.setup.CommandLineHelper;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.NdnGame;
 import com.stefanolupo.ndngame.libgdx.guice.LibGdxGameModule;
 
 public class DesktopLauncher {
 	public static void main (String[] args) {
-		Config config = new CommandLineHelper().getConfig(args);
-		Injector injector = Guice.createInjector(new LibGdxGameModule(config));
+		LocalConfig localConfig = new CommandLineHelper().getConfig(args);
+		Injector injector = Guice.createInjector(new LibGdxGameModule(localConfig));
 
-		if (config.isAutomated() && args == null) {
-			launchHeadlessGame(injector, config);
+		if (localConfig.isAutomated() && args == null) {
+			launchHeadlessGame(injector, localConfig);
 		} else {
-			launchGame(injector, config);
+			launchGame(injector, localConfig);
 		}
 	}
 
-	private static void launchGame(Injector injector, Config config) {
+	private static void launchGame(Injector injector, LocalConfig localConfig) {
 		NdnGame ndnGame = injector.getInstance(NdnGame.class);
 		LwjglApplicationConfiguration lwjglConfig= new LwjglApplicationConfiguration();
 
-		lwjglConfig.height = config.getScreenHeight();
-		lwjglConfig.width = config.getScreenWidth();
-		lwjglConfig.title = config.getPlayerName();
+		lwjglConfig.height = localConfig.getScreenHeight();
+		lwjglConfig.width = localConfig.getScreenWidth();
+		lwjglConfig.title = localConfig.getPlayerName();
 
 		new LwjglApplication(ndnGame, lwjglConfig);
 	}
 
-	private static void launchHeadlessGame(Injector injector, Config config) {
+	private static void launchHeadlessGame(Injector injector, LocalConfig localConfig) {
 
 	}
 }
