@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maps to and from PlayerStatus Proto and Game engine entities
+ * Maps to and from PlayerStatusFace Proto and Game engine entities
  */
 public class PlayerStatusConverter implements HasComponentMappers {
 

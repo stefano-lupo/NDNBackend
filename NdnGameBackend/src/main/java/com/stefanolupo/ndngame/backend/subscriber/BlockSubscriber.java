@@ -3,9 +3,12 @@ package com.stefanolupo.ndngame.backend.subscriber;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
+import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
 import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
@@ -27,12 +30,18 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
+    private final HistogramFactory histogramFactory;
+    private final Value<Long> waitTime;
 
     @Inject
     public BlockSubscriber(LocalConfig localConfig,
-                           FaceManager faceManager) {
+                           FaceManager faceManager,
+                           HistogramFactory histogramFactory,
+                           @Named("block.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
+        this.histogramFactory = histogramFactory;
+        this.waitTime = maxWaitTime;
     }
 
     public void addSubscription(BlocksSyncName blockSyncName) {
@@ -41,7 +50,9 @@ public class BlockSubscriber implements OnPlayersDiscovered {
                 faceManager,
                 blockSyncName,
                 this::typeFromData,
-                BlocksSyncName::new
+                BlocksSyncName::new,
+                l -> waitTime.get(),
+                histogramFactory.create(BlockSubscriber.class)
         );
         subscribersList.add(subscriber);
     }

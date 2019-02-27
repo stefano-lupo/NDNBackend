@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Singleton
-public class DiscoveryManager extends ChronoSyncedDataStructure {
+public class DiscoveryManager extends ChronoSynced {
 
     private static final Logger LOG = LoggerFactory.getLogger(DiscoveryManager.class);
 

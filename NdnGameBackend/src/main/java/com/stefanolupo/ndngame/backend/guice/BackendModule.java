@@ -12,6 +12,8 @@ import com.stefanolupo.ndngame.backend.chronosynced.DiscoveryManager;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
 import com.stefanolupo.ndngame.backend.publisher.BasePublisher;
+import com.stefanolupo.ndngame.backend.statistics.Histogram;
+import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.config.LocalConfig;
@@ -48,6 +50,10 @@ public class BackendModule extends AbstractModule {
         install(new FactoryModuleBuilder()
                 .implement(BasePublisher.class, BasePublisher.class)
                 .build(BasePublisherFactory.class));
+
+        install(new FactoryModuleBuilder()
+                .implement(Histogram.class, Histogram.class)
+                .build(HistogramFactory.class));
 
         Properties properties = loadInitialProperties();
         LiveConfig liveConfig = LiveConfig.builder()

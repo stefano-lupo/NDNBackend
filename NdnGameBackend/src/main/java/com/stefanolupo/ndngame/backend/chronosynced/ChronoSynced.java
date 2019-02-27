@@ -17,7 +17,7 @@ import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public abstract class ChronoSyncedDataStructure implements
+public abstract class ChronoSynced implements
         OnData,
         OnTimeout,
         OnInterestCallback,
@@ -25,7 +25,7 @@ public abstract class ChronoSyncedDataStructure implements
         ChronoSync2013.OnReceivedSyncState
 {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ChronoSyncedDataStructure.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ChronoSynced.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 10L;
     private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 5000L;
     private static final Long DEFAULT_SYNC_LIFETIME_MS = 1000L;
@@ -40,8 +40,8 @@ public abstract class ChronoSyncedDataStructure implements
     private final Name dataListenPrefix;
     private final Statistics statistics;
 
-    public ChronoSyncedDataStructure(Name broadcastPrefix,
-                                     Name dataListenPrefix) {
+    public ChronoSynced(Name broadcastPrefix,
+                        Name dataListenPrefix) {
         this.broadcastPrefix = broadcastPrefix;
         this.dataListenPrefix = dataListenPrefix;
         session = System.currentTimeMillis() / 1000;

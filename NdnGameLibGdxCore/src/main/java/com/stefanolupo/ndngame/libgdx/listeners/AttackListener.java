@@ -61,7 +61,7 @@ public class AttackListener implements EntityListener, HasComponentMappers {
                 } else {
                     // Perform engine updates
                     LOG.debug("Interacting with local block: {}", blockName.getId());
-                    blockComponent.setHealth(blockComponent.getHealth() - 1);
+                    blockComponent.setHealth(blockComponent.getHealth() + 1);
                     blockPublisher.upsertBlock(blockName, BlockConverter.protoFromEntity(blockEntity));
                 }
 

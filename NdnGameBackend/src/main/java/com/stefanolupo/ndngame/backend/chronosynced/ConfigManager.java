@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ConfigManager extends ChronoSyncedDataStructure implements Resolver {
+public class ConfigManager extends ChronoSynced implements Resolver {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigManager.class);
 
@@ -27,8 +27,8 @@ public class ConfigManager extends ChronoSyncedDataStructure implements Resolver
     public ConfigManager(LocalConfig localConfig, Properties initialProperties) {
         super(ConfigName.getBroadcastName(localConfig.getGameId()),
                 new ConfigName(localConfig.getGameId(), localConfig.getPlayerName()).getAsPrefix());
-        configMap = Maps.fromProperties(initialProperties);
-
+        configMap = new HashMap<>();
+        configMap.putAll(Maps.fromProperties(initialProperties));
 
         LOG.debug("Initialized with properties: {}", configMap);
         // update config every minute
