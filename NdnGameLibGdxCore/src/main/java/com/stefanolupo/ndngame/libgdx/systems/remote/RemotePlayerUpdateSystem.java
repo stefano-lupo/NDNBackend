@@ -36,7 +36,7 @@ public class RemotePlayerUpdateSystem
     public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber) {
         super(Family.all(RemotePlayerComponent.class).get());
         this.playerStatusSubscriber = playerStatusSubscriber;
-        runLogStats();
+//        runLogStats();
     }
 
     @Override

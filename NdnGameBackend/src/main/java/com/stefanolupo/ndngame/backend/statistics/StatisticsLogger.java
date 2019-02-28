@@ -50,12 +50,12 @@ public class StatisticsLogger {
     }
 
     private void logStatistics() {
-        System.out.println("--------------- Statistics ---------------");
+        System.out.println("\n--------------- Statistics ---------------");
         statisticsMap.forEach((k, v) -> {
             System.out.println(k.toString());
             System.out.println(v);
         });
-        System.out.println("------------------------------------------");
+        System.out.println("------------------------------------------\n");
     }
 
 

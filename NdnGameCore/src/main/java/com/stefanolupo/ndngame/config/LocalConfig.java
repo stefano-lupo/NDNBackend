@@ -8,18 +8,21 @@ public class LocalConfig {
     private final String playerName;
     private final boolean isMasterView;
     private final boolean isAutomated;
+    private final boolean isHeadless;
     private final long gameId;
     private final int screenWidth;
     private final int screenHeight;
 
     private LocalConfig(String playerName,
                         boolean isAutomated,
+                        boolean isHeadless,
                         long gameId,
                         boolean isMasterView,
                         int screenWidth,
                         int screenHeight) {
         this.playerName = playerName;
         this.isAutomated = isAutomated;
+        this.isHeadless = isHeadless;
         this.gameId = gameId;
         this.isMasterView = isMasterView;
         this.screenWidth = screenWidth;
@@ -50,6 +53,10 @@ public class LocalConfig {
         return screenHeight;
     }
 
+    public boolean isHeadless() {
+        return isHeadless;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -57,6 +64,7 @@ public class LocalConfig {
     public static class Builder {
         private String playerName;
         private boolean isAutomated = false;
+        private boolean isHeadless = false;
         private long gameId = 0;
         private boolean isMasterView = false;
         private int screenWidth = DEFAULT_SCREEN_WIDTH;
@@ -67,8 +75,13 @@ public class LocalConfig {
             return this;
         }
 
-        public Builder setIsAutomated(boolean automated) {
-            isAutomated = automated;
+        public Builder setIsAutomated(boolean isAutomated) {
+            this.isAutomated = isAutomated;
+            return this;
+        }
+
+        public Builder setIsHeadless(boolean isHeadless) {
+            this.isHeadless = isHeadless;
             return this;
         }
 
@@ -93,6 +106,7 @@ public class LocalConfig {
         public LocalConfig build() {
             return new LocalConfig(playerName,
                     isAutomated,
+                    isHeadless,
                     gameId,
                     isMasterView,
                     screenWidth,

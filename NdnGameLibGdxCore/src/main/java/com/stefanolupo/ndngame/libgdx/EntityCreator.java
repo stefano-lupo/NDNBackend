@@ -34,8 +34,8 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(EntityCreator.class);
 
-    public static final float WORLD_WIDTH = 150;
-    public static final float WORLD_HEIGHT = 150;
+    public static final float WORLD_WIDTH = 50;
+    public static final float WORLD_HEIGHT = 50;
 
     public static final float PLAYER_WIDTH = 1;
     public static final float PLAYER_HEIGHT = 1.5f;
@@ -148,7 +148,9 @@ public class EntityCreator implements OnPlayersDiscovered {
         LocalPlayerComponent player = engine.createComponent(LocalPlayerComponent.class);
         entity.add(player);
 
-        entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.PLAYER));
+        if (!localConfig.isHeadless()) {
+            entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.PLAYER));
+        }
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.PLAYER);
@@ -172,7 +174,9 @@ public class EntityCreator implements OnPlayersDiscovered {
 //        remotePlayerComponent.setAttackName(new AttackName(localConfig.getGameId(), playerStatusName.getPlayerName()));
         entity.add(remotePlayerComponent);
 
-        entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));
+        if (!localConfig.isHeadless()) {
+            entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));
+        }
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.REMOTE_PLAYER);

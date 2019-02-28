@@ -8,7 +8,6 @@ import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
 
 public class NdnGame extends Game {
 
-
 	private final LocalConfig localConfig;
 	private final GameAssetManager gameAssetManager;
 	private final MainScreen mainScreen;
@@ -23,9 +22,11 @@ public class NdnGame extends Game {
 
 	@Override
 	public void create () {
-		gameAssetManager.loadAllAssets();
-		music = gameAssetManager.getMusic();
+		if (!localConfig.isHeadless()) {
+			gameAssetManager.loadAllAssets();
+			music = gameAssetManager.getMusic();
 //		music.play();
+		}
 
 		// This must be updateMotionState after loading all the assets for the screen
 		setScreen(mainScreen);
@@ -39,7 +40,9 @@ public class NdnGame extends Game {
 	@Override
 	public void dispose () {
 		screen.dispose();
-		gameAssetManager.dispose();
-		music.dispose();
+		if (!localConfig.isHeadless()) {
+			gameAssetManager.dispose();
+			music.dispose();
+		}
 	}
 }
