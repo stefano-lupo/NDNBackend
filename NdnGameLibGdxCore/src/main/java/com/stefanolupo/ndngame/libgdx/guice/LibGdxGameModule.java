@@ -31,7 +31,6 @@ public class LibGdxGameModule extends AbstractModule {
         install(new BackendModule(localConfig));
 
 
-
         // Mutlibinders are additive so these will add to the ones set in the backend module
         Multibinder<OnPlayersDiscovered> onDiscoveryBinder =
                 Multibinder.newSetBinder(binder(), OnPlayersDiscovered.class);
