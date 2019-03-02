@@ -4,12 +4,20 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IntervalSystem;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.backend.LocalPlayerReference;
+import com.google.inject.name.Named;
+import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
+import com.stefanolupo.ndngame.backend.publisher.PlayerStatusPublisher;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
+import com.stefanolupo.ndngame.protos.GameObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Pushes updates to Player Status from engine to PlayerStatusPublisher
@@ -19,19 +27,85 @@ public class LocalPlayerStatusSystem
         implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayerStatusSystem.class);
-    private static final Float UPDATE_INTERVAL_SEC = 20f / 1000;
 
-    private final LocalPlayerReference localPlayerReference;
+    private long nullUpdates = 0;
+    private long velUpdates = 0;
+    private long deadReckoningUpdates = 0;
+    private long deadReckoningNonUpdates = 0;
+
+    private final PlayerStatusPublisher playerStatusPublisher;
+    private final Value<Boolean> useDeadReckoning;
+    private final Value<Float> maxDeadReckoningError;
 
     @Inject
-    public LocalPlayerStatusSystem(LocalPlayerReference localPlayerReference) {
-        super(UPDATE_INTERVAL_SEC);
-        this.localPlayerReference = localPlayerReference;
+    public LocalPlayerStatusSystem(PlayerStatusPublisher playerStatusPublisher,
+                                   @LogScheduleExecutor ScheduledExecutorService executorService,
+                                   @Named("local.player.status.use.dead.reckoning") Value<Boolean> useDeadReckoning,
+                                   @Named("local.player.dead.reckoning.max.error") Value<Float> maxDeadReckoningError,
+                                   @Named("local.player.status.update.interval.ms") Value<Float> updateInterval) {
+        super(updateInterval.get() / 1000f);
+        this.playerStatusPublisher = playerStatusPublisher;
+        this.useDeadReckoning = useDeadReckoning;
+        this.maxDeadReckoningError = maxDeadReckoningError;
+        executorService.scheduleAtFixedRate(this::logStats, 0, 10, TimeUnit.SECONDS);
     }
 
     @Override
     protected void updateInterval() {
         Entity playerEntity = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
-        localPlayerReference.setPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
+        GameObject playerCurrentGameObject = RENDER_MAPPER.get(playerEntity).getGameObject();
+
+        if (!useDeadReckoning.get()) {
+            playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
+            return;
+        }
+
+        List<PlayerStatusPublisher.PlayerStatusWithTime> list = playerStatusPublisher.getPlayerStatusesForOutstandingInterests();
+        for (PlayerStatusPublisher.PlayerStatusWithTime withTime : list) {
+
+            if (withTime == null) {
+                updateLocalPlayer(playerEntity);
+                nullUpdates++;
+                return;
+            }
+
+            GameObject remoteVersion = withTime.playerStatus.getGameObject();
+            if (remoteVersion.getVelX() != playerCurrentGameObject.getVelX() ||
+                remoteVersion.getVelY() != playerCurrentGameObject.getVelY()) {
+                updateLocalPlayer(playerEntity);
+                velUpdates++;
+                continue;
+            }
+
+            long delta = System.currentTimeMillis() - withTime.timeStamp;
+            float ticks = delta / (1000 / 30f);
+            float approxX = remoteVersion.getX() + ticks*remoteVersion.getVelX();
+            float approxY = remoteVersion.getY() + ticks*remoteVersion.getVelY();
+            double distanceBetween = distanceBetween(
+                    playerCurrentGameObject.getX(), playerCurrentGameObject.getY(),
+                    approxX, approxY);
+
+            if (distanceBetween > maxDeadReckoningError.get()) {
+                deadReckoningUpdates++;
+                playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
+            } else {
+                deadReckoningNonUpdates++;
+            }
+        }
+    }
+
+    private void updateLocalPlayer(Entity playerEntity) {
+        playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
+    }
+
+    private void logStats() {
+        long total = nullUpdates + velUpdates + deadReckoningUpdates + deadReckoningNonUpdates;
+        LOG.debug("Null: {}, vel: {}, deadReckoning: {}, deadReckoningSkip: {}, actionable: {}",
+                nullUpdates, velUpdates, deadReckoningUpdates, deadReckoningNonUpdates,
+                (total - deadReckoningNonUpdates + 0f) / total);
+    }
+
+    private static double distanceBetween(float x1, float y1, float x2, float y2) {
+        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y2 - y1, 2));
     }
 }

@@ -35,6 +35,9 @@ public class DesktopLauncher {
 		lwjglConfig.height = localConfig.getScreenHeight();
 		lwjglConfig.width = localConfig.getScreenWidth();
 		lwjglConfig.title = localConfig.getPlayerName();
+		lwjglConfig.backgroundFPS = 30;
+		lwjglConfig.foregroundFPS = 30;
+
 
 		new LwjglApplication(ndnGame, lwjglConfig);
 	}

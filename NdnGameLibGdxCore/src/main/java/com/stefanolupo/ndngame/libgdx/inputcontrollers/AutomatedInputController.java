@@ -1,11 +1,14 @@
 package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public class AutomatedInputController implements InputController {
 
-    private static final int WALK_TIME_MS = 300;
+    private static final int WALK_TIME_MS = 400;
 
     private static int count = 0;
 
@@ -17,7 +20,9 @@ public class AutomatedInputController implements InputController {
     private boolean isMouse1Pressed = false;
 
     public AutomatedInputController() {
-        Executors.newSingleThreadScheduledExecutor()
+        ThreadFactory namedThreadFactory =
+                new ThreadFactoryBuilder().setNameFormat("automated-controller-%d").build();
+       Executors.newSingleThreadScheduledExecutor(namedThreadFactory)
                 .scheduleAtFixedRate(this::moveOnPath, 2000, WALK_TIME_MS, TimeUnit.MILLISECONDS);
     }
 
@@ -76,13 +81,13 @@ public class AutomatedInputController implements InputController {
         // Using 5 should make them stand still for a tick
         count = ++count % 5;
 
-        if (Math.random() > 0.98) {
-            isSpacePressed = true;
-        }
-
-        if (Math.random() > 0.98) {
-            isMouse1Pressed = true;
-        }
+//        if (Math.random() > 0.98) {
+//            isSpacePressed = true;
+//        }
+//
+//        if (Math.random() > 0.98) {
+//            isMouse1Pressed = true;
+//        }
     }
 
     private void setAllFalse() {

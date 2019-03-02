@@ -4,11 +4,12 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -18,8 +19,9 @@ public class StatisticsLogger {
     private final Set<HasStatistics> statisticSources = new HashSet<>();
 
     @Inject
-    public StatisticsLogger(@Named("statistics.logger.log.rate.sec") Value<Long> logRateSec) {
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+    public StatisticsLogger(@LogScheduleExecutor ScheduledExecutorService executorService,
+                            @Named("statistics.logger.log.rate.sec") Value<Long> logRateSec) {
+        executorService.scheduleAtFixedRate(
                 this::generateStatistics,
                 logRateSec.get(),
                 logRateSec.get(),

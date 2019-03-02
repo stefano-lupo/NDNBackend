@@ -1,9 +1,12 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.*;
@@ -11,11 +14,10 @@ import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -23,7 +25,7 @@ public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
 
-    private final Map<SequenceNumberedName, Face> outstandingInterests = new HashMap<>();
+    private final ConcurrentMap<SequenceNumberedName, Face> outstandingInterests = new ConcurrentHashMap<>();
     private long totalNumInterests = 0;
 
     private final Function<Interest, SequenceNumberedName> interestTFunction;
@@ -36,36 +38,46 @@ public class BasePublisher implements OnInterestCallback {
 
     @Inject
     public BasePublisher(FaceManager faceManager,
+                         @LogScheduleExecutor ScheduledExecutorService executorService,
                          @Named("base.publisher.queue.process.time.ms") Value<Long> processTimeMs,
                          @Assisted Name listenName,
-                         @Assisted Function<Interest, SequenceNumberedName> interestTFunction,
+                         @Assisted Function<Interest, SequenceNumberedName> interestToSequenceNumberedName,
                          @Assisted Value<Double> freshnessPeriod) {
-        this.interestTFunction = interestTFunction;
+        this.interestTFunction = interestToSequenceNumberedName;
         this.freshnessPeriod = freshnessPeriod;
 
         LOG.debug("Registering {}", listenName);
         faceManager.registerBasicPrefix(listenName, this);
+        executorService.scheduleAtFixedRate(
+                () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
+                10,
+                60,
+                TimeUnit.SECONDS
+        );
 
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+        ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("bp- " + listenName.toUri() + "-%d")
+                .build();
+        Executors.newSingleThreadScheduledExecutor(namedThreadFactory).scheduleAtFixedRate(
                 this::processQueue,
                 0,
                 processTimeMs.get(),
                 TimeUnit.MILLISECONDS);
-//        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-//                () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
-//                10,
-//                60,
-//                TimeUnit.SECONDS
-//        );
     }
 
     /**
      * Update the blob that will be used to service interests
      * @param latestBlob the new blob to serve
      */
-    public void updateLatestBlob(Blob latestBlob) {
+    public long updateLatestBlob(Blob latestBlob) {
         this.latestBlob = latestBlob;
         hasUpdate.set(true);
+
+        return ++sequenceNumber;
+    }
+
+    public Set<SequenceNumberedName> getOutstandingInterests() {
+        return ImmutableSet.copyOf(outstandingInterests.keySet());
     }
 
     @Override
@@ -76,13 +88,11 @@ public class BasePublisher implements OnInterestCallback {
     }
 
     // TODO: Maybe multithread this?
-    // TODO: Only send updates when there is one
-    // TODO: Not sure about concurrent modifications here but think its okay
     private void processQueue() {
 
-        if (hasUpdate.compareAndSet(true, false)) {
-            sequenceNumber++;
-        } else {
+        // Set the flag to false IFF it is currently true
+        // Returns true if the operation succeeds (i.e. if the flag was true and its now false)
+        if (!hasUpdate.compareAndSet(true, false)) {
             return;
         }
 

@@ -1,7 +1,9 @@
 package com.stefanolupo.ndngame.backend.ndn;
 
 import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
@@ -18,6 +20,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 @Singleton
 public class FaceManager {
@@ -28,14 +31,14 @@ public class FaceManager {
     private final Value<Integer> threadsPerFace;
     private final Iterator<ThreadPoolFace> iterator;
 
-    private final KeyChain keyChain;
+    private final Provider<KeyChain> keyChainProvider;
 
     @Inject
-    public FaceManager(KeyChain keyChain,
+    public FaceManager(Provider<KeyChain> keyChainProvider,
                        @Named("facemanager.max.num.faces") Value<Integer> numFaces,
                        @Named("facemanager.num.threads.per.face") Value<Integer> threadsPerFace) {
 
-        this.keyChain = keyChain;
+        this.keyChainProvider = keyChainProvider;
         this.numFaces = numFaces;
         this.threadsPerFace = threadsPerFace;
 
@@ -75,10 +78,9 @@ public class FaceManager {
     }
 
     private Set<ThreadPoolFace> buildFaces() {
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(threadsPerFace.get());
         Name certificateName;
         try {
-            certificateName = keyChain.getDefaultCertificateName();
+            certificateName = keyChainProvider.get().getDefaultCertificateName();
         } catch (Exception e) {
             throw new RuntimeException("Unable to initialize FaceManager", e);
         }
@@ -86,12 +88,16 @@ public class FaceManager {
         Set<ThreadPoolFace> faces = new LinkedHashSet<>();
 
         for (int i = 0; i < numFaces.get(); i++) {
+            ThreadFactory namedThreadFactory =
+                    new ThreadFactoryBuilder().setNameFormat("face-manager-" + i + "-%d").build();
+            ScheduledExecutorService executorService =
+                    Executors.newScheduledThreadPool(threadsPerFace.get(), namedThreadFactory);
             ThreadPoolFace face = new ThreadPoolFace(
                     executorService,
                     new AsyncTcpTransport(executorService),
                     new AsyncTcpTransport.ConnectionInfo("localhost")
             );
-            face.setCommandSigningInfo(keyChain, certificateName);
+            face.setCommandSigningInfo(keyChainProvider.get(), certificateName);
             faces.add(face);
         }
 

@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend.chronosynced;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import net.named_data.jndn.*;
 import net.named_data.jndn.encoding.EncodingException;
 import net.named_data.jndn.security.KeyChain;
@@ -15,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class ChronoSynced implements
@@ -67,7 +69,10 @@ public abstract class ChronoSynced implements
             );
 
             face.registerPrefix(dataListenPrefix, this, this::registerPrefixFailure);
-            Executors.newSingleThreadScheduledExecutor()
+            ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                    .setNameFormat("cs-" + dataListenPrefix.toUri() + "-%d")
+                    .build();
+            Executors.newSingleThreadScheduledExecutor(threadFactory)
                     .scheduleAtFixedRate(this::pollFace,
                             DEFAULT_FACE_POLL_INITIAL_WAIT_MS,
                             DEFAULT_FACE_POLL_TIME_MS,
