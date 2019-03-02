@@ -9,7 +9,9 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.config.Config;
+import com.google.inject.name.Named;
+import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
@@ -29,8 +31,11 @@ public class RenderingSystem
     private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getGameObject().getZ());
     private static final float PIXELS_PER_METER = 40f;
 
-    private final Config config;
+    private final LocalConfig localConfig;
     private final OrthographicCamera camera;
+    private final Value<Float> innerRadius;
+    private final Value<Float> outerRadius;
+
     private final Array<Entity> renderQueue;
 
     //    private final BitmapFont font = new BitmapFont();
@@ -39,11 +44,15 @@ public class RenderingSystem
     private ShapeRenderer shapeRenderer;
 
     @Inject
-    public RenderingSystem(Config config,
-                           OrthographicCamera camera) {
+    public RenderingSystem(LocalConfig localConfig,
+                           OrthographicCamera camera,
+                           @Named("linear.interest.zone.filter.inner.radius") Value<Float> innerRadius,
+                           @Named("linear.interest.zone.filter.outer.radius") Value<Float> outerRadius) {
         super(Family.all(RenderComponent.class, TextureComponent.class).get(), Z_COMPARATOR);
-        this.config = config;
+        this.localConfig = localConfig;
         this.camera = camera;
+        this.innerRadius = innerRadius;
+        this.outerRadius = outerRadius;
         renderQueue = new Array<>();
     }
 
@@ -52,7 +61,7 @@ public class RenderingSystem
      */
     public void configureOnInit(SpriteBatch spriteBatch) {
         this.spriteBatch = spriteBatch;
-        if (config.isMasterView()) {
+        if (localConfig.isMasterView()) {
             camera.setToOrtho(false, EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
         } else {
             camera.setToOrtho(false,
@@ -105,8 +114,7 @@ public class RenderingSystem
                     gameObject.getScaleX(), gameObject.getScaleY(),
                     gameObject.getAngle());
 
-
-            shapeRenderer.circle(drawX, drawY, 10);
+            drawInterestZone(entity, drawX, drawY);
     }
         updateCameraPosition();
         spriteBatch.end();
@@ -135,11 +143,18 @@ public class RenderingSystem
             throw new IllegalStateException("Local player had no render component!");
         }
 
-        if (!config.isMasterView()) {
+        if (!localConfig.isMasterView()) {
             camera.position.set(renderComponent.getGameObject().getX(), renderComponent.getGameObject().getY(), 0);
         }
 
         camera.update();
+    }
+
+    private void drawInterestZone(Entity entity, float drawX, float drawY) {
+        if (REMOTE_PLAYER_MAPPER.get(entity) != null || LOCAL_PLAYER_MAPPER.get(entity) != null) {
+            shapeRenderer.circle(drawX, drawY, innerRadius.get());
+            shapeRenderer.circle(drawX, drawY, outerRadius.get());
+        }
     }
 
 //    private void drawPositions(Entity entity, RenderComponent renderComponent) {

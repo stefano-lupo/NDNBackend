@@ -10,7 +10,7 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.Multibinder;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.guice.BackendModule;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.AutomatedInputController;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
@@ -20,15 +20,16 @@ public class LibGdxGameModule extends AbstractModule {
 
     private static final Vector2 WORLD_GRAVITY = new Vector2(0, 0);
 
-    private final Config config;
+    private final LocalConfig localConfig;
 
-    public LibGdxGameModule(Config config) {
-        this.config = config;
+    public LibGdxGameModule(LocalConfig localConfig) {
+        this.localConfig = localConfig;
     }
 
     @Override
     protected void configure() {
-        install(new BackendModule(config));
+        install(new BackendModule(localConfig));
+
 
         // Mutlibinders are additive so these will add to the ones set in the backend module
         Multibinder<OnPlayersDiscovered> onDiscoveryBinder =
@@ -45,7 +46,7 @@ public class LibGdxGameModule extends AbstractModule {
     @Provides
     @Singleton
     InputController providesInputController() {
-        return config.isAutomated() ?
+        return localConfig.isAutomated() ?
                 new AutomatedInputController() :
                 new RealInputController();
     }

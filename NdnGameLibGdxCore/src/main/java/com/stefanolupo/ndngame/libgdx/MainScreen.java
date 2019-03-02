@@ -8,7 +8,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.contactlisteners.MyContactListener;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
@@ -27,7 +27,7 @@ public class MainScreen implements Screen {
 
     private static final Logger LOG = LoggerFactory.getLogger(MainScreen.class);
 
-    private final Config config;
+    private final LocalConfig localConfig;
     private final InputController inputController;
     private final PooledEngine engine;
     private final World world;
@@ -54,7 +54,7 @@ public class MainScreen implements Screen {
     private SpriteBatch spriteBatch = null;
 
     @Inject
-    public MainScreen(Config config,
+    public MainScreen(LocalConfig localConfig,
                       InputController inputController,
                       PooledEngine engine,
                       MyContactListener myContactListener,
@@ -77,7 +77,8 @@ public class MainScreen implements Screen {
 
                       // Listeners
                       AttackListener attackListener) {
-        this.config = config;
+
+        this.localConfig = localConfig;
         this.inputController = inputController;
         this.engine = engine;
         this.world = world;
@@ -105,13 +106,15 @@ public class MainScreen implements Screen {
 
     @Override
     public void show() {
-        if (!config.isAutomated()) {
+        if (!localConfig.isAutomated()) {
             Gdx.input.setInputProcessor((InputProcessor) inputController);
         }
 
         // Create what can't be created until LibGdx is loaded
-        spriteBatch = new SpriteBatch();
-        renderingSystem.configureOnInit(spriteBatch);
+        if (!localConfig.isHeadless()) {
+            spriteBatch = new SpriteBatch();
+            renderingSystem.configureOnInit(spriteBatch);
+        }
 
         // Add all the relevant systems our engine should run
         // Note the order here defines the order in which the system will run
@@ -126,11 +129,18 @@ public class MainScreen implements Screen {
 //        engine.addSystem(attackSystem);
         engine.addSystem(movementSystem);
         engine.addSystem(blockSystem);
-        engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
+
+        if (!localConfig.isHeadless()) {
+            engine.addSystem(new PhysicsDebugSystem(world, renderingSystem.getCamera()));
+        }
+
         engine.addSystem(physicsSystem);
         engine.addSystem(collisionSystem);
-        engine.addSystem(animationSystem);
-        engine.addSystem(renderingSystem);
+
+        if (!localConfig.isHeadless()) {
+            engine.addSystem(animationSystem);
+            engine.addSystem(renderingSystem);
+        }
 
         // Local publisher systems
         engine.addSystem(localPlayerStatusSystem);
@@ -143,8 +153,10 @@ public class MainScreen implements Screen {
 
     @Override
     public void render(float delta) {
-        Gdx.gl.glClearColor(0, 0, 0, 1);
-        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        if (!localConfig.isHeadless()) {
+            Gdx.gl.glClearColor(0, 0, 0, 1);
+            Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        }
         engine.update(delta);
     }
 
@@ -170,7 +182,9 @@ public class MainScreen implements Screen {
 
     @Override
     public void dispose() {
-        spriteBatch.dispose();
+        if (spriteBatch != null) {
+            spriteBatch.dispose();
+        }
         world.dispose();
     }
 }

@@ -2,12 +2,15 @@ package com.stefanolupo.ndngame.backend.subscriber;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.LocalPlayerReference;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.filters.LinearInterestZoneFilter;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
@@ -24,20 +27,28 @@ import java.util.Set;
 public class PlayerStatusSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusSubscriber.class);
-    private static final long MAX_TIME_BETWEEN_INTERESTS_MS = 2000;
 
     private final Map<PlayerStatusName, BaseSubscriber<PlayerStatus>> subscriberMap = new HashMap<>();
-    private final Config config;
+    private final LocalConfig localConfig;
     private final FaceManager faceManager;
     private final LocalPlayerReference localPlayerReference;
+    private final LinearInterestZoneFilter linearInterestZoneFilter;
+    private final HistogramFactory histogramFactory;
+    private final Value<Long> maxWaitTime;
 
     @Inject
-    public PlayerStatusSubscriber(Config config,
+    public PlayerStatusSubscriber(LocalConfig localConfig,
                                   FaceManager faceManager,
-                                  LocalPlayerReference localPlayerReference) {
-        this.config = config;
+                                  LocalPlayerReference localPlayerReference,
+                                  LinearInterestZoneFilter linearInterestZoneFilter,
+                                  HistogramFactory histogramFactory,
+                                  @Named("player.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
+        this.localConfig = localConfig;
         this.faceManager = faceManager;
         this.localPlayerReference = localPlayerReference;
+        this.linearInterestZoneFilter = linearInterestZoneFilter;
+        this.histogramFactory = histogramFactory;
+        this.maxWaitTime = maxWaitTime;
     }
 
     public void addSubscription(PlayerStatusName name) {
@@ -47,7 +58,8 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                 name,
                 this::typeFromData,
                 PlayerStatusName::new,
-                this::sleepTimeFromPosition);
+                this::sleepTimeFromPosition,
+                histogramFactory.create(PlayerStatusSubscriber.class, name.getListenName().toUri()));
         subscriberMap.put(name, subscriber);
     }
 
@@ -74,16 +86,14 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     private long sleepTimeFromPosition(PlayerStatus playerStatus) {
         GameObject localPlayer = localPlayerReference.getPlayerStatus().getGameObject();
         GameObject remotePlayer = playerStatus.getGameObject();
-        double weight = LinearInterestZoneFilter.getSleepTimeFactor(
+        double weight = linearInterestZoneFilter.getSleepTimeFactor(
                 localPlayer.getX(), localPlayer.getY(),
                 remotePlayer.getX(), remotePlayer.getY());
-        long sleepTime = Math.round(MAX_TIME_BETWEEN_INTERESTS_MS * weight);
-//        LOG.debug("Sleeping for {}", sleepTime);
-        return sleepTime;
+        return Math.round(maxWaitTime.get() * weight);
     }
 
     @Override
     public void onPlayersDiscovered(Set<Player> players) {
-        players.forEach(p -> this.addSubscription(new PlayerStatusName(config.getGameId(), p.getName())));
+        players.forEach(p -> this.addSubscription(new PlayerStatusName(localConfig.getGameId(), p.getName())));
     }
 }

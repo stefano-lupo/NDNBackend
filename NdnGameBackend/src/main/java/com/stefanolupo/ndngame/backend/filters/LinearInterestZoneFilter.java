@@ -1,9 +1,23 @@
 package com.stefanolupo.ndngame.backend.filters;
 
-public class LinearInterestZoneFilter {
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import com.hubspot.liveconfig.value.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static final float INNER_CRITICAL_RADIUS = 10;
-    private static final float OUTER_CRITICAL_RADIUS = 20;
+public class LinearInterestZoneFilter {
+    private static final Logger LOG = LoggerFactory.getLogger(LinearInterestZoneFilter.class);
+
+    private final Value<Float> innerRadius;
+    private final Value<Float> outerRadius;
+
+    @Inject
+    public LinearInterestZoneFilter(@Named("linear.interest.zone.filter.inner.radius")Value<Float> innerRadius,
+                                    @Named("linear.interest.zone.filter.outer.radius")Value<Float> outerRadius) {
+        this.innerRadius = innerRadius;
+        this.outerRadius = outerRadius;
+    }
 
     /**
      * Gets distance between two entities as factor of outer radius - inner radius
@@ -11,12 +25,18 @@ public class LinearInterestZoneFilter {
      * Returns 0 if entirely inside inner radius
      * Linear interpolates between those
      */
-    public static double getSleepTimeFactor(float myX, float myY, float otherX, float otherY) {
+    public double getSleepTimeFactor(float myX, float myY, float otherX, float otherY) {
         double distance = distanceBetweenPoints(myX, myY, otherX, otherY);
-        if (distance < INNER_CRITICAL_RADIUS) return 0;
-        if (distance > OUTER_CRITICAL_RADIUS) return 1;
 
-        double rangeDistanceFactor = (distance - INNER_CRITICAL_RADIUS) / (OUTER_CRITICAL_RADIUS - INNER_CRITICAL_RADIUS);
+        float innerRadiusVal = innerRadius.get();
+        float outerRadiusVal = outerRadius.get();
+
+//        LOG.debug("Using radii: {}, {}", innerRadiusVal, outerRadiusVal);
+
+        if (distance < innerRadiusVal) return 0;
+        if (distance > outerRadiusVal) return 1;
+
+        double rangeDistanceFactor = (distance - innerRadiusVal) / (outerRadiusVal - innerRadiusVal);
         return 1 - rangeDistanceFactor;
     }
 

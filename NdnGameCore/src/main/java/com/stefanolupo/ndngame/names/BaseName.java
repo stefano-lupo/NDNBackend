@@ -61,51 +61,12 @@ public class BaseName implements AsPrefix {
         return new BaseName(matcher.group(1), matcher.group(2));
     }
 
-//    public static Name buildPrefixedName(String... args) {
-//        return GAME_BASE_NAME.append(buildFromComponents(args));
-//    }
-//
-//    public static Name buildNonPrefixedName(String... args) {
-//        return buildFromComponents(args);
-//    }
-//
-//    public static long getLongFromComponent(Name.Component component) {
-//        return Long.valueOf(component.toEscapedString());
-//    }
-
-
-    public static Matcher matchOrThrow(Name name, Pattern regex) {
-        return matchOrThrow(name.toUri(), regex);
-    }
-
     public static Matcher matchOrThrow(String name, Pattern regex) {
         Matcher matcher = regex.matcher(name);
         Preconditions.checkArgument(matcher.matches(),
                 "Encountered interest which didn't match provided regex '%s': %s", regex, name);
         return matcher;
     }
-
-//    public static BaseName buildBaseName(String name, Pattern regex) {
-//        Matcher matcher = regex.matcher(name);
-//        Preconditions.checkArgument(matcher.matches(),
-//                "%s didn't match provided regex '%s'", name, regex);
-//        return new BaseName(matcher.group(1), matcher.group(2));
-//    }
-//
-//
-//    private static Name buildFromComponents(String... args) {
-//        Name name = new Name();
-//        for (String arg : args) {
-//            name = name.append(arg);
-//        }
-//        return name;
-//    }
-//
-//
-//    private static Name getTailNameFromFullName(Name fullName) {
-//        return fullName.getSubName(GAME_BASE_NAME.size());
-//    }
-
 
     @Override
     public int hashCode() {

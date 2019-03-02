@@ -1,12 +1,13 @@
 package com.stefanolupo.ndngame.backend.setup;
 
-import com.stefanolupo.ndngame.config.Config;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import org.apache.commons.cli.*;
 
 public class CommandLineHelper {
 
     private final Option NAME_OF_PLAYER;
     private final Option AUTOMATED_MODE;
+    private final Option HEADLESS_MODE;
     private final Option IS_MASTER_VIEW;
     private final Option GAME_ID;
     private final Option SCREEN_WIDTH;
@@ -26,6 +27,11 @@ public class CommandLineHelper {
         AUTOMATED_MODE.setRequired(false);
         AUTOMATED_MODE.setType(Boolean.class);
         options.addOption(AUTOMATED_MODE);
+
+        HEADLESS_MODE = new Option("hl", "headless", false, "use headless mode");
+        HEADLESS_MODE.setRequired(false);
+        HEADLESS_MODE.setType(Boolean.class);
+        options.addOption(HEADLESS_MODE);
 
 
         IS_MASTER_VIEW = new Option("m", "masterview", false, "master view switch");
@@ -50,7 +56,7 @@ public class CommandLineHelper {
 
     }
 
-    public Config getConfig(String[] args) {
+    public LocalConfig getConfig(String[] args) {
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd;
@@ -60,10 +66,11 @@ public class CommandLineHelper {
 
             String playerName = cmd.getOptionValue(NAME_OF_PLAYER.getLongOpt());
 
-            Config.Builder builder = Config.builder()
+            LocalConfig.Builder builder = LocalConfig.builder()
                     .setPlayerName(playerName)
                     .isMasterView(cmd.hasOption(IS_MASTER_VIEW.getOpt()))
-                    .setIsAutomated(cmd.hasOption(AUTOMATED_MODE.getOpt()));
+                    .setIsAutomated(cmd.hasOption(AUTOMATED_MODE.getOpt()))
+                    .setIsHeadless(cmd.hasOption(HEADLESS_MODE.getOpt()));
 
             if (cmd.hasOption(GAME_ID.getLongOpt())) {
                 builder.setGameId(Long.valueOf(cmd.getOptionValue(GAME_ID.getLongOpt())));

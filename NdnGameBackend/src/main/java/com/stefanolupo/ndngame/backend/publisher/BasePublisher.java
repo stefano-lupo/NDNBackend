@@ -2,6 +2,8 @@ package com.stefanolupo.ndngame.backend.publisher;
 
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
+import com.google.inject.name.Named;
+import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.*;
@@ -20,14 +22,12 @@ import java.util.function.Function;
 public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
-    private static final Long DEFAULT_QUEUE_PROCESS_TIME_MS = 10L;
-    private static final Long DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS = 1000L;
-    private static final Double FRESHNESS_PERIOD_MS = 20.0;
 
     private final Map<SequenceNumberedName, Face> outstandingInterests = new HashMap<>();
     private long totalNumInterests = 0;
 
     private final Function<Interest, SequenceNumberedName> interestTFunction;
+    private final Value<Double> freshnessPeriod;
 
     private Blob latestBlob;
     private AtomicBoolean hasUpdate = new AtomicBoolean(false);
@@ -36,22 +36,27 @@ public class BasePublisher implements OnInterestCallback {
 
     @Inject
     public BasePublisher(FaceManager faceManager,
+                         @Named("base.publisher.queue.process.time.ms") Value<Long> processTimeMs,
                          @Assisted Name listenName,
-                         @Assisted Function<Interest, SequenceNumberedName> interestTFunction) {
+                         @Assisted Function<Interest, SequenceNumberedName> interestTFunction,
+                         @Assisted Value<Double> freshnessPeriod) {
         this.interestTFunction = interestTFunction;
-        faceManager.registerBasicPrefix(listenName, this);
+        this.freshnessPeriod = freshnessPeriod;
+
         LOG.debug("Registering {}", listenName);
+        faceManager.registerBasicPrefix(listenName, this);
+
         Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
                 this::processQueue,
-                DEFAULT_QUEUE_PROCESS_INITIAL_WAIT_MS,
-                DEFAULT_QUEUE_PROCESS_TIME_MS,
+                0,
+                processTimeMs.get(),
                 TimeUnit.MILLISECONDS);
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
-                10,
-                60,
-                TimeUnit.SECONDS
-        );
+//        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+//                () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
+//                10,
+//                60,
+//                TimeUnit.SECONDS
+//        );
     }
 
     /**
@@ -74,16 +79,12 @@ public class BasePublisher implements OnInterestCallback {
     // TODO: Only send updates when there is one
     // TODO: Not sure about concurrent modifications here but think its okay
     private void processQueue() {
-        // If had an update, consume the update
-
 
         if (hasUpdate.compareAndSet(true, false)) {
             sequenceNumber++;
-//            LOG.debug("new sequence number: {}", sequenceNumber);
         } else {
             return;
         }
-
 
         // Send any interests with sequenceNumber <= currentSequenceNumber
         for (Iterator<Map.Entry<SequenceNumberedName, Face>> i = outstandingInterests.entrySet().iterator(); i.hasNext();) {
@@ -100,24 +101,14 @@ public class BasePublisher implements OnInterestCallback {
         }
     }
 
-    // TODO: Naming of return here might be important
-    // If i send interest for /data/45 and the sn is actually at 65 now
-        // Publisher can send back something like /data/45/65
-        // If another subscriber later requests /data/45, will caches send back /data/45/65?
-        // Do we even want them to? The SN might be >> than 65 now..
-        // Can use freshness to control this somewhat
-    // If we're always sending back newest one --> we don't need sequence numbers
-
     private void sendData(SequenceNumberedName name, Face face) {
         name.setNextSequenceNumber(sequenceNumber);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
-        data.getMetaInfo().setFreshnessPeriod(FRESHNESS_PERIOD_MS);
+        data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());
         try {
-//            keyChain.sign(data, certificateName);
             face.putData(data);
         } catch (Exception e) {
             LOG.error("Unable to send data to satisfy interest " + name.getFullName(), e);
         }
     }
-
 }
