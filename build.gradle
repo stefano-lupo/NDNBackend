@@ -40,19 +40,6 @@ subprojects {
         }
     }
 
-    sourceSets {
-        generated {
-            java {
-                srcDir "${buildDir.absolutePath}/generated"
-            }
-        }
-        proto {
-            java {
-                srcDir "${buildDir.absolutePath}/generated/source/"
-            }
-        }
-    }
-
     dependencies {
         compile 'net.named-data:jndn:0.20'
         compile 'com.google.guava:guava:27.0.1-jre'

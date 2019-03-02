@@ -59,7 +59,7 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 PlayerStatusName::new,
                 this::sleepTimeFromPosition,
-                histogramFactory.create(PlayerStatusSubscriber.class));
+                histogramFactory.create(PlayerStatusSubscriber.class, name.getListenName().toUri()));
         subscriberMap.put(name, subscriber);
     }
 

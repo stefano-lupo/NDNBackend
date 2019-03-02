@@ -19,12 +19,13 @@ public class Histogram implements HasStatistics {
 
     @Inject
     public Histogram(StatisticsLogger statisticsLogger,
-                     @Assisted Class<?> clazz) {
+                     @Assisted Class<?> clazz,
+                     @Assisted String key) {
         this.clazz = clazz;
         this.statisticsLogger = statisticsLogger;
         statisticsLogger.registerSource(this);
 
-        statisticKey = new StatisticKey(clazz, "Histogram");
+        statisticKey = new StatisticKey(clazz, key);
         statisticsMap.put(statisticKey, "No data gathered");
     }
 

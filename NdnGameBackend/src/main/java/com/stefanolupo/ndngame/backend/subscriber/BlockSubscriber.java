@@ -52,7 +52,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 BlocksSyncName::new,
                 l -> waitTime.get(),
-                histogramFactory.create(BlockSubscriber.class)
+                histogramFactory.create(BlockSubscriber.class, blockSyncName.getAsPrefix().toUri())
         );
         subscribersList.add(subscriber);
     }

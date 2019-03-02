@@ -76,11 +76,11 @@ public class AutomatedInputController implements InputController {
         // Using 5 should make them stand still for a tick
         count = ++count % 5;
 
-        if (Math.random() > 0.95) {
+        if (Math.random() > 0.98) {
             isSpacePressed = true;
         }
 
-        if (Math.random() > 0.95) {
+        if (Math.random() > 0.98) {
             isMouse1Pressed = true;
         }
     }
