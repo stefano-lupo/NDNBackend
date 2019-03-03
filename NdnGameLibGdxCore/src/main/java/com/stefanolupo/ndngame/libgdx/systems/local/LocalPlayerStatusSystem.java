@@ -65,7 +65,6 @@ public class LocalPlayerStatusSystem
             return;
         }
 
-
         List<PlayerStatusPublisher.PlayerStatusWithTime> list = playerStatusPublisher.getPlayerStatusesForOutstandingInterests();
         for (PlayerStatusPublisher.PlayerStatusWithTime withTime : list) {
 
