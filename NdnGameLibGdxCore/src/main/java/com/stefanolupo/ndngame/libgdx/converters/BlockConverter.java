@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maps to and from BlockProto and Game engine entities
+ * Maps to and from BlockProto and Game engine entitys
  */
 public class BlockConverter implements HasComponentMappers {
 
@@ -29,7 +29,7 @@ public class BlockConverter implements HasComponentMappers {
     }
 
     /**
-     * Update the entities state based on the remote block
+     * Update the entitys state based on the remote block
      * The PhysicsSystem updates the render component based on the Body state
      * so only need to update the body
      */

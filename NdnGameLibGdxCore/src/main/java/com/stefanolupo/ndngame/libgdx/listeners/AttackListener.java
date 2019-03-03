@@ -5,19 +5,25 @@ import com.badlogic.ashley.core.EntityListener;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.ashley.utils.ImmutableArray;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
+import com.stefanolupo.ndngame.libgdx.creators.ProjectileCreator;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Attack;
+import com.stefanolupo.ndngame.protos.AttackType;
 import com.stefanolupo.ndngame.protos.GameObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Called any time an AttackComponent is added / removed to an Entity
+ */
 public class AttackListener implements EntityListener, HasComponentMappers {
 
     public static final Family FAMILY = Family.all(AttackComponent.class).get();
@@ -25,14 +31,17 @@ public class AttackListener implements EntityListener, HasComponentMappers {
     private static final Logger LOG = LoggerFactory.getLogger(AttackListener.class);
 
     private final PooledEngine engine;
+    private final ProjectileCreator projectileCreator;
     private final BlockSubscriber blockSubscriber;
     private final BlockPublisher blockPublisher;
 
     @Inject
     public AttackListener(PooledEngine engine,
+                          ProjectileCreator projectileCreator,
                           BlockSubscriber blockSubscriber,
                           BlockPublisher blockPublisher) {
         this.engine = engine;
+        this.projectileCreator = projectileCreator;
         this.blockSubscriber = blockSubscriber;
         this.blockPublisher = blockPublisher;
     }
@@ -40,8 +49,21 @@ public class AttackListener implements EntityListener, HasComponentMappers {
     @Override
     public void entityAdded(Entity entity) {
         AttackComponent attackComponent = ATTACK_MAPPER.get(entity);
-        handleAttackedBlock(entity, attackComponent);
-        handleAttackedPlayer(entity, attackComponent);
+
+        if (attackComponent.getAttack().getType() == AttackType.CAST) {
+            handleCast(entity, attackComponent);
+        } else {
+            handleAttackedBlock(entity, attackComponent);
+            handleAttackedPlayer(entity, attackComponent);
+        }
+    }
+
+    private void handleCast(Entity entity, AttackComponent attackComponent) {
+        Attack attack = attackComponent.getAttack();
+        // Create a new projectile entity
+        Vector2 mouseCoords = attackComponent.getMouseCoords();
+        projectileCreator.createProjectile(attack.getX(), attack.getY(), mouseCoords.x, mouseCoords.y);
+
     }
 
     private void handleAttackedBlock(Entity entity, AttackComponent attackComponent) {

@@ -9,9 +9,12 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.libgdx.contactlisteners.MyContactListener;
+import com.stefanolupo.ndngame.libgdx.contactlisteners.GameContactListener;
+import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
+import com.stefanolupo.ndngame.libgdx.creators.PlayerCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
+import com.stefanolupo.ndngame.libgdx.listeners.BodyRemovalListener;
 import com.stefanolupo.ndngame.libgdx.systems.BlockSystem;
 import com.stefanolupo.ndngame.libgdx.systems.PlayerControlSystem;
 import com.stefanolupo.ndngame.libgdx.systems.core.*;
@@ -31,14 +34,15 @@ public class MainScreen implements Screen {
     private final InputController inputController;
     private final PooledEngine engine;
     private final World world;
-    private final EntityCreator entityCreator;
+    private final GameWorldCreator gameWorldCreator;
+    private final PlayerCreator playerCreator;
 
     // Systems
     private final AnimationSystem animationSystem;
     private final AttackSystem attackSystem;
     private final BlockSystem blockSystem;
     private final BlockUpdateSystem blockUpdateSystem;
-    private final CollisionSystem collisionSystem;
+    private final ProjectileCollisionSystem projectileCollisionSystem;
     private final LocalPlayerStatusSystem localPlayerStatusSystem;
     private final MovementSystem movementSystem;
     private final PhysicsSystem physicsSystem;
@@ -49,6 +53,7 @@ public class MainScreen implements Screen {
 
     // Listeners
     private final AttackListener attackListener;
+    private final BodyRemovalListener bodyRemovalListener;
 
     // These cant be initialized in the constructor
     private SpriteBatch spriteBatch = null;
@@ -57,16 +62,17 @@ public class MainScreen implements Screen {
     public MainScreen(LocalConfig localConfig,
                       InputController inputController,
                       PooledEngine engine,
-                      MyContactListener myContactListener,
+                      GameContactListener gameContactListener,
                       World world,
-                      EntityCreator entityCreator,
+                      GameWorldCreator gameWorldCreator,
+                      PlayerCreator playerCreator,
 
                       // Systems
                       AnimationSystem animationSystem,
                       AttackSystem attackSystem,
                       BlockSystem blockSystem,
                       BlockUpdateSystem blockUpdateSystem,
-                      CollisionSystem collisionSystem,
+                      ProjectileCollisionSystem projectileCollisionSystem,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
                       MovementSystem movementSystem,
                       PhysicsSystem physicsSystem,
@@ -76,20 +82,22 @@ public class MainScreen implements Screen {
                       SteadyStateSystem steadyStateSystem,
 
                       // Listeners
-                      AttackListener attackListener) {
+                      AttackListener attackListener,
+                      BodyRemovalListener bodyRemovalListener) {
 
         this.localConfig = localConfig;
         this.inputController = inputController;
         this.engine = engine;
         this.world = world;
-        this.entityCreator = entityCreator;
+        this.gameWorldCreator = gameWorldCreator;
+        this.playerCreator = playerCreator;
 
         // Systems
         this.animationSystem = animationSystem;
         this.attackSystem = attackSystem;
         this.blockSystem = blockSystem;
         this.blockUpdateSystem = blockUpdateSystem;
-        this.collisionSystem = collisionSystem;
+        this.projectileCollisionSystem = projectileCollisionSystem;
         this.localPlayerStatusSystem = localPlayerStatusSystem;
         this.movementSystem = movementSystem;
         this.physicsSystem = physicsSystem;
@@ -100,8 +108,9 @@ public class MainScreen implements Screen {
 
         // Listeners
         this.attackListener = attackListener;
+        this.bodyRemovalListener = bodyRemovalListener;
 
-        world.setContactListener(myContactListener);
+        world.setContactListener(gameContactListener);
     }
 
     @Override
@@ -135,7 +144,7 @@ public class MainScreen implements Screen {
         }
 
         engine.addSystem(physicsSystem);
-        engine.addSystem(collisionSystem);
+        engine.addSystem(projectileCollisionSystem);
 
         if (!localConfig.isHeadless()) {
             engine.addSystem(animationSystem);
@@ -147,8 +156,10 @@ public class MainScreen implements Screen {
 
         // Listeners
         engine.addEntityListener(AttackListener.FAMILY, attackListener);
+        engine.addEntityListener(BodyRemovalListener.FAMILY, bodyRemovalListener);
 
-        entityCreator.createInitialWorld();
+        gameWorldCreator.createInitialWorld();
+        playerCreator.createLocalPlayer();
     }
 
     @Override

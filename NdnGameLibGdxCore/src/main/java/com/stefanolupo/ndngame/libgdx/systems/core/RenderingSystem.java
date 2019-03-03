@@ -4,20 +4,23 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.SortedIteratingSystem;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.Array;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
+import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.protos.GameObject;
+import com.stefanolupo.ndngame.protos.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +31,8 @@ public class RenderingSystem
         implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderingSystem.class);
-    private static final Comparator<Entity> Z_COMPARATOR = Comparator.comparing(e -> RENDER_MAPPER.get(e).getGameObject().getZ());
+    private static final Comparator<Entity> Z_COMPARATOR =
+            Comparator.comparing(e -> RENDER_MAPPER.get(e).getGameObject().getZ());
     private static final float PIXELS_PER_METER = 40f;
 
     private final LocalConfig localConfig;
@@ -37,8 +41,6 @@ public class RenderingSystem
     private final Value<Float> outerRadius;
 
     private final Array<Entity> renderQueue;
-
-    //    private final BitmapFont font = new BitmapFont();
 
     private SpriteBatch spriteBatch;
     private ShapeRenderer shapeRenderer;
@@ -62,7 +64,7 @@ public class RenderingSystem
     public void configureOnInit(SpriteBatch spriteBatch) {
         this.spriteBatch = spriteBatch;
         if (localConfig.isMasterView()) {
-            camera.setToOrtho(false, EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT);
+            camera.setToOrtho(false, GameWorldCreator.WORLD_WIDTH, GameWorldCreator.WORLD_HEIGHT);
         } else {
             camera.setToOrtho(false,
                     Gdx.graphics.getWidth() / PIXELS_PER_METER,
@@ -80,12 +82,13 @@ public class RenderingSystem
     public void update(float deltaTime) {
         super.update(deltaTime);
 
-        if (spriteBatch == null) {
-            throw new IllegalStateException("configureOnInit must be called before rendering can start");
-        }
+        Preconditions.checkArgument(spriteBatch != null,
+                "configureOnInit must be called before rendering can start");
 
         spriteBatch.setProjectionMatrix(camera.combined);
         spriteBatch.enableBlending();
+        renderPlayerStatus();
+
         spriteBatch.begin();
         shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 
@@ -120,6 +123,7 @@ public class RenderingSystem
         spriteBatch.end();
         shapeRenderer.end();
         renderQueue.clear();
+        shapeRenderer.end();
     }
 
     @Override
@@ -151,24 +155,33 @@ public class RenderingSystem
     }
 
     private void drawInterestZone(Entity entity, float drawX, float drawY) {
+
         if (REMOTE_PLAYER_MAPPER.get(entity) != null || LOCAL_PLAYER_MAPPER.get(entity) != null) {
             shapeRenderer.circle(drawX, drawY, innerRadius.get());
             shapeRenderer.circle(drawX, drawY, outerRadius.get());
         }
+
     }
 
-//    private void drawPositions(Entity entity, RenderComponent renderComponent) {
-//        if (LOCAL_PLAYER_MAPPER.get(entity) != null) {
-//            font.setColor(Color.BLUE);
-//            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
-//                    renderComponent.getPosition().x, renderComponent.getPosition().y);
-//        }
-//
-//        if (REMOTE_PLAYER_MAPPER.get(entity) != null) {
-//            font.setColor(Color.RED);
-//            font.draw(spriteBatch, String.format("x: %2f, y: %2f", renderComponent.getPosition().x, renderComponent.getPosition().y),
-//                    renderComponent.getPosition().x, renderComponent.getPosition().y);
-//        }
-//
-//    }
+    private void renderPlayerStatus() {
+        Entity localPlayer = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
+        Status status = STATUS_MAPPER.get(localPlayer).getStatus();
+        float radius = camera.viewportWidth / 50;
+        float offset = radius;
+        float healthHeight = camera.viewportHeight / 10;
+        float ammoHeight = healthHeight - (offset + radius);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(Color.FIREBRICK);
+        for (int i = 0; i < status.getHealth(); i++) {
+            shapeRenderer.circle(offset + i * (radius + offset), healthHeight, radius);
+        }
+
+        shapeRenderer.setColor(Color.BLUE);
+        for (int i = 0; i <status.getAmmo(); i++) {
+            shapeRenderer.circle(offset + i * (radius + offset), ammoHeight, radius);
+        }
+
+        shapeRenderer.end();
+    }
 }

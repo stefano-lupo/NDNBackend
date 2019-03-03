@@ -2,7 +2,9 @@ package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,8 @@ import org.slf4j.LoggerFactory;
 public class RealInputController implements InputProcessor, InputController {
 
     private static final Logger LOG = LoggerFactory.getLogger(RealInputController.class);
+
+    private final OrthographicCamera camera;
 
     private boolean left;
     private boolean right;
@@ -21,6 +25,10 @@ public class RealInputController implements InputProcessor, InputController {
     private boolean isMouse1Down, isMouse2Down,isMouse3Down;
     private boolean isDragged;
     private Vector2 mouseLocation = new Vector2();
+
+    public RealInputController(OrthographicCamera camera) {
+        this.camera = camera;
+    }
 
     @Override
     public boolean isLeftPressed() {
@@ -60,6 +68,12 @@ public class RealInputController implements InputProcessor, InputController {
     @Override
     public boolean isMouse3Down() {
         return isMouse3Down;
+    }
+
+    @Override
+    public Vector2 getMouseCoords() {
+        Vector3 unprojected = camera.unproject(new Vector3(mouseLocation, 0));
+        return new Vector2(unprojected.x, unprojected.y);
     }
 
     @Override

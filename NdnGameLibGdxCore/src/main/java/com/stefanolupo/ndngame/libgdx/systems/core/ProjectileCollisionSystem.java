@@ -3,22 +3,24 @@ package com.stefanolupo.ndngame.libgdx.systems.core;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.libgdx.components.CollisionComponent;
+import com.stefanolupo.ndngame.libgdx.components.ProjectileComponent;
 import com.stefanolupo.ndngame.libgdx.components.TypeComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-public class CollisionSystem
+@Singleton
+public class ProjectileCollisionSystem
         extends IteratingSystem
         implements HasComponentMappers {
     
-    private static final Logger LOG = LoggerFactory.getLogger(CollisionSystem.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProjectileCollisionSystem.class);
     
-    public CollisionSystem() {
-        super(Family.all(CollisionComponent.class).get());
+    public ProjectileCollisionSystem() {
+        super(Family.all(CollisionComponent.class, ProjectileComponent.class).get());
     }
 
     @Override
@@ -45,6 +47,10 @@ public class CollisionSystem
             LOG.error("Null type in collision between {} and {}", myType, typeComponent);
             collisionComponent.setCollidedWith(null);
             return;
+        }
+
+        if (collidedWithType == Type.BOUNDARY || collidedWithType == Type.SCENERY) {
+            getEngine().removeEntity(entity);
         }
         
 //        LOG.debug("{} collided with {}", myType, collidedWithType);

@@ -10,9 +10,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
-import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
 import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
+import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -34,19 +34,19 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
 
     private final BlockSubscriber blockSubscriber;
     private final BlockPublisher blockPublisher;
-    private final EntityCreator entityCreator;
+    private final GameWorldCreator gameWorldCreator;
     private final PooledEngine engine;
 
     @Inject
     public BlockUpdateSystem(BlockSubscriber blockSubscriber,
                              BlockPublisher blockPublisher,
-                             EntityCreator entityCreator,
+                             GameWorldCreator gameWorldCreator,
                              PooledEngine engine) {
         super(BLOCK_UPDATE_INTERVAL_SEC);
 
         this.blockSubscriber = blockSubscriber;
         this.blockPublisher = blockPublisher;
-        this.entityCreator = entityCreator;
+        this.gameWorldCreator = gameWorldCreator;
         this.engine = engine;
     }
 
@@ -60,7 +60,7 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
         Set<BlockName> blocksToCreate = Sets.difference(remoteBlocks.keySet(), entitiesByBlockName.keySet());
         for (BlockName blocksName : blocksToCreate) {
             Block block = remoteBlocks.get(blocksName);
-            entityCreator.createRemoteBlock(blocksName, block);
+            gameWorldCreator.createRemoteBlock(blocksName, block);
         }
 
         // Destroy old blocks

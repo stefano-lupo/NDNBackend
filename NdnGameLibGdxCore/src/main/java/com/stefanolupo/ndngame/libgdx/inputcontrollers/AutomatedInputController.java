@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
+import com.badlogic.gdx.math.Vector2;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.concurrent.Executors;
@@ -64,6 +65,11 @@ public class AutomatedInputController implements InputController {
     @Override
     public boolean isMouse3Down() {
         return false;
+    }
+
+    @Override
+    public Vector2 getMouseCoords() {
+        return Vector2.Zero;
     }
 
     private void moveOnPath() {
