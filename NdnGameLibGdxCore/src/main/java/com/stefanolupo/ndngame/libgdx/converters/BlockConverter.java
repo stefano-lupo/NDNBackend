@@ -29,7 +29,7 @@ public class BlockConverter implements HasComponentMappers {
     }
 
     /**
-     * Update the entitys state based on the remote block
+     * Update the entity's state based on the remote block
      * The PhysicsSystem updates the render component based on the Body state
      * so only need to update the body
      */

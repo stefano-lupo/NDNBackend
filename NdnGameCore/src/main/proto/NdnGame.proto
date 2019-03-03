@@ -64,7 +64,15 @@ message Blocks {
     repeated Block blocks = 1;
 }
 
+message Projectile {
+    string id = 1;
+    GameObject gameObject = 2;
+    int32 damage = 3;
+}
 
+message Projectiles {
+    repeated Projectile projectiles = 1;
+}
 
 
 

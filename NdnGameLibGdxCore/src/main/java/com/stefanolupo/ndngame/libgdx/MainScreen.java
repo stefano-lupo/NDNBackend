@@ -19,8 +19,10 @@ import com.stefanolupo.ndngame.libgdx.systems.BlockSystem;
 import com.stefanolupo.ndngame.libgdx.systems.PlayerControlSystem;
 import com.stefanolupo.ndngame.libgdx.systems.core.*;
 import com.stefanolupo.ndngame.libgdx.systems.local.LocalPlayerStatusSystem;
+import com.stefanolupo.ndngame.libgdx.systems.local.LocalProjectileSystem;
 import com.stefanolupo.ndngame.libgdx.systems.remote.AttackSystem;
 import com.stefanolupo.ndngame.libgdx.systems.remote.BlockUpdateSystem;
+import com.stefanolupo.ndngame.libgdx.systems.remote.ProjectileUpdateSystem;
 import com.stefanolupo.ndngame.libgdx.systems.remote.RemotePlayerUpdateSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +44,13 @@ public class MainScreen implements Screen {
     private final AttackSystem attackSystem;
     private final BlockSystem blockSystem;
     private final BlockUpdateSystem blockUpdateSystem;
-    private final ProjectileCollisionSystem projectileCollisionSystem;
     private final LocalPlayerStatusSystem localPlayerStatusSystem;
+    private final LocalProjectileSystem localProjectileSystem;
     private final MovementSystem movementSystem;
     private final PhysicsSystem physicsSystem;
     private final PlayerControlSystem playerControlSystem;
+    private final ProjectileCollisionSystem projectileCollisionSystem;
+    private final ProjectileUpdateSystem projectileUpdateSystem;
     private final RemotePlayerUpdateSystem remotePlayerUpdateSystem;
     private final RenderingSystem renderingSystem;
     private final SteadyStateSystem steadyStateSystem;
@@ -72,11 +76,13 @@ public class MainScreen implements Screen {
                       AttackSystem attackSystem,
                       BlockSystem blockSystem,
                       BlockUpdateSystem blockUpdateSystem,
-                      ProjectileCollisionSystem projectileCollisionSystem,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
+                      LocalProjectileSystem localProjectileSystem,
                       MovementSystem movementSystem,
                       PhysicsSystem physicsSystem,
                       PlayerControlSystem playerControlSystem,
+                      ProjectileCollisionSystem projectileCollisionSystem,
+                      ProjectileUpdateSystem projectileUpdateSystem,
                       RemotePlayerUpdateSystem remotePlayerUpdateSystem,
                       RenderingSystem renderingSystem,
                       SteadyStateSystem steadyStateSystem,
@@ -97,11 +103,13 @@ public class MainScreen implements Screen {
         this.attackSystem = attackSystem;
         this.blockSystem = blockSystem;
         this.blockUpdateSystem = blockUpdateSystem;
-        this.projectileCollisionSystem = projectileCollisionSystem;
         this.localPlayerStatusSystem = localPlayerStatusSystem;
+        this.localProjectileSystem = localProjectileSystem;
         this.movementSystem = movementSystem;
         this.physicsSystem = physicsSystem;
         this.playerControlSystem = playerControlSystem;
+        this.projectileCollisionSystem = projectileCollisionSystem;
+        this.projectileUpdateSystem = projectileUpdateSystem;
         this.remotePlayerUpdateSystem = remotePlayerUpdateSystem;
         this.renderingSystem = renderingSystem;
         this.steadyStateSystem = steadyStateSystem;
@@ -132,6 +140,7 @@ public class MainScreen implements Screen {
         // Remote Updater Systems
         engine.addSystem(remotePlayerUpdateSystem);
         engine.addSystem(blockUpdateSystem);
+        engine.addSystem(projectileUpdateSystem);
 
         // Core game systems
         engine.addSystem(playerControlSystem);
@@ -153,6 +162,7 @@ public class MainScreen implements Screen {
 
         // Local publisher systems
         engine.addSystem(localPlayerStatusSystem);
+        engine.addSystem(localProjectileSystem);
 
         // Listeners
         engine.addEntityListener(AttackListener.FAMILY, attackListener);

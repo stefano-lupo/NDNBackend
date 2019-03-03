@@ -3,7 +3,6 @@ package com.stefanolupo.ndngame.libgdx.creators;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.physics.box2d.Body;
-import com.badlogic.gdx.physics.box2d.BodyDef;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
@@ -108,7 +107,7 @@ public class PlayerCreator implements OnPlayersDiscovered {
         float y = ThreadLocalRandom.current().nextInt(MIN_EDGE_DISTANCE, (int) WORLD_HEIGHT - MIN_EDGE_DISTANCE);
 
         GameObject gameObject = GameObjectFactory.buildBasicGameObject(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
-        Body body = bodyFactory.makeBoxPolyBody(gameObject, BodyFactory.STONE, BodyDef.BodyType.DynamicBody);
+        Body body = bodyFactory.makeBoxBody(gameObject, Material.PLAYER);
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
@@ -133,7 +132,7 @@ public class PlayerCreator implements OnPlayersDiscovered {
 
     private static Status buildStatus() {
         return Status.newBuilder()
-                .setAmmo(5)
+                .setAmmo(50)
                 .setHealth(5)
                 .setMana(5)
                 .setXp(0)

@@ -18,6 +18,7 @@ import com.stefanolupo.ndngame.backend.statistics.Histogram;
 import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
+import com.stefanolupo.ndngame.backend.subscriber.ProjectileSubscriber;
 import com.stefanolupo.ndngame.config.LocalConfig;
 import net.named_data.jndn.security.KeyChain;
 
@@ -35,7 +36,8 @@ public class BackendModule extends AbstractModule {
     private static final String PROPERTIES_NAME = "backend.properties";
     private static final Collection<Class<? extends OnPlayersDiscovered>> PLAYER_DISCOVERY_CALLBACKS = Arrays.asList(
             PlayerStatusSubscriber.class,
-            BlockSubscriber.class
+            BlockSubscriber.class,
+            ProjectileSubscriber.class
     );
 
     private final LocalConfig localConfig;
