@@ -10,10 +10,11 @@ import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
+import com.stefanolupo.ndngame.libgdx.components.StatusComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
 import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
-import com.stefanolupo.ndngame.libgdx.entities.EntityCreator;
+import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.AttackType;
@@ -33,18 +34,18 @@ public class PlayerControlSystem
 
     private final InputController inputController;
     private final PooledEngine pooledEngine;
-    private final EntityCreator entityCreator;
+    private final GameWorldCreator gameWorldCreator;
     private final LocalConfig localConfig;
 
     @Inject
     public PlayerControlSystem(InputController inputController,
                                PooledEngine pooledEngine,
-                               EntityCreator entityCreator,
+                               GameWorldCreator gameWorldCreator,
                                LocalConfig localConfig) {
         super(Family.all(LocalPlayerComponent.class).get());
         this.inputController = inputController;
         this.pooledEngine = pooledEngine;
-        this.entityCreator = entityCreator;
+        this.gameWorldCreator = gameWorldCreator;
         this.localConfig = localConfig;
     }
 
@@ -52,6 +53,7 @@ public class PlayerControlSystem
     protected void processEntity(Entity entity, float deltaTime) {
         StateComponent stateComponent = STATE_MAPPER.get(entity);
         Body body = BODY_MAPPER.get(entity).getBody();
+        StatusComponent statusComponent = STATUS_MAPPER.get(entity);
 
         // No input allowed if currently busy
         if (stateComponent.isBusy()) {
@@ -60,10 +62,11 @@ public class PlayerControlSystem
 
         // If attacking: don't allow movement
         if (inputController.isAttackButtonPressed()) {
-            handleAttackCommand(stateComponent, deltaTime, body);
+            handleAttackCommand(stateComponent, deltaTime, body, statusComponent);
             return;
         }
 
+        // If interacting: don't allow movement
         if (inputController.isInteractButtonPressed()) {
             handleInteractionCommand(stateComponent, deltaTime, body);
             return;
@@ -74,12 +77,25 @@ public class PlayerControlSystem
 
     private void handleAttackCommand(StateComponent stateComponent,
                                      float deltaTime,
-                                     Body body) {
+                                     Body body,
+                                     StatusComponent statusComponent) {
         AttackComponent attackComponent = null;
+
         if (inputController.isMouse1Down()) {
             attackComponent = buildAttackComponent(body, 1f, AttackType.SWING);
             stateComponent.updateAttackState(AttackState.SWING, deltaTime);
         } else if (inputController.isMouse2Down()) {
+            int ammo = statusComponent.getStatus().getAmmo();
+
+            if (ammo <= 0) {
+                return;
+            }
+
+            statusComponent.setStatus(statusComponent.getStatus().toBuilder()
+                        .setAmmo(ammo - 1)
+                        .build()
+                );
+
             attackComponent = buildAttackComponent(body, 1f, AttackType.CAST);
             attackComponent.setMouseCoords(inputController.getMouseCoords());
             stateComponent.updateAttackState(AttackState.CAST, deltaTime);
@@ -94,6 +110,7 @@ public class PlayerControlSystem
         entity.add(attackComponent);
         pooledEngine.addEntity(entity);
 
+        // Stop any movement while attacking
         stateComponent.updateMotionState(0, 0, deltaTime);
     }
 
@@ -115,7 +132,7 @@ public class PlayerControlSystem
     private void handleInteractionCommand(StateComponent stateComponent, float deltaTime, Body body) {
         if (inputController.isSpacePressed()) {
             stateComponent.updateInteractionState(InteractionState.PLACE_BLOCK, deltaTime);
-            entityCreator.createLocalBlock(body.getPosition().x, body.getPosition().y);
+            gameWorldCreator.createLocalBlock(body.getPosition().x, body.getPosition().y);
 
             // Force velocity to 0 when placing
             stateComponent.updateMotionState(0, 0, deltaTime);

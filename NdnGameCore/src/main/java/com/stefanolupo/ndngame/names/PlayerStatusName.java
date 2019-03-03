@@ -96,7 +96,7 @@ public class PlayerStatusName implements SequenceNumberedName {
 
 
     /**
-     * Engine needs this for comparing its entities
+     * Engine needs this for comparing its entitys
      */
     @Override
     public long getLatestSequenceNumberSeen() {

@@ -1,10 +1,9 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.creators;
 
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.stefanolupo.ndngame.libgdx.entities.EntityCreator;
 import com.stefanolupo.ndngame.protos.GameObject;
 
 @Singleton
@@ -79,16 +78,16 @@ public class BodyFactory {
         Body body = world.createBody(bodyDef);
         EdgeShape edgeShape = new EdgeShape();
 
-        edgeShape.set(0,0, EntityCreator.WORLD_WIDTH, 0);
+        edgeShape.set(0,0, GameWorldCreator.WORLD_WIDTH, 0);
         body.createFixture(edgeShape, 0);
 
-        edgeShape.set(0,0, 0, EntityCreator.WORLD_HEIGHT);
+        edgeShape.set(0,0, 0, GameWorldCreator.WORLD_HEIGHT);
         body.createFixture(edgeShape, 0);
 
-        edgeShape.set(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT, EntityCreator.WORLD_WIDTH, 0);
+        edgeShape.set(GameWorldCreator.WORLD_WIDTH, GameWorldCreator.WORLD_HEIGHT, GameWorldCreator.WORLD_WIDTH, 0);
         body.createFixture(edgeShape, 0);
 
-        edgeShape.set(EntityCreator.WORLD_WIDTH, EntityCreator.WORLD_HEIGHT, 0, EntityCreator.WORLD_HEIGHT);
+        edgeShape.set(GameWorldCreator.WORLD_WIDTH, GameWorldCreator.WORLD_HEIGHT, 0, GameWorldCreator.WORLD_HEIGHT);
         body.createFixture(edgeShape, 0);
 
         return body;

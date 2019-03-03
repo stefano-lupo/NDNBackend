@@ -12,7 +12,7 @@ import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.*;
 import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
-import com.stefanolupo.ndngame.libgdx.entities.EntityCreator;
+import com.stefanolupo.ndngame.libgdx.creators.ProjectileCreator;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Attack;
@@ -31,17 +31,17 @@ public class AttackListener implements EntityListener, HasComponentMappers {
     private static final Logger LOG = LoggerFactory.getLogger(AttackListener.class);
 
     private final PooledEngine engine;
-    private final EntityCreator entityCreator;
+    private final ProjectileCreator projectileCreator;
     private final BlockSubscriber blockSubscriber;
     private final BlockPublisher blockPublisher;
 
     @Inject
     public AttackListener(PooledEngine engine,
-                          EntityCreator entityCreator,
+                          ProjectileCreator projectileCreator,
                           BlockSubscriber blockSubscriber,
                           BlockPublisher blockPublisher) {
         this.engine = engine;
-        this.entityCreator = entityCreator;
+        this.projectileCreator = projectileCreator;
         this.blockSubscriber = blockSubscriber;
         this.blockPublisher = blockPublisher;
     }
@@ -62,7 +62,7 @@ public class AttackListener implements EntityListener, HasComponentMappers {
         Attack attack = attackComponent.getAttack();
         // Create a new projectile entity
         Vector2 mouseCoords = attackComponent.getMouseCoords();
-        entityCreator.createProjectile(attack.getX(), attack.getY(), mouseCoords.x, mouseCoords.y);
+        projectileCreator.createProjectile(attack.getX(), attack.getY(), mouseCoords.x, mouseCoords.y);
 
     }
 

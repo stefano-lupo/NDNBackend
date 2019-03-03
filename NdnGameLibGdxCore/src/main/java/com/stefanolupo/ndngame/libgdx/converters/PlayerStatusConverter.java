@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maps to and from PlayerStatusFace Proto and Game engine entities
+ * Maps to and from PlayerStatusFace Proto and Game engine entity
  */
 public class PlayerStatusConverter implements HasComponentMappers {
 
@@ -29,7 +29,7 @@ public class PlayerStatusConverter implements HasComponentMappers {
     }
 
     /**
-     * Update the entities state based on the remote playerStatus
+     * Update the entitys state based on the remote playerStatus
      * The PhysicsSystem updates the render component based on the Body state
      * so only need to update the body
      */

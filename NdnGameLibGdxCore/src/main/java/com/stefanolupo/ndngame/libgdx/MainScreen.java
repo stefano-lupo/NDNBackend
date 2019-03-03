@@ -10,7 +10,8 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.contactlisteners.GameContactListener;
-import com.stefanolupo.ndngame.libgdx.entities.EntityCreator;
+import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
+import com.stefanolupo.ndngame.libgdx.creators.PlayerCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
 import com.stefanolupo.ndngame.libgdx.listeners.BodyRemovalListener;
@@ -33,7 +34,8 @@ public class MainScreen implements Screen {
     private final InputController inputController;
     private final PooledEngine engine;
     private final World world;
-    private final EntityCreator entityCreator;
+    private final GameWorldCreator gameWorldCreator;
+    private final PlayerCreator playerCreator;
 
     // Systems
     private final AnimationSystem animationSystem;
@@ -62,7 +64,8 @@ public class MainScreen implements Screen {
                       PooledEngine engine,
                       GameContactListener gameContactListener,
                       World world,
-                      EntityCreator entityCreator,
+                      GameWorldCreator gameWorldCreator,
+                      PlayerCreator playerCreator,
 
                       // Systems
                       AnimationSystem animationSystem,
@@ -86,7 +89,8 @@ public class MainScreen implements Screen {
         this.inputController = inputController;
         this.engine = engine;
         this.world = world;
-        this.entityCreator = entityCreator;
+        this.gameWorldCreator = gameWorldCreator;
+        this.playerCreator = playerCreator;
 
         // Systems
         this.animationSystem = animationSystem;
@@ -154,7 +158,8 @@ public class MainScreen implements Screen {
         engine.addEntityListener(AttackListener.FAMILY, attackListener);
         engine.addEntityListener(BodyRemovalListener.FAMILY, bodyRemovalListener);
 
-        entityCreator.createInitialWorld();
+        gameWorldCreator.createInitialWorld();
+        playerCreator.createLocalPlayer();
     }
 
     @Override
