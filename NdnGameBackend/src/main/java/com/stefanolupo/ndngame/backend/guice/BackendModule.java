@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend.guice;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
@@ -7,6 +8,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.hubspot.liveconfig.LiveConfig;
 import com.hubspot.liveconfig.LiveConfigModule;
+import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 import com.stefanolupo.ndngame.backend.chronosynced.ConfigManager;
 import com.stefanolupo.ndngame.backend.chronosynced.DiscoveryManager;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
@@ -24,6 +26,9 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 public class BackendModule extends AbstractModule {
 
@@ -78,6 +83,16 @@ public class BackendModule extends AbstractModule {
             throw new RuntimeException("Unable to obtain keychain reference", e);
         }
     }
+
+    @Provides
+    @Singleton
+    @LogScheduleExecutor
+    ScheduledExecutorService providesScheduledExecutorService() {
+        ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("log-schedule-%d").build();
+        return Executors.newScheduledThreadPool(1, namedThreadFactory);
+    }
+
 
     private Properties loadInitialProperties() {
         Properties properties = new Properties();

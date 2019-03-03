@@ -12,6 +12,7 @@ public class CommandLineHelper {
     private final Option GAME_ID;
     private final Option SCREEN_WIDTH;
     private final Option SCREEN_HEIGHT;
+    private final Option FRAME_RATE;
 
     private final Options options;
 
@@ -54,6 +55,11 @@ public class CommandLineHelper {
         SCREEN_HEIGHT.setType(Integer.class);
         options.addOption(SCREEN_HEIGHT);
 
+        FRAME_RATE = new Option("f", "framerate", true, "target frame rate");
+        FRAME_RATE.setRequired(false);
+        FRAME_RATE.setType(Integer.class);
+        options.addOption(FRAME_RATE);
+
     }
 
     public LocalConfig getConfig(String[] args) {
@@ -82,6 +88,10 @@ public class CommandLineHelper {
 
             if (cmd.hasOption(SCREEN_HEIGHT.getLongOpt())) {
                 builder.setScreenHeight(Integer.valueOf(cmd.getOptionValue(SCREEN_HEIGHT.getLongOpt())));
+            }
+
+            if (cmd.hasOption(FRAME_RATE.getLongOpt())) {
+                builder.setTargetFrameRate(Integer.valueOf(cmd.getOptionValue(FRAME_RATE.getLongOpt())));
             }
 
             return builder.build();

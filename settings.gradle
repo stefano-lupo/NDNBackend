@@ -6,7 +6,6 @@
 rootProject.name = 'NdnGame'
 include(':NdnGameCore')
 include(':NdnGameBackend')
-include(':NdnGameFrontend')
 include(':NdnGameLibGdxCore')
 include(':NdnGameLibGdxDesktop')
 include 'NdnGameData'
