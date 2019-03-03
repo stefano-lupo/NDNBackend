@@ -1,4 +1,4 @@
-package com.stefanolupo.ndngame.libgdx;
+package com.stefanolupo.ndngame.libgdx.entities;
 
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.PooledEngine;
@@ -10,6 +10,7 @@ import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.libgdx.BodyFactory;
 import com.stefanolupo.ndngame.libgdx.assets.GameAssetManager;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheet;
 import com.stefanolupo.ndngame.libgdx.assets.SpriteSheetLoader;
@@ -45,6 +46,8 @@ public class EntityCreator implements OnPlayersDiscovered {
     public static final float BLOCK_WIDTH = 2;
     public static final float BLOCK_HEIGHT = 2;
 
+    public static final float PROJECTILE_RADIUS = .03f;
+    public static final float PROJECTILE_VELOCITY = 6;
 
     private final LocalConfig localConfig;
     private final PooledEngine engine;
@@ -90,7 +93,7 @@ public class EntityCreator implements OnPlayersDiscovered {
 
     public void createLocalBlock(float x, float y) {
         String id = UUID.randomUUID().toString();
-        GameObject gameObject = buildGameObject(x, y, BLOCK_WIDTH, BLOCK_HEIGHT);
+        GameObject gameObject = buildPlayerGameObject(x, y, BLOCK_WIDTH, BLOCK_HEIGHT);
         Block block = Block.newBuilder()
                 .setId(id)
                 .setGameObject(gameObject)
@@ -140,6 +143,61 @@ public class EntityCreator implements OnPlayersDiscovered {
         entity.add(blockComponent);
 
         return entity;
+    }
+
+    public void createProjectile(float x, float y, float targetX, float targetY) {
+        Entity entity = engine.createEntity();
+
+        double angle = Math.atan2(targetY - y, targetX - x);
+        float velX = PROJECTILE_VELOCITY * (float) Math.cos(angle);
+        float velY = PROJECTILE_VELOCITY * (float) Math.sin(angle);
+        LOG.debug("Setting velocity: {}, {}", velX, velY);
+
+        x += Math.signum(velX) * (PLAYER_WIDTH + PROJECTILE_RADIUS);
+        y += Math.signum(velY) * (PLAYER_HEIGHT + PROJECTILE_RADIUS);
+
+        Body body = bodyFactory.makeCirclePolyBody(x, y, PROJECTILE_RADIUS, BodyFactory.RUBBER, BodyDef.BodyType.DynamicBody, false);
+        body.applyLinearImpulse(velX, velY, x, y, true);
+        body.setUserData(entity);
+        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
+        bodyComponent.setBody(body);
+        entity.add(bodyComponent);
+
+        TypeComponent typeComponent = engine.createComponent(TypeComponent.class);
+        typeComponent.setType(Type.PROJECTILE);
+        entity.add(typeComponent);
+
+        // TODO: Texture
+
+
+
+        RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
+        GameObject gameObject = GameObject.newBuilder()
+                .setX(x)
+                .setY(y)
+                .setZ(1)
+                .setVelX(velX)
+                .setVelY(velY)
+                .setWidth(PROJECTILE_RADIUS)
+                .setHeight(PROJECTILE_RADIUS)
+                .setIsFixedRotation(false)
+                .setScaleX(1)
+                .setScaleY(1)
+                .setAngle(0)
+                .build();
+
+        renderComponent.setGameObject(gameObject);
+        entity.add(renderComponent);
+
+        ProjectileComponent projectileComponent = engine.createComponent(ProjectileComponent.class);
+        // TODO: Populate
+        entity.add(projectileComponent);
+
+        CollisionComponent collisionComponent = engine.createComponent(CollisionComponent.class);
+        entity.add(collisionComponent);
+
+        engine.addEntity(entity);
+
     }
 
     public void createLocalPlayer() {
@@ -195,7 +253,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         float x = ThreadLocalRandom.current().nextInt(20, (int) WORLD_WIDTH - 20);
         float y = ThreadLocalRandom.current().nextInt(20, (int) WORLD_HEIGHT - 20);
 
-        GameObject gameObject = buildGameObject(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
+        GameObject gameObject = buildPlayerGameObject(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
         Body body = bodyFactory.makeBoxPolyBody(gameObject, BodyFactory.STONE, BodyDef.BodyType.DynamicBody);
         body.setUserData(entity);
 
@@ -238,7 +296,7 @@ public class EntityCreator implements OnPlayersDiscovered {
         engine.addEntity(entity);
     }
 
-    private static GameObject buildGameObject(float x, float y, float width, float height) {
+    private static GameObject buildPlayerGameObject(float x, float y, float width, float height) {
         return GameObject.newBuilder()
                 .setX(x)
                 .setY(y)
@@ -259,5 +317,20 @@ public class EntityCreator implements OnPlayersDiscovered {
                 .setMana(100)
                 .setXp(0)
                 .build();
+    }
+
+    public static void main(String[] args) {
+        float x = 0, y = 0;
+        float targetX = -5, targetY = -5;
+        float riseOverRun = (targetY - y) / (targetX - x);
+
+
+        LOG.debug("Rise over run: {}", riseOverRun);
+        double angle = Math.atan2(targetY - y, targetX - x);
+        LOG.debug("angle: {}", angle);
+        float velX = PROJECTILE_VELOCITY * (float) Math.cos(angle);
+        float velY = PROJECTILE_VELOCITY * (float) Math.sin(angle);
+
+        LOG.debug("{}, {}", velX, velY);
     }
 }

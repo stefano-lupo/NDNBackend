@@ -7,13 +7,13 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.libgdx.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.components.AttackComponent;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.StateComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
 import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
+import com.stefanolupo.ndngame.libgdx.entities.EntityCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.AttackType;
@@ -81,6 +81,7 @@ public class PlayerControlSystem
             stateComponent.updateAttackState(AttackState.SWING, deltaTime);
         } else if (inputController.isMouse2Down()) {
             attackComponent = buildAttackComponent(body, 1f, AttackType.CAST);
+            attackComponent.setMouseCoords(inputController.getMouseCoords());
             stateComponent.updateAttackState(AttackState.CAST, deltaTime);
         } else if (inputController.isMouse3Down()) {
             attackComponent = buildAttackComponent(body, 1f, AttackType.SHIELD);

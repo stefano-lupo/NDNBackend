@@ -5,6 +5,7 @@ public enum Type {
     ENEMY,
     REMOTE_PLAYER,
     PLACABLE_OBJECT,
+    PROJECTILE,
     SCENERY,
     BOUNDARY,
     OTHER

@@ -7,7 +7,7 @@ import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.libgdx.components.CollisionComponent;
 
 @Singleton
-public class MyContactListener implements ContactListener {
+public class GameContactListener implements ContactListener {
 
     @Override
     public void beginContact(Contact contact) {

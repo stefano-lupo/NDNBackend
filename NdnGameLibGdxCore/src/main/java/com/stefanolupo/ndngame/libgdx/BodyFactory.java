@@ -4,6 +4,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.stefanolupo.ndngame.libgdx.entities.EntityCreator;
 import com.stefanolupo.ndngame.protos.GameObject;
 
 @Singleton
