@@ -8,6 +8,7 @@ import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 import com.stefanolupo.ndngame.backend.publisher.PlayerStatusPublisher;
+import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
@@ -21,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Pushes updates to Player Status from engine to PlayerStatusPublisher
+ * Also uses Dead Reckoning to limit player updates
  */
 public class LocalPlayerStatusSystem
         extends IntervalSystem
@@ -34,17 +36,20 @@ public class LocalPlayerStatusSystem
     private long deadReckoningNonUpdates = 0;
 
     private final PlayerStatusPublisher playerStatusPublisher;
+    private final float ticksPerMs;
     private final Value<Boolean> useDeadReckoning;
     private final Value<Float> maxDeadReckoningError;
 
     @Inject
     public LocalPlayerStatusSystem(PlayerStatusPublisher playerStatusPublisher,
+                                   LocalConfig localConfig,
                                    @LogScheduleExecutor ScheduledExecutorService executorService,
                                    @Named("local.player.status.use.dead.reckoning") Value<Boolean> useDeadReckoning,
                                    @Named("local.player.dead.reckoning.max.error") Value<Float> maxDeadReckoningError,
                                    @Named("local.player.status.update.interval.ms") Value<Float> updateInterval) {
         super(updateInterval.get() / 1000f);
         this.playerStatusPublisher = playerStatusPublisher;
+        this.ticksPerMs = localConfig.getTargetFrameRate() / 1000f;
         this.useDeadReckoning = useDeadReckoning;
         this.maxDeadReckoningError = maxDeadReckoningError;
         executorService.scheduleAtFixedRate(this::logStats, 0, 10, TimeUnit.SECONDS);
@@ -78,9 +83,9 @@ public class LocalPlayerStatusSystem
             }
 
             long delta = System.currentTimeMillis() - withTime.timeStamp;
-            float ticks = delta / (1000 / 30f);
-            float approxX = remoteVersion.getX() + ticks*remoteVersion.getVelX();
-            float approxY = remoteVersion.getY() + ticks*remoteVersion.getVelY();
+            float ellapsedTicks = delta * ticksPerMs;
+            float approxX = remoteVersion.getX() + ellapsedTicks*remoteVersion.getVelX();
+            float approxY = remoteVersion.getY() + ellapsedTicks*remoteVersion.getVelY();
             double distanceBetween = distanceBetween(
                     playerCurrentGameObject.getX(), playerCurrentGameObject.getY(),
                     approxX, approxY);

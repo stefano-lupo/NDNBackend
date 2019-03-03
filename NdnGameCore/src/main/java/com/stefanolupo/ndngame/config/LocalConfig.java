@@ -12,6 +12,7 @@ public class LocalConfig {
     private final long gameId;
     private final int screenWidth;
     private final int screenHeight;
+    private final int targetFrameRate;
 
     private LocalConfig(String playerName,
                         boolean isAutomated,
@@ -19,7 +20,8 @@ public class LocalConfig {
                         long gameId,
                         boolean isMasterView,
                         int screenWidth,
-                        int screenHeight) {
+                        int screenHeight,
+                        int targetFrameRate) {
         this.playerName = playerName;
         this.isAutomated = isAutomated;
         this.isHeadless = isHeadless;
@@ -27,6 +29,7 @@ public class LocalConfig {
         this.isMasterView = isMasterView;
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        this.targetFrameRate = targetFrameRate;
     }
 
     public String getPlayerName() {
@@ -57,8 +60,26 @@ public class LocalConfig {
         return isHeadless;
     }
 
+    public int getTargetFrameRate() {
+        return targetFrameRate;
+    }
+
     public static Builder builder() {
         return new Builder();
+    }
+
+    @Override
+    public String toString() {
+        return "LocalConfig{" +
+                "playerName='" + playerName + '\'' +
+                ", isMasterView=" + isMasterView +
+                ", isAutomated=" + isAutomated +
+                ", isHeadless=" + isHeadless +
+                ", gameId=" + gameId +
+                ", screenWidth=" + screenWidth +
+                ", screenHeight=" + screenHeight +
+                ", targetFrameRate=" + targetFrameRate +
+                '}';
     }
 
     public static class Builder {
@@ -69,6 +90,7 @@ public class LocalConfig {
         private boolean isMasterView = false;
         private int screenWidth = DEFAULT_SCREEN_WIDTH;
         private int screenHeight = DEFAULT_SCREEN_HEIGHT;
+        private int targetFrameRate = 60;
 
         public Builder setPlayerName(String playerName) {
             this.playerName = playerName;
@@ -95,12 +117,19 @@ public class LocalConfig {
             return this;
         }
 
-        public void setScreenWidth(int screenWidth) {
+        public Builder setScreenWidth(int screenWidth) {
             this.screenWidth = screenWidth;
+            return this;
         }
 
-        public void setScreenHeight(int screenHeight) {
+        public Builder setScreenHeight(int screenHeight) {
             this.screenHeight = screenHeight;
+            return this;
+        }
+
+        public Builder setTargetFrameRate(int targetFrameRate) {
+            this.targetFrameRate = targetFrameRate;
+            return this;
         }
 
         public LocalConfig build() {
@@ -110,7 +139,8 @@ public class LocalConfig {
                     gameId,
                     isMasterView,
                     screenWidth,
-                    screenHeight);
+                    screenHeight,
+                    targetFrameRate);
         }
 
     }

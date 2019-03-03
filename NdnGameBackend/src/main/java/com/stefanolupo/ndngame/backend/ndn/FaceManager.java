@@ -74,7 +74,9 @@ public class FaceManager {
     }
 
     private ThreadPoolFace getNextFace() {
-        return iterator.next();
+        synchronized (iterator) {
+            return iterator.next();
+        }
     }
 
     private Set<ThreadPoolFace> buildFaces() {
