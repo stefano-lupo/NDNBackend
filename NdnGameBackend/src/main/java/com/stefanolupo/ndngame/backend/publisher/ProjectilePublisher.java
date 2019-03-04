@@ -82,7 +82,7 @@ public class ProjectilePublisher {
                     .addAllProjectiles(projectiles)
                     .build().toByteArray());
             data.setContent(blob);
-            LOG.debug("Sent {} projectile updates (to {}) for {}", projectiles.size(), projectileCache.getMaxVal(), name.getFullName());
+
             try {
                 face.putData(data);
                 it.remove();
@@ -95,6 +95,5 @@ public class ProjectilePublisher {
     private void onSyncInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         ProjectilesSyncName syncName = new ProjectilesSyncName(interest);
         outstandingInterests.put(syncName, face);
-        LOG.debug("Added outstanding interest for {}", syncName.getFullName());
     }
 }

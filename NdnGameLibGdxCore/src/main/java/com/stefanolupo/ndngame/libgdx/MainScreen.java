@@ -19,7 +19,6 @@ import com.stefanolupo.ndngame.libgdx.systems.BlockSystem;
 import com.stefanolupo.ndngame.libgdx.systems.PlayerControlSystem;
 import com.stefanolupo.ndngame.libgdx.systems.core.*;
 import com.stefanolupo.ndngame.libgdx.systems.local.LocalPlayerStatusSystem;
-import com.stefanolupo.ndngame.libgdx.systems.local.LocalProjectileSystem;
 import com.stefanolupo.ndngame.libgdx.systems.remote.AttackSystem;
 import com.stefanolupo.ndngame.libgdx.systems.remote.BlockUpdateSystem;
 import com.stefanolupo.ndngame.libgdx.systems.remote.ProjectileUpdateSystem;
@@ -45,7 +44,6 @@ public class MainScreen implements Screen {
     private final BlockSystem blockSystem;
     private final BlockUpdateSystem blockUpdateSystem;
     private final LocalPlayerStatusSystem localPlayerStatusSystem;
-    private final LocalProjectileSystem localProjectileSystem;
     private final MovementSystem movementSystem;
     private final PhysicsSystem physicsSystem;
     private final PlayerControlSystem playerControlSystem;
@@ -77,7 +75,6 @@ public class MainScreen implements Screen {
                       BlockSystem blockSystem,
                       BlockUpdateSystem blockUpdateSystem,
                       LocalPlayerStatusSystem localPlayerStatusSystem,
-                      LocalProjectileSystem localProjectileSystem,
                       MovementSystem movementSystem,
                       PhysicsSystem physicsSystem,
                       PlayerControlSystem playerControlSystem,
@@ -104,7 +101,7 @@ public class MainScreen implements Screen {
         this.blockSystem = blockSystem;
         this.blockUpdateSystem = blockUpdateSystem;
         this.localPlayerStatusSystem = localPlayerStatusSystem;
-        this.localProjectileSystem = localProjectileSystem;
+
         this.movementSystem = movementSystem;
         this.physicsSystem = physicsSystem;
         this.playerControlSystem = playerControlSystem;
@@ -162,7 +159,6 @@ public class MainScreen implements Screen {
 
         // Local publisher systems
         engine.addSystem(localPlayerStatusSystem);
-        engine.addSystem(localProjectileSystem);
 
         // Listeners
         engine.addEntityListener(AttackListener.FAMILY, attackListener);
