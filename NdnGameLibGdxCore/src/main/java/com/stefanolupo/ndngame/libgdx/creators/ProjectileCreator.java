@@ -52,14 +52,14 @@ public class ProjectileCreator {
                 .setGameObject(gameObject)
                 .setDamage(1)
                 .build();
-        LOG.debug("Creating local projectile {}", projectile.getGameObject());
+        LOG.debug("Creating local projectile");
         ProjectileName projectileName = new ProjectileName(localConfig.getGameId(), localConfig.getPlayerName(), id);
         createProjectileEntity(projectileName, projectile, false);
-        projectilePublisher.upsertProjectile(projectileName, projectile);
+        projectilePublisher.insertProjectile(projectileName, projectile);
     }
 
     public void createRemoteProjectile(ProjectileName projectileName, Projectile projectile) {
-        LOG.debug("Creating remote projectile {}", projectile.getGameObject());
+        LOG.debug("Creating remote projectile");
         createProjectileEntity(projectileName, projectile, true);
     }
 
@@ -72,11 +72,10 @@ public class ProjectileCreator {
                 gameObject.getWidth(),
                 Material.PROJECTILE, false);
 
-        // Remote projectiles already have velocities
-        if (!isRemote) {
-            LOG.debug("Applying linear impulse: {} {}", gameObject.getVelX(), gameObject.getVelY());
-            body.applyLinearImpulse(gameObject.getVelX(), gameObject.getVelY(), gameObject.getX(), gameObject.getY(), true);
-        }
+
+        LOG.debug("Applying linear impulse: {} {}", gameObject.getVelX(), gameObject.getVelY());
+        body.applyLinearImpulse(gameObject.getVelX(), gameObject.getVelY(), gameObject.getX(), gameObject.getY(), true);
+
         body.setUserData(entity);
 
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
@@ -111,8 +110,8 @@ public class ProjectileCreator {
         float velX = PROJECTILE_VELOCITY * (float) Math.cos(angle);
         float velY = PROJECTILE_VELOCITY * (float) Math.sin(angle);
 
-        x += Math.signum(velX) * (PLAYER_WIDTH + PROJECTILE_RADIUS);
-        y += Math.signum(velY) * (PLAYER_HEIGHT + PROJECTILE_RADIUS);
+        x += Math.signum(velX) * (2*PLAYER_WIDTH + PROJECTILE_RADIUS);
+        y += Math.signum(velY) * (2*PLAYER_HEIGHT + PROJECTILE_RADIUS);
 
         return GameObjectFactory.getBasicGameObjectBuilder(x, y, PROJECTILE_RADIUS)
                 .setZ(1)

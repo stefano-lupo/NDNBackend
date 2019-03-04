@@ -16,19 +16,20 @@ import com.stefanolupo.ndngame.protos.Player;
 import com.stefanolupo.ndngame.protos.Projectile;
 import com.stefanolupo.ndngame.protos.Projectiles;
 import net.named_data.jndn.Data;
-import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Singleton
 public class ProjectileSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockSubscriber.class);
 
-    private final List<BaseSubscriber<Map<ProjectileName, Projectile>>> subscribersList = new ArrayList<>();
-    private final Map<BaseSubscriber, Long> subscriberSequenceNumbers = new HashMap<>();
+    private final List<BaseSubscriber<Void>> subscribersList = new ArrayList<>();
+    private final ConcurrentMap<ProjectileName, Projectile> projectileMap = new ConcurrentHashMap<>();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
     private final HistogramFactory histogramFactory;
@@ -47,7 +48,7 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
 
     public void addSubscription(ProjectilesSyncName projectilesSyncName) {
         LOG.info("Adding subscription for {}", projectilesSyncName);
-        BaseSubscriber<Map<ProjectileName, Projectile>> subscriber = new BaseSubscriber<>(
+        BaseSubscriber<Void> subscriber = new BaseSubscriber<>(
                 faceManager,
                 projectilesSyncName,
                 this::typeFromData,
@@ -58,51 +59,35 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
         subscribersList.add(subscriber);
     }
 
-    public Map<ProjectileName, Projectile> getRemoteProjectilesWithUpdates() {
-        Map<ProjectileName, Projectile> map = new HashMap<>();
-
-        for (BaseSubscriber<Map<ProjectileName, Projectile>> subscriber : subscribersList) {
-
-            long latestSequenceNumber = subscriber.getLatestVersionSeen();
-
-            if (!subscriberSequenceNumbers.containsKey(subscriber)) {
-                subscriberSequenceNumbers.put(subscriber, latestSequenceNumber);
-            } else {
-                if (subscriberSequenceNumbers.get(subscriber) >= latestSequenceNumber) {
-                    continue;
-                } else {
-                    subscriberSequenceNumbers.put(subscriber, latestSequenceNumber);
-                }
-            }
-
-            // Can be null before first remote receipt of entity
-            if (subscriber.getEntity() == null) {
-                continue;
-            }
-
-            map.putAll(subscriber.getEntity());
+    public Map<ProjectileName, Projectile> getNewProjectiles() {
+        synchronized (projectileMap) {
+            Map<ProjectileName, Projectile> copy = new HashMap<>(projectileMap);
+            if (!copy.isEmpty()) LOG.debug("Returning {} map", copy.size());
+            projectileMap.clear();
+            return copy;
         }
-
-        return map;
     }
 
-
+    // TODO: just update player status etc
     public void interactWithProjectile(ProjectileName projectileName) {
-        for (BaseSubscriber<Map<ProjectileName, Projectile>> subscriber : subscribersList) {
-            if (subscriber.getEntity().containsKey(projectileName)) {
-                Interest interest = projectileName.buildInterest();
-                LOG.info("Interacting with block: {}", interest.toUri());
-                faceManager.expressInterestSafe(interest);
-                return;
-            }
-        }
+//        for (BaseSubscriber<Map<ProjectileName, Projectile>> subscriber : subscribersList) {
+//            if (subscriber.getEntity().containsKey(projectileName)) {
+//                Interest interest = projectileName.buildInterest();
+//                LOG.info("Interacting with block: {}", interest.toUri());
+//                faceManager.expressInterestSafe(interest);
+//                return;
+//            }
+//        }
     }
 
-    private Map<ProjectileName, Projectile> typeFromData(Data data) {
+    private Void typeFromData(Data data) {
         try {
             List<Projectile> projectiles = Projectiles.parseFrom(data.getContent().getImmutableArray()).getProjectilesList();
             ProjectilesSyncName projectilesSyncName = new ProjectilesSyncName(data);
-            return Maps.uniqueIndex(projectiles, b -> ProjectileName.fromProjectileSyncNameAndId(projectilesSyncName, b.getId()));
+
+            Map<ProjectileName, Projectile> map = Maps.uniqueIndex(projectiles, b -> ProjectileName.fromProjectileSyncNameAndId(projectilesSyncName, b.getId()));
+            projectileMap.putAll(map);
+            return null;
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException("Unable to parse Block for %s" + data.getName().toUri(), e);
         }
