@@ -17,5 +17,5 @@ public interface HasComponentMappers {
     ComponentMapper<AttackComponent> ATTACK_MAPPER = ComponentMapper.getFor(AttackComponent.class);
     ComponentMapper<BlockComponent> BLOCK_MAPPER = ComponentMapper.getFor(BlockComponent.class);
     ComponentMapper<StatusComponent> STATUS_MAPPER = ComponentMapper.getFor(StatusComponent.class);
-
+    ComponentMapper<ProjectileComponent> PROJECTILE_MAPPER = ComponentMapper.getFor(ProjectileComponent.class);
 }

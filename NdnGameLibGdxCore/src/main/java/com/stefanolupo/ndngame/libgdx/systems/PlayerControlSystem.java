@@ -14,7 +14,7 @@ import com.stefanolupo.ndngame.libgdx.components.StatusComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.AttackState;
 import com.stefanolupo.ndngame.libgdx.components.enums.InteractionState;
 import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
-import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
+import com.stefanolupo.ndngame.libgdx.creators.BlockCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.protos.Attack;
 import com.stefanolupo.ndngame.protos.AttackType;
@@ -34,18 +34,18 @@ public class PlayerControlSystem
 
     private final InputController inputController;
     private final PooledEngine pooledEngine;
-    private final GameWorldCreator gameWorldCreator;
+    private final BlockCreator blockCreator;
     private final LocalConfig localConfig;
 
     @Inject
     public PlayerControlSystem(InputController inputController,
                                PooledEngine pooledEngine,
-                               GameWorldCreator gameWorldCreator,
+                               BlockCreator blockCreator,
                                LocalConfig localConfig) {
         super(Family.all(LocalPlayerComponent.class).get());
         this.inputController = inputController;
         this.pooledEngine = pooledEngine;
-        this.gameWorldCreator = gameWorldCreator;
+        this.blockCreator = blockCreator;
         this.localConfig = localConfig;
     }
 
@@ -132,7 +132,7 @@ public class PlayerControlSystem
     private void handleInteractionCommand(StateComponent stateComponent, float deltaTime, Body body) {
         if (inputController.isSpacePressed()) {
             stateComponent.updateInteractionState(InteractionState.PLACE_BLOCK, deltaTime);
-            gameWorldCreator.createLocalBlock(body.getPosition().x, body.getPosition().y);
+            blockCreator.createLocalBlock(body.getPosition().x, body.getPosition().y);
 
             // Force velocity to 0 when placing
             stateComponent.updateMotionState(0, 0, deltaTime);

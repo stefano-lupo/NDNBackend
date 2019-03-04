@@ -1,4 +1,5 @@
-package com.stefanolupo.ndngame.names.blocks;
+package com.stefanolupo.ndngame.names.projectiles;
+
 
 import com.stefanolupo.ndngame.names.AsPrefix;
 import com.stefanolupo.ndngame.names.BaseName;
@@ -6,6 +7,8 @@ import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
 import net.named_data.jndn.Name;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -14,32 +17,36 @@ import java.util.regex.Pattern;
  *      - Express: |sequence_number|
  *      - Data: |sequence_number|/\next_sequence_number|
  */
-public class BlocksSyncName
-        extends BlocksName
+public class ProjectilesSyncName
+        extends ProjectilesName
         implements SequenceNumberedName, AsPrefix {
 
-    private static final Pattern SYNC_PATTERN = Pattern.compile("/sync/(\\d+)/?(\\d+)?$");
+    private static final Logger LOG = LoggerFactory.getLogger(ProjectilesSyncName.class);
+
+    private static final Pattern SYNC_DATA_PATTERN = Pattern.compile("/sync/(\\d+)/?(\\d+)?$");
     private static final String SYNC = "sync";
 
     private long sequenceNumber;
     private long nextSequenceNumber;
 
-    public BlocksSyncName(long gameId,
+    public ProjectilesSyncName(long gameId,
                           String playerName) {
         super(gameId, playerName);
         sequenceNumber = 0;
         nextSequenceNumber = 0;
     }
 
-    public BlocksSyncName(Interest interest) {
+    public ProjectilesSyncName(Interest interest) {
         super(interest);
-        parse(super.getRemainder());
+        parse(super.remainder);
     }
 
-    public BlocksSyncName(Data data) {
+    public ProjectilesSyncName(Data data) {
         super(data);
-        parse(super.getRemainder());
+        parse(super.remainder);
     }
+
+
 
     @Override
     public Name getAsPrefix() {
@@ -69,7 +76,7 @@ public class BlocksSyncName
     }
 
     private void parse(String remainder) {
-        Matcher matcher = BaseName.matchOrThrow(remainder, SYNC_PATTERN);
+        Matcher matcher = BaseName.matchOrThrow(remainder, SYNC_DATA_PATTERN);
         sequenceNumber = Long.valueOf(matcher.group(1));
 
         if (matcher.group(2) != null) {

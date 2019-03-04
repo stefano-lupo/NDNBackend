@@ -1,6 +1,5 @@
-package com.stefanolupo.ndngame.names.blocks;
+package com.stefanolupo.ndngame.names.projectiles;
 
-import com.google.common.base.Preconditions;
 import com.stefanolupo.ndngame.names.AsPrefix;
 import com.stefanolupo.ndngame.names.BaseName;
 import com.stefanolupo.ndngame.names.PlayerName;
@@ -13,54 +12,49 @@ import java.util.regex.Pattern;
 
 /**
  * Schema
- * Prefix: /|name|/blocks
+ * Prefix: /|name|/projectiles
 
  *      - Interact: /interact/
- *          - Express: |block_id|
+ *          - Express: |projectile_id|
  */
-class BlocksName implements AsPrefix {
+public class ProjectilesName implements AsPrefix {
 
-    protected static final String BLOCK_BASE_NAME = "^/blocks(.*)";
-    private static final Pattern BLOCK_NAME_PATTERN = Pattern.compile(BLOCK_BASE_NAME);
-    private static final String BLOCKS = "blocks";
+    protected static final String PROJECTILES_BASE_NAME = "^/projectiles(.*)";
+    private static final Pattern PROJECTILES_NAME_PATTERN = Pattern.compile(PROJECTILES_BASE_NAME);
+    private static final String PROJECTILES = "projectiles";
 
     protected String remainder;
-
     private final PlayerName playerName;
 
-    protected BlocksName(long gameId, String playerName) {
+    protected ProjectilesName(long gameId, String playerName) {
         this.playerName = new PlayerName(gameId, playerName);
     }
 
-    protected BlocksName(PlayerName playerName) {
+    protected ProjectilesName(PlayerName playerName) {
         this.playerName = playerName;
     }
 
-    protected BlocksName(Interest interest) {
+    protected ProjectilesName(Interest interest) {
         playerName = new PlayerName(interest);
         parse(playerName.getRemainder());
     }
 
-    protected BlocksName(Data data) {
+    protected ProjectilesName(Data data) {
         playerName = new PlayerName(data);
         parse(playerName.getRemainder());
-    }
-
-    @Override
-    public Name getAsPrefix() {
-        return playerName.getAsPrefix().append(BLOCKS);
     }
 
     public PlayerName getPlayerName() {
         return playerName;
     }
 
-    protected String getRemainder() {
-        return Preconditions.checkNotNull(remainder, "Remainder was null and requested for");
+    @Override
+    public Name getAsPrefix() {
+        return playerName.getAsPrefix().append(PROJECTILES);
     }
 
     private void parse(String postfix) {
-        Matcher matcher = BaseName.matchOrThrow(postfix, BLOCK_NAME_PATTERN);
+        Matcher matcher = BaseName.matchOrThrow(postfix, PROJECTILES_NAME_PATTERN);
         remainder = matcher.group(1);
     }
 
@@ -72,12 +66,11 @@ class BlocksName implements AsPrefix {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof BlocksName)) {
+        if (!(obj instanceof ProjectilesName)) {
             return false;
         }
 
-        BlocksName other = (BlocksName) obj;
+        ProjectilesName other = (ProjectilesName) obj;
         return other.playerName.equals(playerName);
     }
-
 }

@@ -72,7 +72,6 @@ public class BasePublisher implements OnInterestCallback {
     public long updateLatestBlob(Blob latestBlob) {
         this.latestBlob = latestBlob;
         hasUpdate.set(true);
-
         return ++sequenceNumber;
     }
 
@@ -104,6 +103,7 @@ public class BasePublisher implements OnInterestCallback {
 
             if (sequenceNumberedName.getLatestSequenceNumberSeen() <= sequenceNumber) {
                 sendData(sequenceNumberedName, face);
+//                LOG.debug("Seen {}, sent: {}", sequenceNumberedName.getFullName(), sequenceNumber);
                 i.remove();
             } else {
                 LOG.debug("Had Update but {} already had sn {}", sequenceNumberedName.getFullName(), sequenceNumber);

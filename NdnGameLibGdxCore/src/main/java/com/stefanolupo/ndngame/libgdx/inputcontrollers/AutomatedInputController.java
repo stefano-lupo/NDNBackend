@@ -18,7 +18,9 @@ public class AutomatedInputController implements InputController {
     private boolean isUpPressed = false;
     private boolean isDownPressed = false;
     private boolean isSpacePressed = false;
+
     private boolean isMouse1Pressed = false;
+    private boolean isMouse2Pressed = false;
 
     public AutomatedInputController() {
         ThreadFactory namedThreadFactory =
@@ -59,7 +61,7 @@ public class AutomatedInputController implements InputController {
 
     @Override
     public boolean isMouse2Down() {
-        return false;
+        return isMouse2Pressed;
     }
 
     @Override
@@ -69,7 +71,7 @@ public class AutomatedInputController implements InputController {
 
     @Override
     public Vector2 getMouseCoords() {
-        return Vector2.Zero;
+        return new Vector2((float)Math.random(), (float)Math.random());
     }
 
     private void moveOnPath() {
@@ -87,13 +89,16 @@ public class AutomatedInputController implements InputController {
         // Using 5 should make them stand still for a tick
         count = ++count % 5;
 
-//        if (Math.random() > 0.98) {
-//            isSpacePressed = true;
-//        }
-//
-//        if (Math.random() > 0.98) {
-//            isMouse1Pressed = true;
-//        }
+        if (Math.random() > 0.98) {
+            isSpacePressed = true;
+        }
+
+        double attack = Math.random();
+        if (attack > 0.98) {
+            isMouse1Pressed = true;
+        } else if (Math.random() > 0.99) {
+            isMouse2Pressed = true;
+        }
     }
 
     private void setAllFalse() {

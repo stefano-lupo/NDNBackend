@@ -12,7 +12,7 @@ import com.stefanolupo.ndngame.backend.publisher.BlockPublisher;
 import com.stefanolupo.ndngame.backend.subscriber.BlockSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.BlockComponent;
 import com.stefanolupo.ndngame.libgdx.converters.BlockConverter;
-import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
+import com.stefanolupo.ndngame.libgdx.creators.BlockCreator;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -30,23 +30,23 @@ import java.util.Set;
 @Singleton
 public class BlockUpdateSystem extends IntervalSystem implements HasComponentMappers {
     private static final Logger LOG = LoggerFactory.getLogger(BlockUpdateSystem.class);
-    private static final float BLOCK_UPDATE_INTERVAL_SEC = 25f / 1000;
+    private static final float BLOCK_UPDATE_INTERVAL_MS = 25f / 1000;
 
     private final BlockSubscriber blockSubscriber;
     private final BlockPublisher blockPublisher;
-    private final GameWorldCreator gameWorldCreator;
+    private final BlockCreator blockCreator;
     private final PooledEngine engine;
 
     @Inject
     public BlockUpdateSystem(BlockSubscriber blockSubscriber,
                              BlockPublisher blockPublisher,
-                             GameWorldCreator gameWorldCreator,
+                             BlockCreator blockCreator,
                              PooledEngine engine) {
-        super(BLOCK_UPDATE_INTERVAL_SEC);
+        super(BLOCK_UPDATE_INTERVAL_MS);
 
         this.blockSubscriber = blockSubscriber;
         this.blockPublisher = blockPublisher;
-        this.gameWorldCreator = gameWorldCreator;
+        this.blockCreator = blockCreator;
         this.engine = engine;
     }
 
@@ -60,13 +60,14 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
         Set<BlockName> blocksToCreate = Sets.difference(remoteBlocks.keySet(), entitiesByBlockName.keySet());
         for (BlockName blocksName : blocksToCreate) {
             Block block = remoteBlocks.get(blocksName);
-            gameWorldCreator.createRemoteBlock(blocksName, block);
+            blockCreator.createRemoteBlock(blocksName, block);
         }
 
         // Destroy old blocks
         Set<BlockName> blocksToDestroy = Sets.difference(entitiesByBlockName.keySet(), Sets.union(remoteBlocks.keySet(), localBlocks.keySet()));
-        for (BlockName blocksName : blocksToDestroy) {
-            engine.removeEntity(entitiesByBlockName.get(blocksName));
+        for (BlockName blockName : blocksToDestroy) {
+            engine.removeEntity(entitiesByBlockName.get(blockName));
+            entitiesByBlockName.remove(blockName);
         }
 
         // Reconcile updated remote blocks

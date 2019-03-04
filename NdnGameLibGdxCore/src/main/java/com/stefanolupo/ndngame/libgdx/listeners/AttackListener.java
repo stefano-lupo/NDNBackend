@@ -62,7 +62,7 @@ public class AttackListener implements EntityListener, HasComponentMappers {
         Attack attack = attackComponent.getAttack();
         // Create a new projectile entity
         Vector2 mouseCoords = attackComponent.getMouseCoords();
-        projectileCreator.createProjectile(attack.getX(), attack.getY(), mouseCoords.x, mouseCoords.y);
+        projectileCreator.createLocalProjectile(attack.getX(), attack.getY(), mouseCoords.x, mouseCoords.y);
 
     }
 

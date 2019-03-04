@@ -7,12 +7,7 @@ import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.protos.GameObject;
 
 @Singleton
-public class BodyFactory {
-
-    public static final int STEEL = 0;
-    public static final int WOOD = 1;
-    public static final int RUBBER = 2;
-    public static final int STONE = 3;
+class BodyFactory {
 
     private final World world;
 
@@ -21,26 +16,26 @@ public class BodyFactory {
         this.world = world;
     }
 
-    public Body makeCirclePolyBody(float x, float y, float radius, int material, BodyDef.BodyType bodyType, boolean fixedRotation) {
+    Body makeCircleBody(float x, float y, float radius, Material material, boolean fixedRotation) {
         BodyDef bodyDef = new BodyDef();
-        bodyDef.type = bodyType;
+        bodyDef.type = material.getBodyType();
         bodyDef.position.x = x;
         bodyDef.position.y = y;
         bodyDef.fixedRotation = fixedRotation;
-
         Body body = world.createBody(bodyDef);
+
         CircleShape circleShape = new CircleShape();
         circleShape.setRadius(radius);
-        body.createFixture(makeFixture(material, circleShape));
+        body.createFixture(material.getFixtureDef(circleShape));
         circleShape.dispose();
 
         return body;
     }
 
-    public Body makeBoxPolyBody(GameObject gameObject, int material, BodyDef.BodyType bodyType) {
+    Body makeBoxBody(GameObject gameObject, Material material) {
         // create a definition
         BodyDef boxBodyDef = new BodyDef();
-        boxBodyDef.type = bodyType;
+        boxBodyDef.type = material.getBodyType();
         boxBodyDef.position.x = gameObject.getX();
         boxBodyDef.position.y = gameObject.getY();
         boxBodyDef.angle = gameObject.getAngle();
@@ -50,29 +45,29 @@ public class BodyFactory {
         Body boxBody = world.createBody(boxBodyDef);
         PolygonShape poly = new PolygonShape();
         poly.setAsBox(gameObject.getWidth() / 2, gameObject.getHeight() / 2);
-        boxBody.createFixture(makeFixture(material,poly));
+        boxBody.createFixture(material.getFixtureDef(poly));
         poly.dispose();
 
         return boxBody;
     }
 
-    public Body makePolygonBody(Vector2[] vertices, float x, float y, int material, BodyDef.BodyType bodyType) {
+    Body makePolygonBody(Vector2[] vertices, float x, float y, Material material) {
         BodyDef bodyDef = new BodyDef();
-        bodyDef.type = bodyType;
+        bodyDef.type = material.getBodyType();
         bodyDef.position.x = x;
         bodyDef.position.y = y;
         Body body =  world.createBody(bodyDef);
 
         PolygonShape polygonShape = new PolygonShape();
         polygonShape.set(vertices);
-        body.createFixture(makeFixture(material, polygonShape));
+        body.createFixture(material.getFixtureDef(polygonShape));
         polygonShape.dispose();
 
         return body;
 
     }
 
-    public Body makeBoundary() {
+    Body makeBoundary() {
         BodyDef bodyDef = new BodyDef();
         bodyDef.position.set(0, 0);
         Body body = world.createBody(bodyDef);
@@ -91,38 +86,5 @@ public class BodyFactory {
         body.createFixture(edgeShape, 0);
 
         return body;
-    }
-
-
-    private static FixtureDef makeFixture(int material, Shape shape) {
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape;
-
-        switch(material){
-            case 0:
-                fixtureDef.density = 1f;
-                fixtureDef.friction = 0.3f;
-                fixtureDef.restitution = 0.1f;
-                break;
-            case 1:
-                fixtureDef.density = 0.5f;
-                fixtureDef.friction = 0.7f;
-                fixtureDef.restitution = 0.3f;
-                break;
-            case 2:
-                fixtureDef.density = 1f;
-                fixtureDef.friction = 0f;
-                fixtureDef.restitution = 1f;
-                break;
-            case 3:
-                fixtureDef.density = 1f;
-                fixtureDef.friction = 0.9f;
-                fixtureDef.restitution = 0f;
-            default:
-                fixtureDef.density = 7f;
-                fixtureDef.friction = 0.5f;
-                fixtureDef.restitution = 0.3f;
-        }
-        return fixtureDef;
     }
 }
