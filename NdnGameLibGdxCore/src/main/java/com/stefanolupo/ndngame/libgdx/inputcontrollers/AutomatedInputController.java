@@ -108,5 +108,6 @@ public class AutomatedInputController implements InputController {
         isUpPressed = false;
         isDownPressed = false;
         isMouse1Pressed = false;
+        isMouse2Pressed = false;
     }
 }
