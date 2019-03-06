@@ -46,7 +46,7 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
         this.waitTime = maxWaitTime;
     }
 
-    public void addSubscription(ProjectilesSyncName projectilesSyncName) {
+    private void addSubscription(ProjectilesSyncName projectilesSyncName) {
         LOG.info("Adding subscription for {}", projectilesSyncName);
         BaseSubscriber<Void> subscriber = new BaseSubscriber<>(
                 faceManager,

@@ -103,8 +103,8 @@ public class AutomatedInputController implements InputController {
         double random = Math.random();
 
         if (maybePlace(random)) return;
-        if (maybeWalk(random)) return;
         if (maybeShoot(random)) return;
+        if (maybeWalk(random)) return;
     }
 
     private boolean maybeWalk(double random) {
