@@ -31,8 +31,6 @@ public class LinearInterestZoneFilter {
         float innerRadiusVal = innerRadius.get();
         float outerRadiusVal = outerRadius.get();
 
-//        LOG.debug("Using radii: {}, {}", innerRadiusVal, outerRadiusVal);
-
         if (distance < innerRadiusVal) return 0;
         if (distance > outerRadiusVal) return 1;
 
@@ -43,5 +41,4 @@ public class LinearInterestZoneFilter {
     private static double distanceBetweenPoints(float x1, float y1, float x2, float y2) {
         return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
     }
-
 }

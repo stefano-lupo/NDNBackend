@@ -40,18 +40,23 @@ message Status {
 message PlayerStatus {
     GameObject gameObject = 1;
     Status status = 2;
+    int64 sleepTime = 3;
+}
+
+enum AttackType {
+    SWING = 0;
+    CAST = 1;
+    SHIELD = 2;
+    DANCE = 4;
 }
 
 message Attack {
     string id = 1;
-    int64 timestamp = 2;
-    float x = 3;
-    float y = 4;
-    float radius = 5;
-    AttackType type = 6;
+    float x = 2;
+    float y = 3;
+    float radius = 4;
+    AttackType type = 5;
 }
-
-
 
 
 message Block {
@@ -62,6 +67,7 @@ message Block {
 
 message Blocks {
     repeated Block blocks = 1;
+    int64 sleepTime = 2;
 }
 
 message Projectile {
@@ -72,39 +78,10 @@ message Projectile {
 
 message Projectiles {
     repeated Projectile projectiles = 1;
-}
-
-
-
-
-
-
-enum AttackType {
-    SWING = 0;
-    CAST = 1;
-    SHIELD = 2;
-    DANCE = 4;
+    int64 sleepTime = 2;
 }
 
 enum InteractionType {
     PLACE_BLOCK = 0;
     DOOR_TOGGLE = 1;
-}
-
-message BulletStatus {
-    int64 id = 1;
-    int32 x = 2;
-    int32 y = 3;
-    int32 velX = 4;
-    int32 velY = 5;
-    int32 damage = 6;
-    string shooterName = 7;
-}
-
-message BulletsList {
-    repeated BulletStatus bulletStatuses = 1;
-}
-
-message BulletRemove {
-    int64 id = 1;
 }

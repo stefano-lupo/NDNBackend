@@ -51,7 +51,7 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
         this.maxWaitTime = maxWaitTime;
     }
 
-    public void addSubscription(PlayerStatusName name) {
+    private void addSubscription(PlayerStatusName name) {
         LOG.info("Adding subscription for {}", name.getPlayerName());
         BaseSubscriber<PlayerStatus> subscriber = new BaseSubscriber<>(
                 faceManager,

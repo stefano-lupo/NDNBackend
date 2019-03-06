@@ -29,7 +29,7 @@ public class PlayerStatusConverter implements HasComponentMappers {
     }
 
     /**
-     * Update the entitys state based on the remote playerStatus
+     * Update the entity's state based on the remote playerStatus
      * The PhysicsSystem updates the render component based on the Body state
      * so only need to update the body
      */
@@ -41,6 +41,9 @@ public class PlayerStatusConverter implements HasComponentMappers {
 
         RemotePlayerComponent remotePlayerComponent = REMOTE_PLAYER_MAPPER.get(entity);
         StateComponent stateComponent = STATE_MAPPER.get(entity);
+        StatusComponent statusComponent = STATUS_MAPPER.get(entity);
+
+        statusComponent.setStatus(playerStatus.getStatus());
 
         GameObject gameObject = playerStatus.getGameObject();
 

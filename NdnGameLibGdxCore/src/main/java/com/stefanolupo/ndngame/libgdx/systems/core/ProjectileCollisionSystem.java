@@ -75,7 +75,6 @@ public class ProjectileCollisionSystem
 
         // Handle local bullet hitting static object
         if (collidedWithType == Type.BOUNDARY || collidedWithType == Type.SCENERY) {
-            LOG.debug("Removing projectile entity as collided with static");
             getEngine().removeEntity(entity);
             return;
         }

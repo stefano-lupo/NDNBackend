@@ -62,7 +62,6 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
     public Map<ProjectileName, Projectile> getNewProjectiles() {
         synchronized (projectileMap) {
             Map<ProjectileName, Projectile> copy = new HashMap<>(projectileMap);
-            if (!copy.isEmpty()) LOG.debug("Returning {} map", copy.size());
             projectileMap.clear();
             return copy;
         }

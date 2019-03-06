@@ -5,17 +5,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.stefanolupo.ndngame.protos.Attack;
 
 public class AttackComponent implements Component {
-//    private AttackName attackName;
     private Attack attack;
     private Vector2 mouseCoords;
-
-//    public AttackName getAttackName() {
-//        return attackName;
-//    }
-
-//    public void setAttackName(AttackName attackName) {
-//        this.attackName = attackName;
-//    }
 
     public Attack getAttack() {
         return attack;

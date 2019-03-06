@@ -31,7 +31,6 @@ public class BodyRemovalListener implements EntityListener, HasComponentMappers 
 
     @Override
     public void entityRemoved(Entity entity) {
-        LOG.debug("Removed: {}", TYPE_MAPPER.get(entity).getType());
         world.destroyBody(BODY_MAPPER.get(entity).getBody());
     }
 }

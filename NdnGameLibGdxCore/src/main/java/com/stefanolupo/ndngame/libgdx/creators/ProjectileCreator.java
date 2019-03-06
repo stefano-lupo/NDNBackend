@@ -72,8 +72,6 @@ public class ProjectileCreator {
                 gameObject.getWidth(),
                 Material.PROJECTILE, false);
 
-
-        LOG.debug("Applying linear impulse: {} {}", gameObject.getVelX(), gameObject.getVelY());
         body.applyLinearImpulse(gameObject.getVelX(), gameObject.getVelY(), gameObject.getX(), gameObject.getY(), true);
 
         body.setUserData(entity);

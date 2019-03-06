@@ -7,6 +7,7 @@ import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import com.stefanolupo.ndngame.names.projectiles.ProjectileName;
 import com.stefanolupo.ndngame.names.projectiles.ProjectilesSyncName;
 import com.stefanolupo.ndngame.protos.Projectile;
@@ -21,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 @Singleton
 public class ProjectilePublisher {
@@ -31,13 +33,27 @@ public class ProjectilePublisher {
     private final SequenceNumberedCache<Projectile> projectileCache;
     private final Value<Double> freshnessPeriod;
 
+    private final Consumer<DataSend> dataSendConsumer;
+
     @Inject
     public ProjectilePublisher(LocalConfig localConfig,
                                FaceManager faceManager,
+                               @Named("projectile.publisher.queue.process.per.sec") Value<Long> queueProcPerSec,
+                               @Named("projectile.publisher.queue.process.multithread") Value<Boolean> queueProcMultithread,
                                @Named("projectile.cache.size") Value<Integer> cacheSize,
                                @Named("projectile.publisher.freshness.period.ms") Value<Double> freshnessPeriod) {
         this.freshnessPeriod = freshnessPeriod;
         projectileCache = SequenceNumberedCache.getInstance(cacheSize.get());
+
+        if (queueProcMultithread.get()) {
+            ThreadFactory factory = new ThreadFactoryBuilder()
+                    .setNameFormat("projectile-publisher-sender")
+                    .build();
+            ExecutorService executorService = Executors.newCachedThreadPool(factory);
+            dataSendConsumer = (ds -> executorService.submit(() -> doSendData(ds)));
+        } else {
+            dataSendConsumer = this::doSendData;
+        }
 
         ProjectilesSyncName projectilesSyncName = new ProjectilesSyncName(localConfig.getGameId(), localConfig.getPlayerName());
 
@@ -51,7 +67,7 @@ public class ProjectilePublisher {
                 .build();
         Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(
                 this::processOutstandingInterests,
-                0, 20, TimeUnit.MILLISECONDS
+                0, queueProcPerSec.get() / 1000L, TimeUnit.MILLISECONDS
         );
     }
 
@@ -74,27 +90,44 @@ public class ProjectilePublisher {
             List<Projectile> projectiles = projectileCache.getFrom(name.getLatestSequenceNumberSeen() + 1);
             if (projectiles.isEmpty()) continue;
 
-            name.setNextSequenceNumber(projectileCache.getMaxVal());
-            Data data = new Data(name.getFullName());
-            MetaInfo metaInfo = new MetaInfo();
-            metaInfo.setFreshnessPeriod(freshnessPeriod.get());
-            data.setMetaInfo(metaInfo);
-            Blob blob = new Blob(Projectiles.newBuilder()
-                    .addAllProjectiles(projectiles)
-                    .build().toByteArray());
-            data.setContent(blob);
+            dataSendConsumer.accept(new DataSend(name, projectiles, face));
+            it.remove();
+        }
+    }
 
-            try {
-                face.putData(data);
-                it.remove();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+    private void doSendData(DataSend dataSend) {
+        dataSend.name.setNextSequenceNumber(projectileCache.getMaxVal());
+        Data data = new Data(dataSend.name.getFullName());
+        MetaInfo metaInfo = new MetaInfo();
+        metaInfo.setFreshnessPeriod(freshnessPeriod.get());
+        data.setMetaInfo(metaInfo);
+        Blob blob = new Blob(Projectiles.newBuilder()
+                .addAllProjectiles(dataSend.projectiles)
+                .build().toByteArray());
+        data.setContent(blob);
+
+        try {
+            dataSend.face.putData(data);
+            LOG.debug("Sent data for interest {}", dataSend.name.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     private void onSyncInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         ProjectilesSyncName syncName = new ProjectilesSyncName(interest);
         outstandingInterests.put(syncName, face);
+    }
+
+    private class DataSend {
+        SequenceNumberedName name;
+        List<Projectile> projectiles;
+        Face face;
+
+        public DataSend(SequenceNumberedName name, List<Projectile> projectiles, Face face) {
+            this.name = name;
+            this.projectiles = projectiles;
+            this.face = face;
+        }
     }
 }

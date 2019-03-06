@@ -18,6 +18,7 @@ import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
 import com.stefanolupo.ndngame.libgdx.components.TextureComponent;
 import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
+import com.stefanolupo.ndngame.libgdx.creators.PlayerCreator;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Status;
@@ -35,6 +36,9 @@ public class RenderingSystem
             Comparator.comparing(e -> RENDER_MAPPER.get(e).getGameObject().getZ());
     private static final float PIXELS_PER_METER = 40f;
 
+    private static final float REMOTE_STATUS_BAR_MAX_WIDTH = 1.5f * PlayerCreator.PLAYER_WIDTH;
+    private static final float REMOTE_STATUS_BAR_HEIGHT = 0.3f;
+
     private final LocalConfig localConfig;
     private final OrthographicCamera camera;
     private final Value<Float> innerRadius;
@@ -43,7 +47,8 @@ public class RenderingSystem
     private final Array<Entity> renderQueue;
 
     private SpriteBatch spriteBatch;
-    private ShapeRenderer shapeRenderer;
+    private ShapeRenderer filledRenderer;
+    private ShapeRenderer lineRenderer;
 
     @Inject
     public RenderingSystem(LocalConfig localConfig,
@@ -74,8 +79,11 @@ public class RenderingSystem
         camera.update();
         LOG.info("Camera viewport: {} x {} units", camera.viewportHeight, camera.viewportHeight);
 
-        shapeRenderer = new ShapeRenderer();
-        shapeRenderer.setProjectionMatrix(camera.combined);
+        filledRenderer = new ShapeRenderer();
+        filledRenderer.setProjectionMatrix(camera.combined);
+
+        lineRenderer = new ShapeRenderer();
+        lineRenderer.setProjectionMatrix(camera.combined);
     }
 
     @Override
@@ -87,10 +95,12 @@ public class RenderingSystem
 
         spriteBatch.setProjectionMatrix(camera.combined);
         spriteBatch.enableBlending();
-        renderPlayerStatus();
-
         spriteBatch.begin();
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+        filledRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        lineRenderer.begin(ShapeRenderer.ShapeType.Line);
+
+        renderLocalPlayerStatus();
+
 
         for (Entity entity : renderQueue) {
             TextureComponent textureComponent = TEXTURE_MAPPER.get(entity);
@@ -118,12 +128,17 @@ public class RenderingSystem
                     gameObject.getAngle());
 
             drawInterestZone(entity, drawX, drawY);
+
+            if (REMOTE_PLAYER_MAPPER.get(entity) != null) {
+                renderRemotePlayerStatus(entity, gameObject);
+            }
+
     }
         updateCameraPosition();
         spriteBatch.end();
-        shapeRenderer.end();
+        filledRenderer.end();
+        lineRenderer.end();
         renderQueue.clear();
-        shapeRenderer.end();
     }
 
     @Override
@@ -155,15 +170,14 @@ public class RenderingSystem
     }
 
     private void drawInterestZone(Entity entity, float drawX, float drawY) {
-
         if (REMOTE_PLAYER_MAPPER.get(entity) != null || LOCAL_PLAYER_MAPPER.get(entity) != null) {
-            shapeRenderer.circle(drawX, drawY, innerRadius.get());
-            shapeRenderer.circle(drawX, drawY, outerRadius.get());
+            lineRenderer.circle(drawX, drawY, innerRadius.get());
+            lineRenderer.circle(drawX, drawY, outerRadius.get());
         }
 
     }
 
-    private void renderPlayerStatus() {
+    private void renderLocalPlayerStatus() {
         Entity localPlayer = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
         Status status = STATUS_MAPPER.get(localPlayer).getStatus();
         float radius = camera.viewportWidth / 50;
@@ -171,17 +185,32 @@ public class RenderingSystem
         float healthHeight = camera.viewportHeight / 10;
         float ammoHeight = healthHeight - (offset + radius);
 
-        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(Color.FIREBRICK);
+        filledRenderer.setColor(Color.FIREBRICK);
         for (int i = 0; i < status.getHealth(); i++) {
-            shapeRenderer.circle(offset + i * (radius + offset), healthHeight, radius);
+            filledRenderer.circle(offset + i * (radius + offset), healthHeight, radius);
         }
 
-        shapeRenderer.setColor(Color.BLUE);
+        filledRenderer.setColor(Color.BLUE);
         for (int i = 0; i <status.getAmmo(); i++) {
-            shapeRenderer.circle(offset + i * (radius + offset), ammoHeight, radius);
+            filledRenderer.circle(offset + i * (radius + offset), ammoHeight, radius);
         }
 
-        shapeRenderer.end();
+    }
+
+    private void renderRemotePlayerStatus(Entity entity, GameObject gameObject) {
+        Status status = STATUS_MAPPER.get(entity).getStatus();
+        int health = status.getHealth();
+        int ammo = status.getAmmo();
+
+        float healthBarWidth = REMOTE_STATUS_BAR_MAX_WIDTH * (health + 0f) / PlayerCreator.MAX_HEALTH;
+        float ammoBarWidth = REMOTE_STATUS_BAR_MAX_WIDTH * (ammo + 0f) / PlayerCreator.MAX_AMMO;
+
+        float drawX = gameObject.getX() - (REMOTE_STATUS_BAR_MAX_WIDTH / 2);
+        float drawY = gameObject.getY() + 1;
+
+        filledRenderer.setColor(Color.FIREBRICK);
+        filledRenderer.rect(drawX, drawY, healthBarWidth, REMOTE_STATUS_BAR_HEIGHT);
+        filledRenderer.setColor(Color.BLUE);
+        filledRenderer.rect(drawX, drawY + REMOTE_STATUS_BAR_HEIGHT + 0.1f, ammoBarWidth, REMOTE_STATUS_BAR_HEIGHT);
     }
 }

@@ -15,11 +15,7 @@ import java.util.function.Function;
 public class BaseSubscriber<D> implements OnData, OnTimeout {
     private static final Logger LOG = LoggerFactory.getLogger(BaseSubscriber.class);
 
-    /**
-     * The timeout of the interest
-     */
-    private static final long INTEREST_LIFETIME_MS = 1000;
-
+    private static final long INTEREST_TIMEOUT_MS = 1000;
     private static final long MIN_SLEEP_TIME_TO_BOTHER_MS = 10;
 
     private SequenceNumberedName name;
@@ -46,18 +42,6 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
         this.sleepTimeFunction = sleepTimeFunction;
         this.histogram = histogram;
         expressInterestSafe(buildInterest(name));
-    }
-
-    public BaseSubscriber(FaceManager faceManager,
-                          SequenceNumberedName name,
-                          Function<Data, D> dataFunction,
-                          Function<Data, SequenceNumberedName> nameExtractor) {
-        this(faceManager,
-                name,
-                dataFunction,
-                nameExtractor,
-                l -> 10L,
-                null);
     }
 
     @Override
@@ -102,7 +86,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     private Interest buildInterest(SequenceNumberedName name) {
         return name.buildInterest()
                 .setMustBeFresh(true)
-                .setInterestLifetimeMilliseconds(INTEREST_LIFETIME_MS)
+                .setInterestLifetimeMilliseconds(INTEREST_TIMEOUT_MS)
                 .setCanBePrefix(true);
     }
 

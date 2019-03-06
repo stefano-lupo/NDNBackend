@@ -29,6 +29,8 @@ public class PlayerCreator implements OnPlayersDiscovered {
 
     public static final float PLAYER_WIDTH = 1;
     public static final float PLAYER_HEIGHT = 1.5f;
+    public static final int MAX_HEALTH = 20;
+    public static final int MAX_AMMO = 50;
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerCreator.class);
     private static final int MIN_EDGE_DISTANCE = 10;
@@ -131,9 +133,9 @@ public class PlayerCreator implements OnPlayersDiscovered {
 
     private static Status buildStatus() {
         return Status.newBuilder()
-                .setAmmo(50)
-                .setHealth(5)
-                .setMana(5)
+                .setHealth(MAX_HEALTH)
+                .setAmmo(MAX_AMMO)
+                .setMana(MAX_AMMO)
                 .setXp(0)
                 .build();
     }

@@ -24,6 +24,11 @@ public class PlayerStatusPublisher {
 
     private final BasePublisher publisher;
     private final LocalPlayerReference localPlayerReference;
+
+    /**
+     * Keep a cache of the local player's recent status by their sequence number
+     * This is used by the dead reckoning system to approximate the local player's position on remote machines
+     */
     private final Cache<Long, PlayerStatusWithTime> playerStatusBySequenceNumber = CacheBuilder.newBuilder()
             .maximumSize(50)
             .concurrencyLevel(1)
@@ -46,6 +51,11 @@ public class PlayerStatusPublisher {
         playerStatusBySequenceNumber.put(nextSequenceNumber, new PlayerStatusWithTime(playerStatus, System.currentTimeMillis()));
     }
 
+    /**
+     * For all of the publisher's outstanding interests, link their last seen sequence numbers to
+     * the relevant player status. This is used by the dead reckoning system to determine when to publish an update
+     * for the local players position
+     */
     public List<PlayerStatusWithTime> getPlayerStatusesForOutstandingInterests() {
         return publisher.getOutstandingInterests().stream()
                 .map(k -> {
@@ -59,7 +69,7 @@ public class PlayerStatusPublisher {
         public final PlayerStatus playerStatus;
         public final long timeStamp;
 
-        public PlayerStatusWithTime(PlayerStatus playerStatus, long timeStamp) {
+        PlayerStatusWithTime(PlayerStatus playerStatus, long timeStamp) {
             this.playerStatus = playerStatus;
             this.timeStamp = timeStamp;
         }
