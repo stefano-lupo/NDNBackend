@@ -76,8 +76,7 @@ public class PlayerCreator implements OnPlayersDiscovered {
         createPlayer(entity);
     }
 
-    public void createRemotePlayer(Player player) {
-        LOG.debug("Creating remote player: {}", player);
+    private void createRemotePlayer(Player player) {
         PlayerStatusName playerStatusName = new PlayerStatusName(localConfig.getGameId(), player.getName());
 
         Entity entity = engine.createEntity();

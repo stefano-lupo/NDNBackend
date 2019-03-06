@@ -47,8 +47,8 @@ public class LibGdxGameModule extends AbstractModule {
     @Singleton
     InputController providesInputController(Injector injector) {
         return localConfig.isAutomated() ?
-                new AutomatedInputController() :
-                new RealInputController(injector.getInstance(OrthographicCamera.class));
+                injector.getInstance(AutomatedInputController.class) :
+                injector.getInstance(RealInputController.class);
     }
 
     @Provides

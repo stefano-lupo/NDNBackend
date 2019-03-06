@@ -58,38 +58,50 @@ public class LocalPlayerStatusSystem
     @Override
     protected void updateInterval() {
         Entity playerEntity = getEngine().getEntitiesFor(Family.all(LocalPlayerComponent.class).get()).get(0);
-        GameObject playerCurrentGameObject = RENDER_MAPPER.get(playerEntity).getGameObject();
 
         if (!useDeadReckoning.get()) {
             playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
             return;
         }
 
-        List<PlayerStatusPublisher.PlayerStatusWithTime> list = playerStatusPublisher.getPlayerStatusesForOutstandingInterests();
-        for (PlayerStatusPublisher.PlayerStatusWithTime withTime : list) {
+        deadReckoningUpdate(playerEntity);
+    }
 
-            if (withTime == null) {
+    /**
+     * Determine whether or not to publish a player update based on the deadreckoned position of the
+     * local player on subscribers' machines
+     *
+     *  This currently just produces a player update for everyone to consume or doesn't produce one at all
+     *  Possible enhancement is to do it on a per player basis
+     */
+    private void deadReckoningUpdate(Entity playerEntity) {
+        GameObject playerCurrentGameObject = RENDER_MAPPER.get(playerEntity).getGameObject();
+        List<PlayerStatusPublisher.PlayerStatusWithTime> statusForCurrentSeqNoOfInterest =
+                playerStatusPublisher.getPlayerStatusesForOutstandingInterests();
+        for (PlayerStatusPublisher.PlayerStatusWithTime statusWithTime : statusForCurrentSeqNoOfInterest) {
+
+            // If we don't have this sequence number version cached any more
+            // Always produce an update
+            // TODO: This means a laggy client requesting old SN which are no longer cached
+            // will cause everyone to get more updates
+            if (statusWithTime == null) {
                 updateLocalPlayer(playerEntity);
                 nullUpdates++;
                 return;
             }
 
-            GameObject remoteVersion = withTime.playerStatus.getGameObject();
+            // On changing velocity just push out an update
+            // Currently NOT lerping velocities, so this is basically a direction change
+            GameObject remoteVersion = statusWithTime.playerStatus.getGameObject();
             if (remoteVersion.getVelX() != playerCurrentGameObject.getVelX() ||
-                remoteVersion.getVelY() != playerCurrentGameObject.getVelY()) {
+                    remoteVersion.getVelY() != playerCurrentGameObject.getVelY()) {
                 updateLocalPlayer(playerEntity);
                 velUpdates++;
-                continue;
+                return;
             }
 
-            long delta = System.currentTimeMillis() - withTime.timeStamp;
-            float ellapsedTicks = delta * ticksPerMs;
-            float approxX = remoteVersion.getX() + ellapsedTicks*remoteVersion.getVelX();
-            float approxY = remoteVersion.getY() + ellapsedTicks*remoteVersion.getVelY();
-            double distanceBetween = distanceBetween(
-                    playerCurrentGameObject.getX(), playerCurrentGameObject.getY(),
-                    approxX, approxY);
-
+            // Finally, compute the approx dead reckoned position and publish update if its over the threshold
+            double distanceBetween = computeDeadReckoningDistance(statusWithTime, playerCurrentGameObject);
             if (distanceBetween > maxDeadReckoningError.get()) {
                 deadReckoningUpdates++;
                 playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
@@ -97,6 +109,18 @@ public class LocalPlayerStatusSystem
                 deadReckoningNonUpdates++;
             }
         }
+    }
+
+    private double computeDeadReckoningDistance(PlayerStatusPublisher.PlayerStatusWithTime statusWithTime,
+                                                GameObject playerCurrentGameObject) {
+        GameObject remoteVersion = statusWithTime.playerStatus.getGameObject();
+        long delta = System.currentTimeMillis() - statusWithTime.timeStamp;
+        float ellapsedTicks = delta * ticksPerMs;
+        float approxX = remoteVersion.getX() + ellapsedTicks*remoteVersion.getVelX();
+        float approxY = remoteVersion.getY() + ellapsedTicks*remoteVersion.getVelY();
+        return distanceBetween(
+                playerCurrentGameObject.getX(), playerCurrentGameObject.getY(),
+                approxX, approxY);
     }
 
     private void updateLocalPlayer(Entity playerEntity) {

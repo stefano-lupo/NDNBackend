@@ -5,6 +5,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -14,6 +16,8 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class StatisticsLogger {
+
+    private static final Logger LOG = LoggerFactory.getLogger(StatisticsLogger.class);
 
     private final ConcurrentHashMap<StatisticKey, String> statisticsMap = new ConcurrentHashMap<>();
     private final Set<HasStatistics> statisticSources = new HashSet<>();
@@ -52,10 +56,10 @@ public class StatisticsLogger {
     }
 
     private void logStatistics() {
-        System.out.println("\n--------------- Statistics ---------------");
+        LOG.debug("\n--------------- Statistics ---------------");
         statisticsMap.forEach((k, v) -> {
-            System.out.println(k.toString());
-            System.out.println(v);
+            LOG.debug("{}", k.toString());
+            LOG.debug("{}", v);
         });
         System.out.println("------------------------------------------\n");
     }

@@ -24,9 +24,10 @@ public class CommandLineHelper {
         NAME_OF_PLAYER.setType(String.class);
         options.addOption(NAME_OF_PLAYER);
 
-        AUTOMATED_MODE = new Option("a", "automate", false, "use automated mode");
+        AUTOMATED_MODE = new Option("a", "automate", true, "use automated mode");
         AUTOMATED_MODE.setRequired(false);
-        AUTOMATED_MODE.setType(Boolean.class);
+        AUTOMATED_MODE.setOptionalArg(true);
+        AUTOMATED_MODE.setType(String.class);
         options.addOption(AUTOMATED_MODE);
 
         HEADLESS_MODE = new Option("hl", "headless", false, "use headless mode");
@@ -75,8 +76,13 @@ public class CommandLineHelper {
             LocalConfig.Builder builder = LocalConfig.builder()
                     .setPlayerName(playerName)
                     .isMasterView(cmd.hasOption(IS_MASTER_VIEW.getOpt()))
-                    .setIsAutomated(cmd.hasOption(AUTOMATED_MODE.getOpt()))
                     .setIsHeadless(cmd.hasOption(HEADLESS_MODE.getOpt()));
+
+            if (cmd.hasOption(AUTOMATED_MODE.getLongOpt())) {
+                builder.setIsAutomated(true);
+                String optValue = cmd.getOptionValue(AUTOMATED_MODE.getLongOpt());
+                builder.setAutomationType(optValue == null ? "w" : optValue);
+            }
 
             if (cmd.hasOption(GAME_ID.getLongOpt())) {
                 builder.setGameId(Long.valueOf(cmd.getOptionValue(GAME_ID.getLongOpt())));

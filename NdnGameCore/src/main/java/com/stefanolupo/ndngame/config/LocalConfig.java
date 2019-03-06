@@ -2,12 +2,13 @@ package com.stefanolupo.ndngame.config;
 
 public class LocalConfig {
 
-    private static final int DEFAULT_SCREEN_WIDTH = 400;
+    private static final int DEFAULT_SCREEN_WIDTH = 600;
     private static final int DEFAULT_SCREEN_HEIGHT = DEFAULT_SCREEN_WIDTH;
 
     private final String playerName;
     private final boolean isMasterView;
     private final boolean isAutomated;
+    private final String automationType;
     private final boolean isHeadless;
     private final long gameId;
     private final int screenWidth;
@@ -16,6 +17,7 @@ public class LocalConfig {
 
     private LocalConfig(String playerName,
                         boolean isAutomated,
+                        String automationType,
                         boolean isHeadless,
                         long gameId,
                         boolean isMasterView,
@@ -24,6 +26,7 @@ public class LocalConfig {
                         int targetFrameRate) {
         this.playerName = playerName;
         this.isAutomated = isAutomated;
+        this.automationType = automationType;
         this.isHeadless = isHeadless;
         this.gameId = gameId;
         this.isMasterView = isMasterView;
@@ -38,6 +41,10 @@ public class LocalConfig {
 
     public boolean isAutomated() {
         return isAutomated;
+    }
+
+    public String getAutomationType() {
+        return automationType;
     }
 
     public boolean isMasterView() {
@@ -74,6 +81,7 @@ public class LocalConfig {
                 "playerName='" + playerName + '\'' +
                 ", isMasterView=" + isMasterView +
                 ", isAutomated=" + isAutomated +
+                ", automationType='" + automationType + '\'' +
                 ", isHeadless=" + isHeadless +
                 ", gameId=" + gameId +
                 ", screenWidth=" + screenWidth +
@@ -85,6 +93,7 @@ public class LocalConfig {
     public static class Builder {
         private String playerName;
         private boolean isAutomated = false;
+        private String automationType = "wsp";
         private boolean isHeadless = false;
         private long gameId = 0;
         private boolean isMasterView = false;
@@ -99,6 +108,11 @@ public class LocalConfig {
 
         public Builder setIsAutomated(boolean isAutomated) {
             this.isAutomated = isAutomated;
+            return this;
+        }
+
+        public Builder setAutomationType(String automationType) {
+            this.automationType = automationType;
             return this;
         }
 
@@ -135,6 +149,7 @@ public class LocalConfig {
         public LocalConfig build() {
             return new LocalConfig(playerName,
                     isAutomated,
+                    automationType,
                     isHeadless,
                     gameId,
                     isMasterView,

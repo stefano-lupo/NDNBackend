@@ -5,6 +5,7 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class RealInputController implements InputProcessor, InputController {
     private boolean isDragged;
     private Vector2 mouseLocation = new Vector2();
 
+    @Inject
     public RealInputController(OrthographicCamera camera) {
         this.camera = camera;
     }

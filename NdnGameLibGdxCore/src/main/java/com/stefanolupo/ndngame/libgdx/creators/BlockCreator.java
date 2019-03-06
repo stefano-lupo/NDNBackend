@@ -82,7 +82,7 @@ public class BlockCreator {
         entity.add(bodyComponent);
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
-        type.setType(Type.SCENERY);
+        type.setType(Type.PLACABLE_OBJECT);
         entity.add(type);
 
 

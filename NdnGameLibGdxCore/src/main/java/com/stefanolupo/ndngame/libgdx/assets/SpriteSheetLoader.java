@@ -85,7 +85,6 @@ public class SpriteSheetLoader {
 
     private JsonDescription readJsonDescription(SpriteSheet spriteSheet) {
         String fileName = spriteSheet.toJsonName();
-        LOG.debug("Reading JSON for {} from {}", spriteSheet, fileName);
         try (InputStream fileStream = new FileInputStream(fileName)) {
             return MAPPER.readValue(fileStream, JsonDescription.class);
         } catch (IOException e) {

@@ -5,9 +5,9 @@ import com.badlogic.gdx.physics.box2d.FixtureDef;
 import com.badlogic.gdx.physics.box2d.Shape;
 
 public enum Material {
-    PLAYER(0.5f, 0f, 1f, BodyDef.BodyType.DynamicBody),
+    PLAYER(0.001f, 1f, 1f, BodyDef.BodyType.DynamicBody),
     PROJECTILE(0.3f, 0.3f, 0.3f, BodyDef.BodyType.DynamicBody),
-    BLOCK(1f, 0.9f,0.9f, BodyDef.BodyType.DynamicBody);
+    BLOCK(5f, 5f,10f, BodyDef.BodyType.StaticBody);
 
     private float density;
     private float friction;

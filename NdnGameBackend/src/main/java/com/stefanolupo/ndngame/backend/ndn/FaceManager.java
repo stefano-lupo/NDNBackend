@@ -27,27 +27,29 @@ public class FaceManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(FaceManager.class);
 
-    private final Value<Integer> numFaces;
-    private final Value<Integer> threadsPerFace;
-    private final Iterator<ThreadPoolFace> iterator;
+    private final Iterator<ThreadPoolFace> pubFaceIt;
+    private final Iterator<ThreadPoolFace> subFaceIt;
 
     private final Provider<KeyChain> keyChainProvider;
 
     @Inject
     public FaceManager(Provider<KeyChain> keyChainProvider,
-                       @Named("facemanager.max.num.faces") Value<Integer> numFaces,
-                       @Named("facemanager.num.threads.per.face") Value<Integer> threadsPerFace) {
+                       @Named("facemanager.max.num.pub.faces") Value<Integer> numPubFaces,
+                       @Named("facemanager.max.num.sub.faces") Value<Integer> numSubFaces,
+                       @Named("facemanager.num.pub.threads.per.face") Value<Integer> pubThreadsPerFace,
+                       @Named("facemanager.num.sub.threads.per.face") Value<Integer> subThreadsPerFace) {
 
         this.keyChainProvider = keyChainProvider;
-        this.numFaces = numFaces;
-        this.threadsPerFace = threadsPerFace;
 
-        Set<ThreadPoolFace> faces = buildFaces();
-        iterator = Iterables.cycle(faces).iterator();
+        Set<ThreadPoolFace> pubFaces = buildFaces(numPubFaces.get(), pubThreadsPerFace.get(), "pub");
+        Set<ThreadPoolFace> subFaces = buildFaces(numSubFaces.get(), subThreadsPerFace.get(), "sub");
+
+        pubFaceIt = Iterables.cycle(pubFaces).iterator();
+        subFaceIt = Iterables.cycle(subFaces).iterator();
     }
 
     public void registerBasicPrefix(Name prefix, OnInterestCallback onInterestCallback) {
-        ThreadPoolFace face = getNextFace();
+        ThreadPoolFace face = getNextPubFace();
         RegisterPrefixAttempt prefixAttempt =
                 new RegisterPrefixAttempt(face, prefix, onInterestCallback);
         doRegisterPrefix(face, prefixAttempt);
@@ -59,7 +61,7 @@ public class FaceManager {
 
     public void expressInterestSafe(Interest interest, OnData onData, OnTimeout onTimeout) {
         try {
-            getNextFace().expressInterest(interest, onData, onTimeout);
+            getNextSubFace().expressInterest(interest, onData, onTimeout);
         } catch (IOException e) {
             LOG.error("Unable to express interest for {}", interest.toUri());
         }
@@ -73,13 +75,19 @@ public class FaceManager {
         }
     }
 
-    private ThreadPoolFace getNextFace() {
-        synchronized (iterator) {
-            return iterator.next();
+    private ThreadPoolFace getNextPubFace() {
+        synchronized (pubFaceIt) {
+            return pubFaceIt.next();
         }
     }
 
-    private Set<ThreadPoolFace> buildFaces() {
+    private ThreadPoolFace getNextSubFace() {
+        synchronized (subFaceIt) {
+            return subFaceIt.next();
+        }
+    }
+
+    private Set<ThreadPoolFace> buildFaces(int numFaces, int numThreads, String threadName) {
         Name certificateName;
         try {
             certificateName = keyChainProvider.get().getDefaultCertificateName();
@@ -89,11 +97,11 @@ public class FaceManager {
 
         Set<ThreadPoolFace> faces = new LinkedHashSet<>();
 
-        for (int i = 0; i < numFaces.get(); i++) {
+        for (int i = 0; i < numFaces; i++) {
             ThreadFactory namedThreadFactory =
-                    new ThreadFactoryBuilder().setNameFormat("face-manager-" + i + "-%d").build();
+                    new ThreadFactoryBuilder().setNameFormat("fm-" + threadName + "-" + i + "-%d").build();
             ScheduledExecutorService executorService =
-                    Executors.newScheduledThreadPool(threadsPerFace.get(), namedThreadFactory);
+                    Executors.newScheduledThreadPool(numThreads, namedThreadFactory);
             ThreadPoolFace face = new ThreadPoolFace(
                     executorService,
                     new AsyncTcpTransport(executorService),

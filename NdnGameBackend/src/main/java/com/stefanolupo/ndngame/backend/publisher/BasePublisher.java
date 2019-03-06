@@ -6,7 +6,6 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
-import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.*;
@@ -19,27 +18,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
 
-    private final ConcurrentMap<SequenceNumberedName, Face> outstandingInterests = new ConcurrentHashMap<>();
-    private long totalNumInterests = 0;
-
+    // Assisted
     private final Function<Interest, SequenceNumberedName> interestTFunction;
     private final Value<Double> freshnessPeriod;
 
+    // Class logic
+    private final ConcurrentMap<SequenceNumberedName, Face> outstandingInterests = new ConcurrentHashMap<>();
+    private final BiConsumer<SequenceNumberedName, Face> sendDataFunction;
     private Blob latestBlob;
     private AtomicBoolean hasUpdate = new AtomicBoolean(false);
     private long sequenceNumber = 0;
 
-
     @Inject
     public BasePublisher(FaceManager faceManager,
-                         @LogScheduleExecutor ScheduledExecutorService executorService,
-                         @Named("base.publisher.queue.process.time.ms") Value<Long> processTimeMs,
+                         @Named("base.publisher.queue.process.per.sec") Value<Long> queueProcessPerSec,
+                         @Named("base.publisher.queue.process.multithread") Value<Boolean> queueProcessMultithread,
                          @Assisted Name listenName,
                          @Assisted Function<Interest, SequenceNumberedName> interestToSequenceNumberedName,
                          @Assisted Value<Double> freshnessPeriod) {
@@ -48,20 +48,24 @@ public class BasePublisher implements OnInterestCallback {
 
         LOG.debug("Registering {}", listenName);
         faceManager.registerBasicPrefix(listenName, this);
-        executorService.scheduleAtFixedRate(
-                () -> LOG.info("Seen {} interests, {} outstanding", totalNumInterests, outstandingInterests.size()),
-                10,
-                60,
-                TimeUnit.SECONDS
-        );
+
+        if (queueProcessMultithread.get()) {
+            ThreadFactory builder = new ThreadFactoryBuilder()
+                    .setNameFormat("bp-data-sender-" + listenName.toUri() + "-%d")
+                    .build();
+            ExecutorService executor = Executors.newCachedThreadPool(builder);
+            sendDataFunction = (n, f) -> executor.submit(() -> doSendData(n, f));
+        } else {
+            sendDataFunction = this::doSendData;
+        }
 
         ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
-                .setNameFormat("bp- " + listenName.toUri() + "-%d")
+                .setNameFormat("bp-queue-proc-" + listenName.toUri() + "-%d")
                 .build();
         Executors.newSingleThreadScheduledExecutor(namedThreadFactory).scheduleAtFixedRate(
                 this::processQueue,
                 0,
-                processTimeMs.get(),
+                (1000L) / queueProcessPerSec.get(),
                 TimeUnit.MILLISECONDS);
     }
 
@@ -82,7 +86,6 @@ public class BasePublisher implements OnInterestCallback {
     @Override
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         SequenceNumberedName interestName = interestTFunction.apply(interest);
-        totalNumInterests++;
         outstandingInterests.put(interestName, face);
     }
 
@@ -102,7 +105,9 @@ public class BasePublisher implements OnInterestCallback {
             Face face = entry.getValue();
 
             if (sequenceNumberedName.getLatestSequenceNumberSeen() <= sequenceNumber) {
-                sendData(sequenceNumberedName, face);
+                sendDataFunction.accept(sequenceNumberedName, face);
+//                executor.submit(() -> doSendData(sequenceNumberedName, face));
+//                doSendData(sequenceNumberedName, face);
 //                LOG.debug("Seen {}, sent: {}", sequenceNumberedName.getFullName(), sequenceNumber);
                 i.remove();
             } else {
@@ -111,7 +116,7 @@ public class BasePublisher implements OnInterestCallback {
         }
     }
 
-    private void sendData(SequenceNumberedName name, Face face) {
+    private void doSendData(SequenceNumberedName name, Face face) {
         name.setNextSequenceNumber(sequenceNumber);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());

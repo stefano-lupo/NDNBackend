@@ -8,7 +8,7 @@ import java.util.Map;
 
 public class Histogram implements HasStatistics {
 
-    private final int[] HISTOGRAM = {0, 0, 0, 0, 0};
+    private final int[] HISTOGRAM = {0, 0, 0, 0, 0, 0, 0, 0};
     private static final int HISTOGRAM_BIN_SIZE_MS = 20;
 
     private final Map<StatisticKey, String> statisticsMap = new HashMap<>();
@@ -42,9 +42,20 @@ public class Histogram implements HasStatistics {
 
     private String generateString() {
         StringBuilder stringBuilder = new StringBuilder(HISTOGRAM.length);
-        String format = "[%d - %d]: %d\t\t";
+        String format = "[%d - %d]: %.2f\t\t";
+        int totalNumPoints = 0;
+        for (int numPoints : HISTOGRAM) {
+            totalNumPoints += numPoints;
+        }
+
+        if (totalNumPoints == 0) {
+            return "No data";
+        }
+
         for (int i=0; i<HISTOGRAM.length; i++) {
-            stringBuilder.append(String.format(format, i*HISTOGRAM_BIN_SIZE_MS, (i+1)*HISTOGRAM_BIN_SIZE_MS, HISTOGRAM[i]));
+            float percentage = (HISTOGRAM[i] + 0f) / totalNumPoints;
+            String s = String.format(format, i*HISTOGRAM_BIN_SIZE_MS, (i+1)*HISTOGRAM_BIN_SIZE_MS, percentage);
+            stringBuilder.append(s);
         }
 
         return stringBuilder.toString();

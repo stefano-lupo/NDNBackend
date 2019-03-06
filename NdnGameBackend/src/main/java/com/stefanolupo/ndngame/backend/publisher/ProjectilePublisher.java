@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -19,10 +20,7 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 @Singleton
 public class ProjectilePublisher {
@@ -48,7 +46,10 @@ public class ProjectilePublisher {
         ProjectileName projectileName = new ProjectileName(localConfig.getGameId(), localConfig.getPlayerName());
         faceManager.registerBasicPrefix(projectileName.getAsPrefix(), this::onInteractionInterest);
 
-        Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+        ThreadFactory threadFactory = new ThreadFactoryBuilder()
+                .setNameFormat("projectile-publisher-%d")
+                .build();
+        Executors.newSingleThreadScheduledExecutor(threadFactory).scheduleAtFixedRate(
                 this::processOutstandingInterests,
                 0, 20, TimeUnit.MILLISECONDS
         );

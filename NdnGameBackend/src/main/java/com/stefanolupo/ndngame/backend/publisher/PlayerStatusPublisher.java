@@ -24,7 +24,7 @@ public class PlayerStatusPublisher {
 
     private final BasePublisher publisher;
     private final LocalPlayerReference localPlayerReference;
-    private final Cache<Long, PlayerStatusWithTime> playerStatusCache = CacheBuilder.newBuilder()
+    private final Cache<Long, PlayerStatusWithTime> playerStatusBySequenceNumber = CacheBuilder.newBuilder()
             .maximumSize(50)
             .concurrencyLevel(1)
             .build();
@@ -43,14 +43,14 @@ public class PlayerStatusPublisher {
     public void updateLocalPlayerStatus(PlayerStatus playerStatus) {
         long nextSequenceNumber = publisher.updateLatestBlob(new Blob(playerStatus.toByteArray()));
         localPlayerReference.setPlayerStatus(playerStatus);
-        playerStatusCache.put(nextSequenceNumber, new PlayerStatusWithTime(playerStatus, System.currentTimeMillis()));
+        playerStatusBySequenceNumber.put(nextSequenceNumber, new PlayerStatusWithTime(playerStatus, System.currentTimeMillis()));
     }
 
     public List<PlayerStatusWithTime> getPlayerStatusesForOutstandingInterests() {
         return publisher.getOutstandingInterests().stream()
                 .map(k -> {
                     PlayerStatusName name = (PlayerStatusName) k;
-                    return playerStatusCache.getIfPresent(name.getLatestSequenceNumberSeen());
+                    return playerStatusBySequenceNumber.getIfPresent(name.getLatestSequenceNumberSeen());
                 })
                 .collect(Collectors.toList());
     }

@@ -2,16 +2,32 @@ package com.stefanolupo.ndngame.libgdx.inputcontrollers;
 
 import com.badlogic.gdx.math.Vector2;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.stefanolupo.ndngame.config.LocalConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
+@Singleton
 public class AutomatedInputController implements InputController {
+    private static final Logger LOG = LoggerFactory.getLogger(AutomatedInputController.class);
 
     private static final int WALK_TIME_MS = 400;
+    private static final double WALK_RATE = 0;
+    private static final double PLACE_RATE = 0.95;
+    private static final double SHOOT_RATE = 0.90;
 
     private static int count = 0;
+    private static final List<Integer> moves = Arrays.asList(1, 2, 3, 4);
+    private final boolean shouldWalk;
+    private final boolean shouldPlace;
+    private final boolean shouldShoot;
 
     private boolean isLeftPressed = false;
     private boolean isRightPressed = false;
@@ -22,10 +38,17 @@ public class AutomatedInputController implements InputController {
     private boolean isMouse1Pressed = false;
     private boolean isMouse2Pressed = false;
 
-    public AutomatedInputController() {
+    @Inject
+    public AutomatedInputController(LocalConfig localConfig) {
+        String automationType = localConfig.getAutomationType();
+        shouldWalk = automationType.contains("w");
+        shouldPlace = automationType.contains("p");
+        shouldShoot = automationType.contains("s");
+        LOG.debug("Starting with automation type: {}", automationType);
+
         ThreadFactory namedThreadFactory =
                 new ThreadFactoryBuilder().setNameFormat("automated-controller-%d").build();
-       Executors.newSingleThreadScheduledExecutor(namedThreadFactory)
+        Executors.newSingleThreadScheduledExecutor(namedThreadFactory)
                 .scheduleAtFixedRate(this::moveOnPath, 2000, WALK_TIME_MS, TimeUnit.MILLISECONDS);
     }
 
@@ -76,6 +99,23 @@ public class AutomatedInputController implements InputController {
 
     private void moveOnPath() {
         setAllFalse();
+
+        double random = Math.random();
+
+        if (maybePlace(random)) return;
+        if (maybeWalk(random)) return;
+        if (maybeShoot(random)) return;
+    }
+
+    private boolean maybeWalk(double random) {
+
+        if (!shouldWalk || random < WALK_RATE) {
+            return false;
+        }
+
+        // Stand still for a tick
+        count = ++count % (moves.size() + 1);
+
         if (count == 0) {
             isRightPressed = true;
         } else if (count == 1) {
@@ -86,19 +126,23 @@ public class AutomatedInputController implements InputController {
             isUpPressed = true;
         }
 
-        // Using 5 should make them stand still for a tick
-        count = ++count % 5;
 
-        if (Math.random() > 0.98) {
-            isSpacePressed = true;
-        }
+        return true;
 
-        double attack = Math.random();
-        if (attack > 0.98) {
-            isMouse1Pressed = true;
-        } else if (Math.random() > 0.99) {
-            isMouse2Pressed = true;
-        }
+    }
+
+    private boolean maybePlace(double random) {
+        if (!shouldPlace || random < PLACE_RATE) return false;
+
+        isSpacePressed = true;
+        return true;
+    }
+
+    private boolean maybeShoot(double random) {
+        if (!shouldShoot || random < SHOOT_RATE) return false;
+
+        isMouse2Pressed = true;
+        return true;
     }
 
     private void setAllFalse() {
