@@ -68,6 +68,12 @@ public class BaseName implements AsPrefix {
         return matcher;
     }
 
+    public static String trimBaseName(Name name) {
+        Name trimmed = new Name(name);
+        // + 1 also trims game id
+        return trimmed.getSubName(GAME_BASE_NAME.size()+1).toUri();
+    }
+
     @Override
     public int hashCode() {
         return 31 * Long.hashCode(gameId);

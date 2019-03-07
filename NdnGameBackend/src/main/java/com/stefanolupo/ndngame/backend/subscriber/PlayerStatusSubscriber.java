@@ -1,16 +1,18 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.LocalPlayerReference;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.filters.LinearInterestZoneFilter;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
@@ -33,7 +35,7 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     private final FaceManager faceManager;
     private final LocalPlayerReference localPlayerReference;
     private final LinearInterestZoneFilter linearInterestZoneFilter;
-    private final HistogramFactory histogramFactory;
+    private final MetricRegistry metrics;
     private final Value<Long> maxWaitTime;
 
     @Inject
@@ -41,13 +43,13 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                                   FaceManager faceManager,
                                   LocalPlayerReference localPlayerReference,
                                   LinearInterestZoneFilter linearInterestZoneFilter,
-                                  HistogramFactory histogramFactory,
+                                  @BackendMetrics MetricRegistry metrics,
                                   @Named("player.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
         this.localPlayerReference = localPlayerReference;
         this.linearInterestZoneFilter = linearInterestZoneFilter;
-        this.histogramFactory = histogramFactory;
+        this.metrics = metrics;
         this.maxWaitTime = maxWaitTime;
     }
 
@@ -59,7 +61,8 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 PlayerStatusName::new,
                 this::sleepTimeFromPosition,
-                histogramFactory.create(PlayerStatusSubscriber.class, name.getListenName().toUri()));
+                metrics.histogram(MetricNames.playerStatusSyncLatency(name))
+                );
         subscriberMap.put(name, subscriber);
     }
 
