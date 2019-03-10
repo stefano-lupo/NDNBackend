@@ -20,7 +20,7 @@ public class PlayerStatusName implements SequenceNumberedName {
     private static final String BASE_PATTERN = "^/status/sync";
 
     @VisibleForTesting
-    static final Pattern PATTERN = Pattern.compile(BASE_PATTERN + "/(\\d+)/?(\\d+)?");
+    static final Pattern PATTERN = Pattern.compile(BASE_PATTERN + "/(\\d+)/?(\\d+)?/?(\\d+)?");
 
     private static final String STATUS = "status";
     private static final String SYNC = "sync";
@@ -28,6 +28,7 @@ public class PlayerStatusName implements SequenceNumberedName {
     private PlayerName playerName;
     private long sequenceNumber = 0;
     private long nextSequenceNumber = 0;
+    private long sentTimestamp = 0;
 
     /**
      * Create a PlayerStatusName using the components
@@ -91,7 +92,8 @@ public class PlayerStatusName implements SequenceNumberedName {
     public Name getFullName() {
         return getListenName()
                 .append(String.valueOf(sequenceNumber))
-                .append(String.valueOf(nextSequenceNumber));
+                .append(String.valueOf(nextSequenceNumber))
+                .append(String.valueOf(sentTimestamp));
     }
 
 
@@ -107,6 +109,16 @@ public class PlayerStatusName implements SequenceNumberedName {
         return playerName;
     }
 
+    @Override
+    public void setUpdateTimestamp(long updateTimestamp) {
+        this.sentTimestamp = updateTimestamp;
+    }
+
+    @Override
+    public long getUpdateTimestamp() {
+        return sentTimestamp;
+    }
+
     private void parse(String remainder) {
         Matcher matcher = BaseName.matchOrThrow(remainder, PATTERN);
         sequenceNumber = Long.valueOf(matcher.group(1));
@@ -115,6 +127,10 @@ public class PlayerStatusName implements SequenceNumberedName {
 
         if (nextSequenceNumber != null) {
             this.nextSequenceNumber = Long.valueOf(nextSequenceNumber);
+        }
+
+        if (matcher.group(3) != null) {
+            sentTimestamp = Long.valueOf(matcher.group(3));
         }
     }
 

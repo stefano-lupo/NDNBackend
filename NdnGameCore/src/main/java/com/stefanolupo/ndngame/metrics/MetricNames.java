@@ -16,6 +16,18 @@ public class MetricNames {
         return String.format("pub-queue-size-%s", trimAndSanitize(name));
     }
 
+    public static String playerStatusSyncRtt(PlayerStatusName playerName) {
+        return String.format("sub-status-rtt-%s", playerName.getPlayerName().getName());
+    }
+
+    public static String blockNameSyncRtt(BlocksSyncName name) {
+        return String.format("sub-block-rtt-%s", name.getPlayerName().getName());
+    }
+
+    public static String projectileSyncRtt(ProjectilesSyncName name) {
+        return String.format("sub-projectile-rtt-%s", name.getPlayerName().getName());
+    }
+
     public static String playerStatusSyncLatency(PlayerStatusName playerName) {
         return String.format("sub-status-latency-%s", playerName.getPlayerName().getName());
     }
@@ -27,6 +39,7 @@ public class MetricNames {
     public static String projectileSyncLatency(ProjectilesSyncName name) {
         return String.format("sub-projectile-latency-%s", name.getPlayerName().getName());
     }
+
 
     private static String trimAndSanitize(Name name) {
         String s = BaseName.trimBaseName(name).replace("/", "-");

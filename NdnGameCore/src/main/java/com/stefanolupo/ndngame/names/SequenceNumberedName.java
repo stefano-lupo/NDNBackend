@@ -8,4 +8,7 @@ public interface SequenceNumberedName {
     Interest buildInterest();
     long getLatestSequenceNumberSeen();
     void setNextSequenceNumber(long nextSequenceNumber);
+
+    void setUpdateTimestamp(long updateTimestamp);
+    long getUpdateTimestamp();
 }

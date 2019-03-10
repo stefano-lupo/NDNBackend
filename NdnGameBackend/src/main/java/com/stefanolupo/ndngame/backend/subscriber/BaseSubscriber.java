@@ -23,7 +23,8 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     private final Function<Data, D> dataFunction;
     private final Function<D, Long> sleepTimeFunction;
     private final Function<Data, SequenceNumberedName> nameExtractor;
-    private final Histogram histogram;
+    private final Histogram fullRoundTripHistogram;
+    private final Histogram gameLatencyHistogram;
 
     private final FaceManager faceManager;
     private long lastInterestExpressTime = 0;
@@ -34,13 +35,15 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
                           Function<Data, D> dataFunction,
                           Function<Data, SequenceNumberedName> nameExtractor,
                           Function<D, Long> sleepTimeFunction,
-                          Histogram histogram) {
+                          Histogram fullRoundTripHistogram,
+                          Histogram gameLatencyHistogram) {
         this.faceManager = faceManager;
         this.name = name;
         this.dataFunction = dataFunction;
         this.nameExtractor = nameExtractor;
         this.sleepTimeFunction = sleepTimeFunction;
-        this.histogram = histogram;
+        this.fullRoundTripHistogram = fullRoundTripHistogram;
+        this.gameLatencyHistogram = gameLatencyHistogram;
         expressInterestSafe(buildInterest(name));
     }
 
@@ -48,12 +51,19 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     public void onData(Interest interest, Data data) {
         long now = System.currentTimeMillis();
         long delta = now - lastInterestExpressTime;
-        histogram.update(delta);
+        fullRoundTripHistogram.update(delta);
 
         entity = dataFunction.apply(data);
 
         // Setup the name for the next data based on what came from publisher
         name = nameExtractor.apply(data);
+
+        long gameLatency = now - name.getUpdateTimestamp();
+        gameLatencyHistogram.update(gameLatency);
+
+        if (delta < gameLatency) {
+            LOG.error("Delta was: {}, Latency was: {}", delta, gameLatency);
+        }
 
         long targetSleepTime = sleepTimeFunction.apply(entity);
 

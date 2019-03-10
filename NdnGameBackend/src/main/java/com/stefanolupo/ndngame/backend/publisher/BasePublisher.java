@@ -1,6 +1,5 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
-import com.codahale.metrics.Gauge;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableSet;
@@ -20,18 +19,19 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
+    private static final long MICRO_SECONDS_PER_SEC = (long) 1e6;
 
     // Injected
-    private final MetricRegistry metrics;
     private final Timer dataSendTimer;
 
     // Assisted
@@ -40,10 +40,11 @@ public class BasePublisher implements OnInterestCallback {
 
     // Class logic
     private final ConcurrentMap<SequenceNumberedName, Face> outstandingInterests = new ConcurrentHashMap<>();
-    private final BiConsumer<SequenceNumberedName, Face> sendDataFunction;
+    private final BiConsumer<DataSend, Long> sendDataFunction;
     private Blob latestBlob;
-    private AtomicBoolean hasUpdate = new AtomicBoolean(false);
     private long sequenceNumber = 0;
+
+    private final AtomicReference<UpdateWithTimestamp> updateReference = new AtomicReference<>(new UpdateWithTimestamp());
 
     @Inject
     public BasePublisher(FaceManager faceManager,
@@ -53,13 +54,9 @@ public class BasePublisher implements OnInterestCallback {
                          @Assisted Name listenName,
                          @Assisted Function<Interest, SequenceNumberedName> interestToSequenceNumberedName,
                          @Assisted Value<Double> freshnessPeriod) {
-        this.metrics = metrics;
         this.dataSendTimer = metrics.timer(MetricNames.basePublisherQueueTimer(listenName));
         this.interestTFunction = interestToSequenceNumberedName;
         this.freshnessPeriod = freshnessPeriod;
-
-        this.metrics.register(MetricNames.basePublisherQueueSize(listenName),
-                (Gauge<Integer>) outstandingInterests::size);
 
         LOG.debug("Registering {}", listenName);
         faceManager.registerBasicPrefix(listenName, this);
@@ -69,7 +66,7 @@ public class BasePublisher implements OnInterestCallback {
                     .setNameFormat("bp-data-sender-" + listenName.toUri() + "-%d")
                     .build();
             ExecutorService executor = Executors.newCachedThreadPool(builder);
-            sendDataFunction = (n, f) -> executor.submit(() -> doSendData(n, f));
+            sendDataFunction = (ds, ts) -> executor.submit(() -> doSendData(ds, ts));
         } else {
             sendDataFunction = this::doSendData;
         }
@@ -80,8 +77,8 @@ public class BasePublisher implements OnInterestCallback {
         Executors.newSingleThreadScheduledExecutor(namedThreadFactory).scheduleAtFixedRate(
                 this::processQueue,
                 0,
-                (1000L) / queueProcessPerSec.get(),
-                TimeUnit.MILLISECONDS);
+                MICRO_SECONDS_PER_SEC / queueProcessPerSec.get(),
+                TimeUnit.MICROSECONDS);
     }
 
     /**
@@ -90,7 +87,7 @@ public class BasePublisher implements OnInterestCallback {
      */
     public long updateLatestBlob(Blob latestBlob) {
         this.latestBlob = latestBlob;
-        hasUpdate.set(true);
+        updateReference.getAndUpdate(UpdateWithTimestamp::markUpdate);
         return ++sequenceNumber;
     }
 
@@ -106,11 +103,12 @@ public class BasePublisher implements OnInterestCallback {
 
     private void processQueue() {
 
-        // Set the flag to false IFF it is currently true
-        // Returns true if the operation succeeds (i.e. if the flag was true and its now false)
-        if (!hasUpdate.compareAndSet(true, false)) {
+        Optional<Long> maybeUpdateTimestamp = updateReference.get().consumeUpdateIfHasOne();
+        if (!maybeUpdateTimestamp.isPresent()) {
             return;
         }
+
+        long updateTimestamp = maybeUpdateTimestamp.get();
 
         // Send any interests with sequenceNumber <= currentSequenceNumber
         for (Iterator<Map.Entry<SequenceNumberedName, Face>> i = outstandingInterests.entrySet().iterator(); i.hasNext();) {
@@ -119,7 +117,7 @@ public class BasePublisher implements OnInterestCallback {
             Face face = entry.getValue();
 
             if (sequenceNumberedName.getLatestSequenceNumberSeen() <= sequenceNumber) {
-                sendDataFunction.accept(sequenceNumberedName, face);
+                sendDataFunction.accept(new DataSend(face, sequenceNumberedName, latestBlob), updateTimestamp);
                 i.remove();
             } else {
                 LOG.debug("Had Update but {} already had sn {}", sequenceNumberedName.getFullName(), sequenceNumber);
@@ -127,16 +125,36 @@ public class BasePublisher implements OnInterestCallback {
         }
     }
 
-    private void doSendData(SequenceNumberedName name, Face face) {
+    private void doSendData(DataSend dataSend, long updateTimestamp) {
         Timer.Context context = dataSendTimer.time();
+        SequenceNumberedName name = dataSend.getName();
         name.setNextSequenceNumber(sequenceNumber);
+        name.setUpdateTimestamp(updateTimestamp);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());
         try {
-            face.putData(data);
+            dataSend.getFace().putData(data);
         } catch (Exception e) {
             LOG.error("Unable to send data to satisfy interest " + name.getFullName(), e);
         }
         context.stop();
+    }
+
+    private final class UpdateWithTimestamp {
+        private boolean hasUpdate = false;
+        private long timestamp = 0;
+
+        UpdateWithTimestamp markUpdate() {
+            hasUpdate = true;
+            timestamp = System.currentTimeMillis();
+            return this;
+        }
+
+        Optional<Long> consumeUpdateIfHasOne() {
+            if (!hasUpdate) return Optional.empty();
+
+            hasUpdate = false;
+            return Optional.of(timestamp);
+        }
     }
 }

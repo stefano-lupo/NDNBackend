@@ -61,6 +61,7 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 PlayerStatusName::new,
                 this::sleepTimeFromPosition,
+                metrics.histogram(MetricNames.playerStatusSyncRtt(name)),
                 metrics.histogram(MetricNames.playerStatusSyncLatency(name))
                 );
         subscriberMap.put(name, subscriber);

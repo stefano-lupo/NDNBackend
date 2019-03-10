@@ -54,6 +54,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 BlocksSyncName::new,
                 l -> waitTime.get(),
+                metricRegistry.histogram(MetricNames.blockNameSyncRtt(blockSyncName)),
                 metricRegistry.histogram(MetricNames.blockNameSyncLatency(blockSyncName))
         );
         subscribersList.add(subscriber);

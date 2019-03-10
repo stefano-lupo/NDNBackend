@@ -58,6 +58,7 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 ProjectilesSyncName::new,
                 l -> waitTime.get(),
+                metrics.histogram(MetricNames.projectileSyncRtt(projectilesSyncName)),
                 metrics.histogram(MetricNames.projectileSyncLatency(projectilesSyncName))
         );
     }

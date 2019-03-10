@@ -18,17 +18,19 @@ public class BlocksSyncName
         extends BlocksName
         implements SequenceNumberedName, AsPrefix {
 
-    private static final Pattern SYNC_PATTERN = Pattern.compile("/sync/(\\d+)/?(\\d+)?$");
+    private static final Pattern SYNC_PATTERN = Pattern.compile("/sync/(\\d+)/?(\\d+)?/?(\\d+)?$");
     private static final String SYNC = "sync";
 
     private long sequenceNumber;
     private long nextSequenceNumber;
+    private long sentTimestamp;
 
     public BlocksSyncName(long gameId,
                           String playerName) {
         super(gameId, playerName);
         sequenceNumber = 0;
         nextSequenceNumber = 0;
+        sentTimestamp = 0;
     }
 
     public BlocksSyncName(Interest interest) {
@@ -50,7 +52,8 @@ public class BlocksSyncName
     public Name getFullName() {
         return getAsPrefix()
                 .append(String.valueOf(sequenceNumber))
-                .append(String.valueOf(nextSequenceNumber));
+                .append(String.valueOf(nextSequenceNumber))
+                .append(String.valueOf(sentTimestamp));
     }
 
     @Override
@@ -68,12 +71,26 @@ public class BlocksSyncName
         this.nextSequenceNumber = nextSequenceNumber;
     }
 
+    @Override
+    public long getUpdateTimestamp() {
+        return sentTimestamp;
+    }
+
+    @Override
+    public void setUpdateTimestamp(long updateTimestamp) {
+        this.sentTimestamp = updateTimestamp;
+    }
+
     private void parse(String remainder) {
         Matcher matcher = BaseName.matchOrThrow(remainder, SYNC_PATTERN);
         sequenceNumber = Long.valueOf(matcher.group(1));
 
         if (matcher.group(2) != null) {
             nextSequenceNumber = Long.valueOf(matcher.group(2));
+        }
+
+        if (matcher.group(3) != null) {
+            sentTimestamp = Long.valueOf(matcher.group(3));
         }
     }
 }

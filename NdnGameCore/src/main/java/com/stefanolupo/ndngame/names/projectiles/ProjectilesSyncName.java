@@ -23,17 +23,19 @@ public class ProjectilesSyncName
 
     private static final Logger LOG = LoggerFactory.getLogger(ProjectilesSyncName.class);
 
-    private static final Pattern SYNC_DATA_PATTERN = Pattern.compile("/sync/(\\d+)/?(\\d+)?$");
+    private static final Pattern SYNC_DATA_PATTERN = Pattern.compile("/sync/(\\d+)/?(\\d+)?/?(\\d+)?$");
     private static final String SYNC = "sync";
 
     private long sequenceNumber;
     private long nextSequenceNumber;
+    private long sentTimestamp;
 
     public ProjectilesSyncName(long gameId,
                           String playerName) {
         super(gameId, playerName);
         sequenceNumber = 0;
         nextSequenceNumber = 0;
+        sentTimestamp = 0;
     }
 
     public ProjectilesSyncName(Interest interest) {
@@ -57,7 +59,8 @@ public class ProjectilesSyncName
     public Name getFullName() {
         return getAsPrefix()
                 .append(String.valueOf(sequenceNumber))
-                .append(String.valueOf(nextSequenceNumber));
+                .append(String.valueOf(nextSequenceNumber))
+                .append(String.valueOf(sentTimestamp));
     }
 
     @Override
@@ -75,12 +78,26 @@ public class ProjectilesSyncName
         this.nextSequenceNumber = nextSequenceNumber;
     }
 
+    @Override
+    public void setUpdateTimestamp(long updateTimestamp) {
+        this.sentTimestamp = updateTimestamp;
+    }
+
+    @Override
+    public long getUpdateTimestamp() {
+        return sentTimestamp;
+    }
+
     private void parse(String remainder) {
         Matcher matcher = BaseName.matchOrThrow(remainder, SYNC_DATA_PATTERN);
         sequenceNumber = Long.valueOf(matcher.group(1));
 
         if (matcher.group(2) != null) {
             nextSequenceNumber = Long.valueOf(matcher.group(2));
+        }
+
+        if (matcher.group(3) != null) {
+            sentTimestamp = Long.valueOf(matcher.group(3));
         }
     }
 }

@@ -2,14 +2,15 @@ package com.stefanolupo.ndngame.backend.guice;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
+import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
+import com.google.inject.*;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import com.hubspot.liveconfig.LiveConfig;
 import com.hubspot.liveconfig.LiveConfigModule;
 import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
@@ -42,11 +43,14 @@ import java.util.concurrent.TimeUnit;
 
 public class BackendModule extends AbstractModule {
 
+    public static final String METRICS_DIR = "METRICS_DIR";
+
     private static final Logger LOG = LoggerFactory.getLogger(BackendModule.class);
 
     private static final String PROPERTIES_NAME = "backend.properties";
-    private static final String METRICS_DIR_ENV_NAME = "METRICS_DIR";
+    private static final String METRICS_DIR_ENV_VARIABLE_NAME = "METRICS_DIR";
     private static final Integer METRIC_LOG_RATE_INTERVAL_SEC = 10;
+
     private static final Collection<Class<? extends OnPlayersDiscovered>> PLAYER_DISCOVERY_CALLBACKS = Arrays.asList(
             PlayerStatusSubscriber.class,
             BlockSubscriber.class,
@@ -66,6 +70,7 @@ public class BackendModule extends AbstractModule {
         PLAYER_DISCOVERY_CALLBACKS.forEach(pdc -> onDiscoveryBinder.addBinding().to(pdc));
 
         bind(DiscoveryManager.class).asEagerSingleton();
+        bind(HistogramValuesWriter.class).asEagerSingleton();
 
         install(new FactoryModuleBuilder()
                 .implement(BasePublisher.class, BasePublisher.class)
@@ -91,26 +96,39 @@ public class BackendModule extends AbstractModule {
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
                 .convertRatesTo(TimeUnit.MILLISECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.contains("sub"))
                 .build();
+
         reporter.start(METRIC_LOG_RATE_INTERVAL_SEC, METRIC_LOG_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
-        String metricsDir = System.getenv(METRICS_DIR_ENV_NAME);
-        if (metricsDir == null) {
-            LOG.warn("Environment var {} was null, not writing metrics to file", METRICS_DIR_ENV_NAME);
-        } else {
-            String namedMetricDir = String.format("%s/%s", metricsDir, localConfig.getPlayerName());
-            LOG.debug("Writing metrics to {}", namedMetricDir);
-            File directory = new File(namedMetricDir);
-            if (!directory.exists()){
-                directory.mkdirs();
-                LOG.debug("{} didn't exist and was created", namedMetricDir);
-            }
+
+        File metricsDir = injector.getInstance(Key.get(File.class, Names.named(METRICS_DIR)));
+
+        if (metricsDir != null) {
             CsvReporter csvReporter = CsvReporter.forRegistry(metricRegistry)
                     .convertRatesTo(TimeUnit.MILLISECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .build(directory);
+                    .build(metricsDir);
             csvReporter.start(METRIC_LOG_RATE_INTERVAL_SEC, METRIC_LOG_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
         }
         return metricRegistry;
+    }
+
+    @Provides
+    @Singleton
+    @Named(METRICS_DIR_ENV_VARIABLE_NAME)
+    File providesMetricsDirectory() {
+        String metricsDir = Preconditions.checkNotNull(System.getenv(METRICS_DIR_ENV_VARIABLE_NAME),
+                "Environment variable %s was not set!", METRICS_DIR_ENV_VARIABLE_NAME);
+
+        String namedMetricDir = String.format("%s/%s", metricsDir, localConfig.getPlayerName());
+        LOG.debug("Writing metrics to {}", namedMetricDir);
+        File directory = new File(namedMetricDir);
+        if (!directory.exists()){
+            directory.mkdirs();
+            LOG.debug("{} didn't exist and was created", namedMetricDir);
+        }
+
+        return directory;
     }
 
     @Provides
