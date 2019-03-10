@@ -28,7 +28,6 @@ public class BlockPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(BlockPublisher.class);
 
     private final Map<BlockName, Block> localBlocksByName = new HashMap<>();
-    private final FaceManager faceManager;
     private final BasePublisher publisher;
 
     @Inject
@@ -36,8 +35,6 @@ public class BlockPublisher {
                           BasePublisherFactory factory,
                           FaceManager faceManager,
                           @Named("block.publisher.freshness.period.ms") Value<Double> freshnessPeriod) {
-        this.faceManager = faceManager;
-
         BlocksSyncName blockSyncName = new BlocksSyncName(localConfig.getGameId(), localConfig.getPlayerName());
         publisher = factory.create(blockSyncName.getAsPrefix(), BlocksSyncName::new, freshnessPeriod);
 

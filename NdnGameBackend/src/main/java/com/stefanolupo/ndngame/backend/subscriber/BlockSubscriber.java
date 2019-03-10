@@ -1,15 +1,17 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -30,17 +32,17 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
-    private final HistogramFactory histogramFactory;
+    private final MetricRegistry metricRegistry;
     private final Value<Long> waitTime;
 
     @Inject
     public BlockSubscriber(LocalConfig localConfig,
                            FaceManager faceManager,
-                           HistogramFactory histogramFactory,
+                           @BackendMetrics MetricRegistry metricRegistry,
                            @Named("block.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
-        this.histogramFactory = histogramFactory;
+        this.metricRegistry = metricRegistry;
         this.waitTime = maxWaitTime;
     }
 
@@ -52,7 +54,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 BlocksSyncName::new,
                 l -> waitTime.get(),
-                histogramFactory.create(BlockSubscriber.class, blockSyncName.getAsPrefix().toUri())
+                metricRegistry.histogram(MetricNames.blockNameSyncLatency(blockSyncName))
         );
         subscribersList.add(subscriber);
     }
@@ -71,7 +73,6 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
         return map;
     }
-
 
     public void interactWithBlock(BlockName blockName) {
         for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {

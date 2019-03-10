@@ -1,13 +1,18 @@
 package com.stefanolupo.ndngame.backend.guice;
 
+import com.codahale.metrics.ConsoleReporter;
+import com.codahale.metrics.CsvReporter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.Multibinder;
 import com.hubspot.liveconfig.LiveConfig;
 import com.hubspot.liveconfig.LiveConfigModule;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 import com.stefanolupo.ndngame.backend.chronosynced.ConfigManager;
 import com.stefanolupo.ndngame.backend.chronosynced.DiscoveryManager;
@@ -21,7 +26,10 @@ import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.backend.subscriber.ProjectileSubscriber;
 import com.stefanolupo.ndngame.config.LocalConfig;
 import net.named_data.jndn.security.KeyChain;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
@@ -30,10 +38,15 @@ import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public class BackendModule extends AbstractModule {
 
+    private static final Logger LOG = LoggerFactory.getLogger(BackendModule.class);
+
     private static final String PROPERTIES_NAME = "backend.properties";
+    private static final String METRICS_DIR_ENV_NAME = "METRICS_DIR";
+    private static final Integer METRIC_LOG_RATE_INTERVAL_SEC = 10;
     private static final Collection<Class<? extends OnPlayersDiscovered>> PLAYER_DISCOVERY_CALLBACKS = Arrays.asList(
             PlayerStatusSubscriber.class,
             BlockSubscriber.class,
@@ -68,6 +81,36 @@ public class BackendModule extends AbstractModule {
                 .usingResolver(new ConfigManager(localConfig, properties))
                 .build();
         install(new LiveConfigModule(liveConfig));
+    }
+
+    @Provides
+    @Singleton
+    @BackendMetrics
+    MetricRegistry providesMetricRegistery(Injector injector) {
+        MetricRegistry metricRegistry = new MetricRegistry();
+        ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.MILLISECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .build();
+        reporter.start(METRIC_LOG_RATE_INTERVAL_SEC, METRIC_LOG_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
+        String metricsDir = System.getenv(METRICS_DIR_ENV_NAME);
+        if (metricsDir == null) {
+            LOG.warn("Environment var {} was null, not writing metrics to file", METRICS_DIR_ENV_NAME);
+        } else {
+            String namedMetricDir = String.format("%s/%s", metricsDir, localConfig.getPlayerName());
+            LOG.debug("Writing metrics to {}", namedMetricDir);
+            File directory = new File(namedMetricDir);
+            if (!directory.exists()){
+                directory.mkdirs();
+                LOG.debug("{} didn't exist and was created", namedMetricDir);
+            }
+            CsvReporter csvReporter = CsvReporter.forRegistry(metricRegistry)
+                    .convertRatesTo(TimeUnit.MILLISECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .build(directory);
+            csvReporter.start(METRIC_LOG_RATE_INTERVAL_SEC, METRIC_LOG_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
+        }
+        return metricRegistry;
     }
 
     @Provides

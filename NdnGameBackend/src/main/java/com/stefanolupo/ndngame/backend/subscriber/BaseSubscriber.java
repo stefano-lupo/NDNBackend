@@ -1,7 +1,7 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.codahale.metrics.Histogram;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.backend.statistics.Histogram;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
@@ -48,7 +48,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     public void onData(Interest interest, Data data) {
         long now = System.currentTimeMillis();
         long delta = now - lastInterestExpressTime;
-        histogram.addDatapoint(delta);
+        histogram.update(delta);
 
         entity = dataFunction.apply(data);
 

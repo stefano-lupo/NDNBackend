@@ -11,14 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Maps to and from PlayerStatusFace Proto and Game engine entity
+ * Maps to and from PlayerStatus Proto and Game engine entity
  */
 public class PlayerStatusConverter implements HasComponentMappers {
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusConverter.class);
 
     /**
-     * Builds Block based on current state of entity
+     * Builds PlayerStatus based on current state of entity
      */
     public static PlayerStatus protoFromEntity(Entity entity) {
         StatusComponent statusComponent = STATUS_MAPPER.get(entity);

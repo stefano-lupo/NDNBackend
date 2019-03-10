@@ -1,15 +1,17 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
-import com.stefanolupo.ndngame.backend.statistics.HistogramFactory;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.projectiles.ProjectileName;
 import com.stefanolupo.ndngame.names.projectiles.ProjectilesSyncName;
 import com.stefanolupo.ndngame.protos.Player;
@@ -19,7 +21,10 @@ import net.named_data.jndn.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -28,21 +33,20 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockSubscriber.class);
 
-    private final List<BaseSubscriber<Void>> subscribersList = new ArrayList<>();
     private final ConcurrentMap<ProjectileName, Projectile> projectileMap = new ConcurrentHashMap<>();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
-    private final HistogramFactory histogramFactory;
+    private final MetricRegistry metrics;
     private final Value<Long> waitTime;
 
     @Inject
     public ProjectileSubscriber(LocalConfig localConfig,
                                 FaceManager faceManager,
-                                HistogramFactory histogramFactory,
+                                @BackendMetrics MetricRegistry metrics,
                                 @Named("projectile.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
-        this.histogramFactory = histogramFactory;
+        this.metrics = metrics;
         this.waitTime = maxWaitTime;
     }
 
@@ -54,9 +58,8 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 ProjectilesSyncName::new,
                 l -> waitTime.get(),
-                histogramFactory.create(ProjectileSubscriber.class, projectilesSyncName.getAsPrefix().toUri())
+                metrics.histogram(MetricNames.projectileSyncLatency(projectilesSyncName))
         );
-        subscribersList.add(subscriber);
     }
 
     public Map<ProjectileName, Projectile> getNewProjectiles() {

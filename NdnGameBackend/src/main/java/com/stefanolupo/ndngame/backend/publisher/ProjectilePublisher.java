@@ -108,7 +108,6 @@ public class ProjectilePublisher {
 
         try {
             dataSend.face.putData(data);
-            LOG.debug("Sent data for interest {}", dataSend.name.toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

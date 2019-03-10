@@ -35,7 +35,7 @@ public class PlayerName implements AsPrefix {
         return baseName.getAsPrefix().append(playerName);
     }
 
-    public String getPlayerName() {
+    public String getName() {
         return playerName;
     }
 

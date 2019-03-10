@@ -1,8 +1,10 @@
 package com.stefanolupo.ndngame.backend;
 
+import com.stefanolupo.ndngame.protos.Player;
 import net.named_data.jndn.*;
 import net.named_data.jndn.security.KeyChain;
 import net.named_data.jndn.transport.AsyncTcpTransport;
+import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,8 +99,36 @@ public class NfdPingBenchmark implements OnData, OnTimeout {
 
     }
 
+    static class Test implements OnInterestCallback {
+        @Override
+        public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
+            System.out.println("Received interest..sleeping for 30s");
+            System.out.println(interest.toUri());
+            try {
+                Thread.sleep(20000);
+
+                System.out.println("sending datas");
+
+                Data data = new Data(interest.getName());
+                data.setContent(new Blob(Player.newBuilder().setName("Hello world!").build().toByteArray()));
+                face.putData(data);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 
     public static void main(String[] args) throws Exception {
-        NfdPingBenchmark nfdPingBenchmark = new NfdPingBenchmark(new Name("/com/test/laptop/ping"), 10);
+//        NfdPingBenchmark nfdPingBenchmark = new NfdPingBenchmark(new Name("/com/test/laptop/ping"), 10);
+        Face face = new Face();
+        face.setCommandSigningInfo(new KeyChain(), new KeyChain().getDefaultCertificateName());
+        Test test = new Test();
+        face.registerPrefix(new Name("/com/desktop"), test, p -> System.out.println(p));
+
+        while (true) {
+            face.processEvents();
+            Thread.sleep(5);
+        }
     }
 }

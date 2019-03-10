@@ -61,6 +61,9 @@ subprojects {
         compile group: 'com.google.inject.extensions', name: 'guice-assistedinject', version: '4.0'
         compile group: 'com.hubspot.liveconfig', name: 'live-config', version: '1.0.0'
         compile group: 'com.badlogicgames.gdx', name: 'gdx-backend-headless', version: '1.6.2'
+        compile group: 'io.dropwizard.metrics', name: 'metrics-core', version: '4.1.0-rc3'
+        compile group: 'io.dropwizard.metrics', name: 'metrics-servlet', version: '4.1.0-rc3'
+
     }
 
     sourceCompatibility = '1.8'
