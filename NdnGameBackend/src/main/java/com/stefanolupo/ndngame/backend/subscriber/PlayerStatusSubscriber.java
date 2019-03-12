@@ -1,18 +1,17 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.LocalPlayerReference;
-import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.filters.LinearInterestZoneFilter;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetricsFactory;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetricsNames;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.Player;
@@ -35,22 +34,25 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     private final FaceManager faceManager;
     private final LocalPlayerReference localPlayerReference;
     private final LinearInterestZoneFilter linearInterestZoneFilter;
-    private final MetricRegistry metrics;
+    private final BaseSubscriberMetricsFactory metricsFactory;
     private final Value<Long> maxWaitTime;
+    private final Value<Boolean> useZoneFiltering;
 
     @Inject
     public PlayerStatusSubscriber(LocalConfig localConfig,
                                   FaceManager faceManager,
                                   LocalPlayerReference localPlayerReference,
                                   LinearInterestZoneFilter linearInterestZoneFilter,
-                                  @BackendMetrics MetricRegistry metrics,
-                                  @Named("player.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
+                                  BaseSubscriberMetricsFactory metricsFactory,
+                                  @Named("player.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime,
+                                  @Named("linear.interest.zone.filter.enabled") Value<Boolean> useZoneFiltering) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
         this.localPlayerReference = localPlayerReference;
         this.linearInterestZoneFilter = linearInterestZoneFilter;
-        this.metrics = metrics;
+        this.metricsFactory = metricsFactory;
         this.maxWaitTime = maxWaitTime;
+        this.useZoneFiltering = useZoneFiltering;
     }
 
     private void addSubscription(PlayerStatusName name) {
@@ -61,9 +63,7 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 PlayerStatusName::new,
                 this::sleepTimeFromPosition,
-                metrics.histogram(MetricNames.playerStatusSyncRtt(name)),
-                metrics.histogram(MetricNames.playerStatusSyncLatency(name))
-                );
+                metricsFactory.forNameAndType(name.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.STATUS));
         subscriberMap.put(name, subscriber);
     }
 
@@ -88,6 +88,8 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     }
 
     private long sleepTimeFromPosition(PlayerStatus playerStatus) {
+        if (!useZoneFiltering.get()) return 0;
+
         GameObject localPlayer = localPlayerReference.getPlayerStatus().getGameObject();
         GameObject remotePlayer = playerStatus.getGameObject();
         double weight = linearInterestZoneFilter.getSleepTimeFactor(

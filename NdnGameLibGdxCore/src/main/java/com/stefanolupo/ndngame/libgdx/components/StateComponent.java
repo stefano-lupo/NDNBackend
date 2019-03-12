@@ -7,7 +7,7 @@ import com.stefanolupo.ndngame.libgdx.components.enums.MotionState;
 
 public class StateComponent implements Component {
 
-    public static final float ATTACK_STATE_ANIMATION_TIME_MS = 2;
+    public static final float ATTACK_STATE_ANIMATION_TIME_MS = 1f;
     public static final float INTERACT_STATE_ANIMATION_TIME_MS = 1.5f;
 
     private MotionState currentHozMotionState = MotionState.REST;

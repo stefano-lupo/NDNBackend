@@ -156,4 +156,11 @@ public class PlayerStatusName implements SequenceNumberedName {
     public int hashCode() {
         return 31 * playerName.hashCode();
     }
+
+    @Override
+    public String toString() {
+        return "PlayerStatusName{" +
+                "playerName=" + playerName +
+                '}';
+    }
 }

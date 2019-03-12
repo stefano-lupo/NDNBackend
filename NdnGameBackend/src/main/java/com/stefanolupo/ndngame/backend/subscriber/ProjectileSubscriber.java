@@ -1,17 +1,16 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hubspot.liveconfig.value.Value;
-import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetricsFactory;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetricsNames;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.projectiles.ProjectileName;
 import com.stefanolupo.ndngame.names.projectiles.ProjectilesSyncName;
 import com.stefanolupo.ndngame.protos.Player;
@@ -36,17 +35,17 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
     private final ConcurrentMap<ProjectileName, Projectile> projectileMap = new ConcurrentHashMap<>();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
-    private final MetricRegistry metrics;
+    private final BaseSubscriberMetricsFactory metricsFactory;
     private final Value<Long> waitTime;
 
     @Inject
     public ProjectileSubscriber(LocalConfig localConfig,
                                 FaceManager faceManager,
-                                @BackendMetrics MetricRegistry metrics,
+                                BaseSubscriberMetricsFactory metricsFactory,
                                 @Named("projectile.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
-        this.metrics = metrics;
+        this.metricsFactory = metricsFactory;
         this.waitTime = maxWaitTime;
     }
 
@@ -58,9 +57,7 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 ProjectilesSyncName::new,
                 l -> waitTime.get(),
-                metrics.histogram(MetricNames.projectileSyncRtt(projectilesSyncName)),
-                metrics.histogram(MetricNames.projectileSyncLatency(projectilesSyncName))
-        );
+                metricsFactory.forNameAndType(projectilesSyncName.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.PROJECTILE));
     }
 
     public Map<ProjectileName, Projectile> getNewProjectiles() {

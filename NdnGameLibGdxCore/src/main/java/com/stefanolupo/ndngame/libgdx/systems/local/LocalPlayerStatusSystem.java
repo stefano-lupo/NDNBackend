@@ -13,6 +13,7 @@ import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import com.stefanolupo.ndngame.protos.GameObject;
+import com.stefanolupo.ndngame.util.MathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,13 +47,16 @@ public class LocalPlayerStatusSystem
                                    @LogScheduleExecutor ScheduledExecutorService executorService,
                                    @Named("local.player.status.use.dead.reckoning") Value<Boolean> useDeadReckoning,
                                    @Named("local.player.dead.reckoning.max.error") Value<Float> maxDeadReckoningError,
-                                   @Named("local.player.status.update.interval.ms") Value<Float> updateInterval) {
-        super(updateInterval.get() / 1000f);
+                                   @Named("local.player.status.updates.per.sec") Value<Float> updatesPerSecond) {
+        super(1 / updatesPerSecond.get());
         this.playerStatusPublisher = playerStatusPublisher;
         this.ticksPerMs = localConfig.getTargetFrameRate() / 1000f;
         this.useDeadReckoning = useDeadReckoning;
         this.maxDeadReckoningError = maxDeadReckoningError;
-        executorService.scheduleAtFixedRate(this::logStats, 0, 10, TimeUnit.SECONDS);
+
+        if (useDeadReckoning.get()) {
+            executorService.scheduleAtFixedRate(this::logStats, 0, 10, TimeUnit.SECONDS);
+        }
     }
 
     @Override
@@ -118,7 +122,7 @@ public class LocalPlayerStatusSystem
         float ellapsedTicks = delta * ticksPerMs;
         float approxX = remoteVersion.getX() + ellapsedTicks*remoteVersion.getVelX();
         float approxY = remoteVersion.getY() + ellapsedTicks*remoteVersion.getVelY();
-        return distanceBetween(
+        return MathUtils.distanceBetween(
                 playerCurrentGameObject.getX(), playerCurrentGameObject.getY(),
                 approxX, approxY);
     }
@@ -134,7 +138,5 @@ public class LocalPlayerStatusSystem
                 (total - deadReckoningNonUpdates + 0f) / total);
     }
 
-    private static double distanceBetween(float x1, float y1, float x2, float y2) {
-        return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y2 - y1, 2));
-    }
+
 }

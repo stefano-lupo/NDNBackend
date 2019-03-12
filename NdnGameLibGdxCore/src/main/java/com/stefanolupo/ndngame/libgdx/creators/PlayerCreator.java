@@ -30,7 +30,7 @@ public class PlayerCreator implements OnPlayersDiscovered {
     public static final float PLAYER_WIDTH = 1;
     public static final float PLAYER_HEIGHT = 1.5f;
     public static final int MAX_HEALTH = 20;
-    public static final int MAX_AMMO = 50;
+    public static final int MAX_AMMO = 100;
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerCreator.class);
     private static final int MIN_EDGE_DISTANCE = 10;

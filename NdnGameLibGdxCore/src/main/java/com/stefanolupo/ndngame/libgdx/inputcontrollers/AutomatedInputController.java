@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -18,10 +19,12 @@ import java.util.concurrent.TimeUnit;
 public class AutomatedInputController implements InputController {
     private static final Logger LOG = LoggerFactory.getLogger(AutomatedInputController.class);
 
+    public static final long SEED = 10;
     private static final int WALK_TIME_MS = 400;
     private static final double WALK_RATE = 0;
     private static final double PLACE_RATE = 0.95;
-    private static final double SHOOT_RATE = 0.90;
+    private static final double SHOOT_RATE = 0.75;
+    private static final Random RANDOM = new Random(SEED);
 
     private static int count = 0;
     private static final List<Integer> moves = Arrays.asList(1, 2, 3, 4);
@@ -100,7 +103,7 @@ public class AutomatedInputController implements InputController {
     private void moveOnPath() {
         setAllFalse();
 
-        double random = Math.random();
+        double random = RANDOM.nextDouble();
 
         if (maybePlace(random)) return;
         if (maybeShoot(random)) return;

@@ -2,7 +2,6 @@ package com.stefanolupo.ndngame.backend.guice;
 
 import com.codahale.metrics.ConsoleReporter;
 import com.codahale.metrics.CsvReporter;
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -49,7 +48,8 @@ public class BackendModule extends AbstractModule {
 
     private static final String PROPERTIES_NAME = "backend.properties";
     private static final String METRICS_DIR_ENV_VARIABLE_NAME = "METRICS_DIR";
-    private static final Integer METRIC_LOG_RATE_INTERVAL_SEC = 10;
+    private static final Integer METRIC_LOG_RATE_INTERVAL_SEC = 30;
+    private static final Integer METRIC_CSV_WRITE_RATE_INTERVAL_SEC = 10;
 
     private static final Collection<Class<? extends OnPlayersDiscovered>> PLAYER_DISCOVERY_CALLBACKS = Arrays.asList(
             PlayerStatusSubscriber.class,
@@ -94,9 +94,8 @@ public class BackendModule extends AbstractModule {
     MetricRegistry providesMetricRegistery(Injector injector) {
         MetricRegistry metricRegistry = new MetricRegistry();
         ConsoleReporter reporter = ConsoleReporter.forRegistry(metricRegistry)
-                .convertRatesTo(TimeUnit.MILLISECONDS)
+                .convertRatesTo(TimeUnit.SECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.contains("sub"))
                 .build();
 
         reporter.start(METRIC_LOG_RATE_INTERVAL_SEC, METRIC_LOG_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
@@ -105,10 +104,10 @@ public class BackendModule extends AbstractModule {
 
         if (metricsDir != null) {
             CsvReporter csvReporter = CsvReporter.forRegistry(metricRegistry)
-                    .convertRatesTo(TimeUnit.MILLISECONDS)
+                    .convertRatesTo(TimeUnit.SECONDS)
                     .convertDurationsTo(TimeUnit.MILLISECONDS)
                     .build(metricsDir);
-            csvReporter.start(METRIC_LOG_RATE_INTERVAL_SEC, METRIC_LOG_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
+            csvReporter.start(METRIC_CSV_WRITE_RATE_INTERVAL_SEC, METRIC_CSV_WRITE_RATE_INTERVAL_SEC, TimeUnit.SECONDS);
         }
         return metricRegistry;
     }

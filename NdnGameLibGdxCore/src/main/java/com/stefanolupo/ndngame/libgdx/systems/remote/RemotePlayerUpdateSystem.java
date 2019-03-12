@@ -3,16 +3,24 @@ package com.stefanolupo.ndngame.libgdx.systems.remote;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.subscriber.PlayerStatusSubscriber;
 import com.stefanolupo.ndngame.libgdx.components.RemotePlayerComponent;
 import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
+import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
+import com.stefanolupo.ndngame.util.MathUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
@@ -31,11 +39,15 @@ public class RemotePlayerUpdateSystem
     private static long numberOfNonUpdates = 0;
 
     private final PlayerStatusSubscriber playerStatusSubscriber;
+    private final MetricRegistry metrics;
+    private final Map<PlayerStatusName, Histogram> playerStatusHistograms = new HashMap<>();
 
     @Inject
-    public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber) {
+    public RemotePlayerUpdateSystem(PlayerStatusSubscriber playerStatusSubscriber,
+                                    @BackendMetrics MetricRegistry metrics) {
         super(Family.all(RemotePlayerComponent.class).get());
         this.playerStatusSubscriber = playerStatusSubscriber;
+        this.metrics = metrics;
 //        runLogStats();
     }
 
@@ -59,6 +71,7 @@ public class RemotePlayerUpdateSystem
         }
 
         PlayerStatus latestStatus = playerStatusSubscriber.getLatestStatusForPlayer(playerStatusName);
+        capturePositionDeltaMetrics(playerStatusName, latestStatus, entity);
         PlayerStatusConverter.reconcileRemotePlayer(entity, latestStatus, latestVersionForPlayer, deltaTime);
     }
 
@@ -89,6 +102,23 @@ public class RemotePlayerUpdateSystem
                 20,
                 TimeUnit.SECONDS
         );
+    }
+
+    private void capturePositionDeltaMetrics(PlayerStatusName name, PlayerStatus status, Entity entity) {
+        GameObject engineObject = RENDER_MAPPER.get(entity).getGameObject();
+        GameObject remoteObject = status.getGameObject();
+
+        Histogram playerStatusHistogram = playerStatusHistograms.get(name);
+        if (playerStatusHistogram == null) {
+            playerStatusHistogram = metrics.histogram(MetricNames.playerStatusPositionDeltas(name));
+            playerStatusHistograms.put(name, playerStatusHistogram);
+
+            // Don't capture distance on first occurence as it will skew results
+            return;
+        }
+
+        long distanceBetweenInHundreths = Math.round(MathUtils.distanceBetween(engineObject, remoteObject) * 100);
+        playerStatusHistogram.update(distanceBetweenInHundreths);
     }
 
     private void logStats() {

@@ -1,7 +1,7 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
-import com.codahale.metrics.Histogram;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetrics;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
 import net.named_data.jndn.Data;
 import net.named_data.jndn.Interest;
@@ -23,11 +23,11 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     private final Function<Data, D> dataFunction;
     private final Function<D, Long> sleepTimeFunction;
     private final Function<Data, SequenceNumberedName> nameExtractor;
-    private final Histogram fullRoundTripHistogram;
-    private final Histogram gameLatencyHistogram;
+    private final BaseSubscriberMetrics metrics;
 
     private final FaceManager faceManager;
     private long lastInterestExpressTime = 0;
+
 
 
     public BaseSubscriber(FaceManager faceManager,
@@ -35,15 +35,13 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
                           Function<Data, D> dataFunction,
                           Function<Data, SequenceNumberedName> nameExtractor,
                           Function<D, Long> sleepTimeFunction,
-                          Histogram fullRoundTripHistogram,
-                          Histogram gameLatencyHistogram) {
+                          BaseSubscriberMetrics metrics) {
         this.faceManager = faceManager;
         this.name = name;
         this.dataFunction = dataFunction;
         this.nameExtractor = nameExtractor;
         this.sleepTimeFunction = sleepTimeFunction;
-        this.fullRoundTripHistogram = fullRoundTripHistogram;
-        this.gameLatencyHistogram = gameLatencyHistogram;
+        this.metrics = metrics;
         expressInterestSafe(buildInterest(name));
     }
 
@@ -51,7 +49,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     public void onData(Interest interest, Data data) {
         long now = System.currentTimeMillis();
         long delta = now - lastInterestExpressTime;
-        fullRoundTripHistogram.update(delta);
+        metrics.getRoundTripTime().update(delta);
 
         entity = dataFunction.apply(data);
 
@@ -59,10 +57,13 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
         name = nameExtractor.apply(data);
 
         long gameLatency = now - name.getUpdateTimestamp();
-        gameLatencyHistogram.update(gameLatency);
+        metrics.getLatency().update(gameLatency);
 
         if (delta < gameLatency) {
-            LOG.error("Delta was: {}, Latency was: {}", delta, gameLatency);
+            metrics.getPercentageGauge().hit();
+//            LOG.debug("Delta was: {}, Latency was: {} - {}", delta, gameLatency, name.getFullName());
+        } else {
+            metrics.getPercentageGauge().miss();
         }
 
         long targetSleepTime = sleepTimeFunction.apply(entity);

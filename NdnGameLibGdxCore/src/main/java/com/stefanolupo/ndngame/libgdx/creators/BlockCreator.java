@@ -22,8 +22,8 @@ public class BlockCreator {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockCreator.class);
 
-    private static final float BLOCK_WIDTH = 2;
-    private static final float BLOCK_HEIGHT = 2;
+    private static final float BLOCK_WIDTH = 1.5f;
+    private static final float BLOCK_HEIGHT = 1.5f;
 
     private final LocalConfig localConfig;
     private final PooledEngine engine;

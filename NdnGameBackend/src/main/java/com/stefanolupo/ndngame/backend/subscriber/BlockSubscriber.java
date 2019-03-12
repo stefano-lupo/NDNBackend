@@ -1,17 +1,16 @@
 package com.stefanolupo.ndngame.backend.subscriber;
 
-import com.codahale.metrics.MetricRegistry;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.hubspot.liveconfig.value.Value;
-import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetricsFactory;
+import com.stefanolupo.ndngame.backend.subscriber.metrics.BaseSubscriberMetricsNames;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -32,17 +31,17 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
-    private final MetricRegistry metricRegistry;
+    private final BaseSubscriberMetricsFactory metricsFactory;
     private final Value<Long> waitTime;
 
     @Inject
     public BlockSubscriber(LocalConfig localConfig,
                            FaceManager faceManager,
-                           @BackendMetrics MetricRegistry metricRegistry,
+                           BaseSubscriberMetricsFactory metricsFactory,
                            @Named("block.sub.inter.interest.max.wait.time.ms") Value<Long> maxWaitTime) {
         this.localConfig = localConfig;
         this.faceManager = faceManager;
-        this.metricRegistry = metricRegistry;
+        this.metricsFactory = metricsFactory;
         this.waitTime = maxWaitTime;
     }
 
@@ -54,9 +53,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
                 this::typeFromData,
                 BlocksSyncName::new,
                 l -> waitTime.get(),
-                metricRegistry.histogram(MetricNames.blockNameSyncRtt(blockSyncName)),
-                metricRegistry.histogram(MetricNames.blockNameSyncLatency(blockSyncName))
-        );
+                metricsFactory.forNameAndType(blockSyncName.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.BLOCK));
         subscribersList.add(subscriber);
     }
 
