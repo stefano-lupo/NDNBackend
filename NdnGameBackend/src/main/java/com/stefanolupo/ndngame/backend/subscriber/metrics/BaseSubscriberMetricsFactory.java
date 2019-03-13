@@ -25,7 +25,8 @@ public class BaseSubscriberMetricsFactory {
         return new BaseSubscriberMetrics(
                 metrics.histogram(names.getRttName()),
                 metrics.histogram(names.getLatencyName()),
-                metrics.register(names.getCacheHitRateName(), PercentageGauge.getInstance())
+                metrics.register(names.getCacheHitRateName(), PercentageGauge.getInstance()),
+                metrics.counter(names.getInterestExpressedCounterName())
         );
     }
 }

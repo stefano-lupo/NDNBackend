@@ -55,18 +55,19 @@ public abstract class ChronoSynced implements
             face = new Face();
             face.setCommandSigningInfo(keyChain, certificateName);
 
-            chronoSync = new ChronoSync2013(
-                    this,
-                    this,
-                    dataListenPrefix,
-                    broadcastPrefix,
-                    session,
-                    face,
-                    keyChain,
-                    certificateName,
-                    DEFAULT_SYNC_LIFETIME_MS,
-                    this::registerPrefixFailure
-            );
+            chronoSync = null;
+//            chronoSync = new ChronoSync2013(
+//                    this,
+//                    this,
+//                    dataListenPrefix,
+//                    broadcastPrefix,
+//                    session,
+//                    face,
+//                    keyChain,
+//                    certificateName,
+//                    DEFAULT_SYNC_LIFETIME_MS,
+//                    this::registerPrefixFailure
+//            );
 
             face.registerPrefix(dataListenPrefix, this, this::registerPrefixFailure);
             ThreadFactory threadFactory = new ThreadFactoryBuilder()

@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -34,7 +35,6 @@ public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
 
-    // Injected
     private final Supplier<Meter> interestMeterDelayedSupplier;
     private final Timer dataSendTimer;
     private Meter interestMeter;
@@ -64,6 +64,7 @@ public class BasePublisher implements OnInterestCallback {
         this.interestMeterDelayedSupplier = () -> metrics.meter(MetricNames.basePublisherInterestRate(listenName));
         this.dataSendTimer = metrics.timer(MetricNames.basePublisherQueueTimer(listenName));
         this.percentageGauge = metrics.register(MetricNames.basePublisherUpdatePercentage(listenName), PercentageGauge.getInstance());
+
         this.interestTFunction = interestToSequenceNumberedName;
         this.freshnessPeriod = freshnessPeriod;
 
