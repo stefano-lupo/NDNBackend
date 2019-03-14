@@ -1,6 +1,5 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -150,7 +149,13 @@ public class BasePublisher implements OnInterestCallback {
     private void doSendData(DataSend dataSend, long updateTimestamp) {
         Timer.Context context = dataSendTimer.time();
         SequenceNumberedName name = dataSend.getName();
-        name.setNextSequenceNumber(sequenceNumber);
+        if (name.getLatestSequenceNumberSeen() >= sequenceNumber) {
+            LOG.error("Producing name with next sequence number that will be less than or equal to current name: was {}, new {}", name.getLatestSequenceNumberSeen(), sequenceNumber);
+            // TODO: I have no idea why this happens but its very rare and leads to all sorts of problems
+            name.setNextSequenceNumber(sequenceNumber+10);
+        } else {
+            name.setNextSequenceNumber(sequenceNumber);
+        }
         name.setUpdateTimestamp(updateTimestamp);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());

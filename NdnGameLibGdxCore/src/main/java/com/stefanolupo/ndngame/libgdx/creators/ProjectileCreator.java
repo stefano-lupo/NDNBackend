@@ -23,8 +23,8 @@ import static com.stefanolupo.ndngame.libgdx.creators.PlayerCreator.PLAYER_WIDTH
 @Singleton
 public class ProjectileCreator {
 
-    public static final float PROJECTILE_RADIUS = 0.05f;
-    public static final float PROJECTILE_VELOCITY = 0.1f;
+    public static final float PROJECTILE_RADIUS = 0.15f;
+    public static final float PROJECTILE_VELOCITY = 0.2f;
 
     private static final Logger LOG = LoggerFactory.getLogger(ProjectileCreator.class);
 
@@ -52,14 +52,21 @@ public class ProjectileCreator {
                 .setGameObject(gameObject)
                 .setDamage(1)
                 .build();
-        LOG.debug("Creating local projectile");
+//        LOG.debug("Creating local projectile");
         ProjectileName projectileName = new ProjectileName(localConfig.getGameId(), localConfig.getPlayerName(), id);
         createProjectileEntity(projectileName, projectile, false);
         projectilePublisher.insertProjectile(projectileName, projectile);
     }
 
+    public void createLocalProjectileExplosion(float x, float y) {
+        createLocalProjectile(x, y, x+1, y);
+        createLocalProjectile(x, y, x-1, y);
+        createLocalProjectile(x, y, x, y+1);
+        createLocalProjectile(x, y, x, y-1);
+    }
+
     public void createRemoteProjectile(ProjectileName projectileName, Projectile projectile) {
-        LOG.debug("Creating remote projectile");
+//        LOG.debug("Creating remote projectile");
         createProjectileEntity(projectileName, projectile, true);
     }
 

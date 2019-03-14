@@ -24,6 +24,7 @@ public class BlockCreator {
 
     private static final float BLOCK_WIDTH = 1.5f;
     private static final float BLOCK_HEIGHT = 1.5f;
+    private static final int BLOCK_HEALTH = 3;
 
     private final LocalConfig localConfig;
     private final PooledEngine engine;
@@ -56,7 +57,7 @@ public class BlockCreator {
         Block block = Block.newBuilder()
                 .setId(id)
                 .setGameObject(gameObject)
-                .setHealth(5)
+                .setHealth(BLOCK_HEALTH)
                 .build();
         BlockName blockName = new BlockName(localConfig.getGameId(), localConfig.getPlayerName(), id);
         Entity entity = createBlockEntity(blockName, block, false);

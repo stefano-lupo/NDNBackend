@@ -95,7 +95,7 @@ public class ProjectileCollisionSystem
                     }
                 }
             } else {
-                LOG.debug("Local projectile collided with a block, removing");
+                LOG.debug("Local projectile collided with a block, ignoring, will be picked up by remote if it was remote block");
             }
 
             getEngine().removeEntity(entity);

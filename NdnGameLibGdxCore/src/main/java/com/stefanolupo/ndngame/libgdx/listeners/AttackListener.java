@@ -52,6 +52,8 @@ public class AttackListener implements EntityListener, HasComponentMappers {
 
         if (attackComponent.getAttack().getType() == AttackType.CAST) {
             handleCast(entity, attackComponent);
+        } else if (attackComponent.getAttack().getType() == AttackType.EXPLOSION) {
+            handleExplosion(entity, attackComponent);
         } else {
             handleAttackedBlock(entity, attackComponent);
             handleAttackedPlayer(entity, attackComponent);
@@ -63,7 +65,11 @@ public class AttackListener implements EntityListener, HasComponentMappers {
         // Create a new projectile entity
         Vector2 mouseCoords = attackComponent.getMouseCoords();
         projectileCreator.createLocalProjectile(attack.getX(), attack.getY(), mouseCoords.x, mouseCoords.y);
+    }
 
+    private void handleExplosion(Entity entity, AttackComponent attackComponent) {
+        Attack attack = attackComponent.getAttack();
+        projectileCreator.createLocalProjectileExplosion(attack.getX(), attack.getY());
     }
 
     private void handleAttackedBlock(Entity entity, AttackComponent attackComponent) {

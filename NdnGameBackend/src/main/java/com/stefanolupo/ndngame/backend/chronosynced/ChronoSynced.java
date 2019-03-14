@@ -30,7 +30,7 @@ public abstract class ChronoSynced implements
     private static final Logger LOG = LoggerFactory.getLogger(ChronoSynced.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 1000L;
     private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 5000L;
-    private static final Long DEFAULT_SYNC_LIFETIME_MS = 5000L;
+    private static final Long DEFAULT_SYNC_LIFETIME_MS = 30000L;
 
     private final ChronoSync2013 chronoSync;
     private final Face face;
@@ -55,19 +55,18 @@ public abstract class ChronoSynced implements
             face = new Face();
             face.setCommandSigningInfo(keyChain, certificateName);
 
-            chronoSync = null;
-//            chronoSync = new ChronoSync2013(
-//                    this,
-//                    this,
-//                    dataListenPrefix,
-//                    broadcastPrefix,
-//                    session,
-//                    face,
-//                    keyChain,
-//                    certificateName,
-//                    DEFAULT_SYNC_LIFETIME_MS,
-//                    this::registerPrefixFailure
-//            );
+            chronoSync = new ChronoSync2013(
+                    this,
+                    this,
+                    dataListenPrefix,
+                    broadcastPrefix,
+                    session,
+                    face,
+                    keyChain,
+                    certificateName,
+                    DEFAULT_SYNC_LIFETIME_MS,
+                    this::registerPrefixFailure
+            );
 
             face.registerPrefix(dataListenPrefix, this, this::registerPrefixFailure);
             ThreadFactory threadFactory = new ThreadFactoryBuilder()

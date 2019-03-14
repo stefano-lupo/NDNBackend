@@ -100,8 +100,8 @@ public class PlayerControlSystem
             attackComponent.setMouseCoords(inputController.getMouseCoords());
             stateComponent.updateAttackState(AttackState.CAST, deltaTime);
         } else if (inputController.isMouse3Down()) {
-            attackComponent = buildAttackComponent(body, 1f, AttackType.SHIELD);
-            stateComponent.updateAttackState(AttackState.SHIELD, deltaTime);
+            attackComponent = buildAttackComponent(body, 1f, AttackType.EXPLOSION);
+            stateComponent.updateAttackState(AttackState.EXPLOSION, deltaTime);
         } else {
             LOG.error("Unknown attack command: {}", stateComponent.getAttackState());
         }

@@ -19,9 +19,9 @@ import com.stefanolupo.ndngame.protos.Block;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -63,12 +63,13 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
             blockCreator.createRemoteBlock(blocksName, block);
         }
 
-        // Destroy old blocks
+        // Destroy old blocks from the engine
         Set<BlockName> blocksToDestroy = Sets.difference(entitiesByBlockName.keySet(), Sets.union(remoteBlocks.keySet(), localBlocks.keySet()));
         for (BlockName blockName : blocksToDestroy) {
             engine.removeEntity(entitiesByBlockName.get(blockName));
-            entitiesByBlockName.remove(blockName);
         }
+
+        entitiesByBlockName.keySet().removeAll(blocksToDestroy);
 
         // Reconcile updated remote blocks
         for (BlockName blocksName : entitiesByBlockName.keySet()) {
@@ -83,7 +84,7 @@ public class BlockUpdateSystem extends IntervalSystem implements HasComponentMap
 
     private Map<BlockName, Entity> getEntitiesByBlockName() {
         ImmutableArray<Entity> blockEntities = engine.getEntitiesFor(Family.all(BlockComponent.class).get());
-        Map<BlockName, Entity> entityMap = new HashMap<>();
+        Map<BlockName, Entity> entityMap = new ConcurrentHashMap<>();
         for (Entity e : blockEntities) {
             BlockComponent blockComponent = BLOCK_MAPPER.get(e);
             entityMap.put(blockComponent.getBlockName(), e);
