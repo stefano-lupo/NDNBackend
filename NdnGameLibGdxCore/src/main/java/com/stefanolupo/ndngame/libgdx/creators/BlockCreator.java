@@ -24,6 +24,7 @@ public class BlockCreator {
 
     private static final float BLOCK_WIDTH = 1.5f;
     private static final float BLOCK_HEIGHT = 1.5f;
+    private static final int BLOCK_HEALTH = 3;
 
     private final LocalConfig localConfig;
     private final PooledEngine engine;
@@ -56,7 +57,7 @@ public class BlockCreator {
         Block block = Block.newBuilder()
                 .setId(id)
                 .setGameObject(gameObject)
-                .setHealth(5)
+                .setHealth(BLOCK_HEALTH)
                 .build();
         BlockName blockName = new BlockName(localConfig.getGameId(), localConfig.getPlayerName(), id);
         Entity entity = createBlockEntity(blockName, block, false);
@@ -71,7 +72,7 @@ public class BlockCreator {
 
     private Entity createBlockEntity(BlockName blockName, Block block, boolean isRemote) {
         GameObject gameObject = block.getGameObject();
-        LOG.debug("Creating a block at {}, {}, isRemote: {}", gameObject.getX(), gameObject.getY(), isRemote);
+//        LOG.debug("Creating a block at {}, {}, isRemote: {}", gameObject.getX(), gameObject.getY(), isRemote);
 
         Entity entity = engine.createEntity();
         Body body = bodyFactory.makeBoxBody(gameObject, Material.BLOCK);

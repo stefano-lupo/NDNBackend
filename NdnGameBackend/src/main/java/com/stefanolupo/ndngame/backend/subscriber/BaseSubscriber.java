@@ -104,5 +104,6 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     private void expressInterestSafe(Interest i) {
         lastInterestExpressTime = System.currentTimeMillis();
         faceManager.expressInterestSafe(i, this, this);
+        metrics.getInterestsExpressedCounter().inc();
     }
 }

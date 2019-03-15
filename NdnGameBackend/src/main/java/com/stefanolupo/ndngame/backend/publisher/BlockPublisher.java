@@ -19,15 +19,16 @@ import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Singleton
 public class BlockPublisher {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockPublisher.class);
 
-    private final Map<BlockName, Block> localBlocksByName = new HashMap<>();
+    private final ConcurrentMap<BlockName, Block> localBlocksByName = new ConcurrentHashMap<>();
     private final BasePublisher publisher;
 
     @Inject
@@ -57,7 +58,7 @@ public class BlockPublisher {
         updateBlob();
     }
 
-    public Map<BlockName, Block> getLocalBlocks() {
+    public ConcurrentMap<BlockName, Block> getLocalBlocks() {
         return localBlocksByName;
     }
 

@@ -30,7 +30,7 @@ public abstract class ChronoSynced implements
     private static final Logger LOG = LoggerFactory.getLogger(ChronoSynced.class);
     private static final Long DEFAULT_FACE_POLL_TIME_MS = 1000L;
     private static final Long DEFAULT_FACE_POLL_INITIAL_WAIT_MS = 5000L;
-    private static final Long DEFAULT_SYNC_LIFETIME_MS = 5000L;
+    private static final Long DEFAULT_SYNC_LIFETIME_MS = 30000L;
 
     private final ChronoSync2013 chronoSync;
     private final Face face;
@@ -90,7 +90,7 @@ public abstract class ChronoSynced implements
 
     @Override
     public void onInitialized() {
-//        LOG.info("Initialized ChronoSyncedMap for {}", dataListenPrefix.toUri());
+        LOG.info("Initialized ChronoSyncedMap for {}", dataListenPrefix.toUri());
     }
 
     @Override

@@ -50,14 +50,14 @@ public class ProjectileSubscriber implements OnPlayersDiscovered {
     }
 
     private void addSubscription(ProjectilesSyncName projectilesSyncName) {
-        LOG.info("Adding subscription for {}", projectilesSyncName);
+        LOG.info("Adding subscription for {}", projectilesSyncName.getFullName());
         BaseSubscriber<Void> subscriber = new BaseSubscriber<>(
                 faceManager,
                 projectilesSyncName,
                 this::typeFromData,
                 ProjectilesSyncName::new,
                 l -> waitTime.get(),
-                metricsFactory.forNameAndType(projectilesSyncName.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.PROJECTILE));
+                metricsFactory.forNameAndType(projectilesSyncName.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.PROJECTILES));
     }
 
     public Map<ProjectileName, Projectile> getNewProjectiles() {

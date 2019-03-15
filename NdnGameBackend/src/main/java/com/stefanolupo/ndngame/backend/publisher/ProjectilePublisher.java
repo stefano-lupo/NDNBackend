@@ -130,6 +130,7 @@ public class ProjectilePublisher {
             LOG.info("Creating interest meter");
             interestMeter = interestMeterDelayedSupplier.get();
         }
+        interestMeter.mark();
         ProjectilesSyncName syncName = new ProjectilesSyncName(interest);
         outstandingInterests.put(syncName, face);
     }

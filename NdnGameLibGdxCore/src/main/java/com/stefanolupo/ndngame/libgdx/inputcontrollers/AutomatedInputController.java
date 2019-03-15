@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +23,7 @@ public class AutomatedInputController implements InputController {
     public static final long SEED = 10;
     private static final int WALK_TIME_MS = 400;
     private static final double WALK_RATE = 0;
-    private static final double PLACE_RATE = 0.95;
+    private static final double PLACE_RATE = 0.97;
     private static final double SHOOT_RATE = 0.75;
     private static final Random RANDOM = new Random(SEED);
 
@@ -40,6 +41,7 @@ public class AutomatedInputController implements InputController {
 
     private boolean isMouse1Pressed = false;
     private boolean isMouse2Pressed = false;
+    private boolean isMouse3Pressed = false;
 
     @Inject
     public AutomatedInputController(LocalConfig localConfig) {
@@ -92,12 +94,12 @@ public class AutomatedInputController implements InputController {
 
     @Override
     public boolean isMouse3Down() {
-        return false;
+        return isMouse3Pressed;
     }
 
     @Override
     public Vector2 getMouseCoords() {
-        return new Vector2((float)Math.random(), (float)Math.random());
+        return new Vector2(GameWorldCreator.WORLD_WIDTH * (float)Math.random(), GameWorldCreator.WORLD_HEIGHT * (float)Math.random());
     }
 
     private void moveOnPath() {
@@ -144,7 +146,13 @@ public class AutomatedInputController implements InputController {
     private boolean maybeShoot(double random) {
         if (!shouldShoot || random < SHOOT_RATE) return false;
 
-        isMouse2Pressed = true;
+        double shotType = SHOOT_RATE + ((1-SHOOT_RATE)/ 2);
+
+        if (random > shotType) {
+            isMouse3Pressed = true;
+        } else {
+            isMouse2Pressed = true;
+        }
         return true;
     }
 
@@ -156,5 +164,6 @@ public class AutomatedInputController implements InputController {
         isDownPressed = false;
         isMouse1Pressed = false;
         isMouse2Pressed = false;
+        isMouse3Pressed = false;
     }
 }

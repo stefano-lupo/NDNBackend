@@ -9,6 +9,7 @@ public enum AttackState {
     REST("DIE"),
     SWING("ATTACK_DOWN"),
     CAST("BOW_DOWN"),
+    EXPLOSION("BOW_UP"),
     SHIELD("BOW_UP"),
     DANCE("DANCE_UP");
 

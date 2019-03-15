@@ -34,7 +34,6 @@ public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
 
-    // Injected
     private final Supplier<Meter> interestMeterDelayedSupplier;
     private final Timer dataSendTimer;
     private Meter interestMeter;
@@ -48,7 +47,7 @@ public class BasePublisher implements OnInterestCallback {
     private final ConcurrentMap<SequenceNumberedName, Face> outstandingInterests = new ConcurrentHashMap<>();
     private final BiConsumer<DataSend, Long> sendDataFunction;
     private Blob latestBlob;
-    private long sequenceNumber = 0;
+    private long sequenceNumberValue = 0;
 
     private final AtomicReference<UpdateWithTimestamp> updateReference =
             new AtomicReference<>(UpdateWithTimestamp.withoutUpdate());
@@ -64,6 +63,7 @@ public class BasePublisher implements OnInterestCallback {
         this.interestMeterDelayedSupplier = () -> metrics.meter(MetricNames.basePublisherInterestRate(listenName));
         this.dataSendTimer = metrics.timer(MetricNames.basePublisherQueueTimer(listenName));
         this.percentageGauge = metrics.register(MetricNames.basePublisherUpdatePercentage(listenName), PercentageGauge.getInstance());
+
         this.interestTFunction = interestToSequenceNumberedName;
         this.freshnessPeriod = freshnessPeriod;
 
@@ -92,13 +92,12 @@ public class BasePublisher implements OnInterestCallback {
 
     /**
      * Update the blob that will be used to service interests
-     *
      * @param latestBlob the new blob to serve
      */
     public long updateLatestBlob(Blob latestBlob) {
         this.latestBlob = latestBlob;
         updateReference.getAndSet(UpdateWithTimestamp.withUpdate());
-        return ++sequenceNumber;
+        return ++sequenceNumberValue;
     }
 
     public Set<SequenceNumberedName> getOutstandingInterests() {
@@ -109,6 +108,7 @@ public class BasePublisher implements OnInterestCallback {
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         SequenceNumberedName interestName = interestTFunction.apply(interest);
         outstandingInterests.put(interestName, face);
+
         // Fairly gross, but don't want to start meter until we get first interest
         if (interestMeter == null) {
             interestMeter = interestMeterDelayedSupplier.get();
@@ -137,19 +137,25 @@ public class BasePublisher implements OnInterestCallback {
             SequenceNumberedName sequenceNumberedName = entry.getKey();
             Face face = entry.getValue();
 
-            if (sequenceNumberedName.getLatestSequenceNumberSeen() <= sequenceNumber) {
-                sendDataFunction.accept(new DataSend(face, sequenceNumberedName, latestBlob), updateTimestamp);
+            if (sequenceNumberedName.getLatestSequenceNumberSeen() < sequenceNumberValue) {
                 i.remove();
+                sendDataFunction.accept(new DataSend(face, sequenceNumberedName, latestBlob), updateTimestamp);
             } else {
-                LOG.debug("Had Update but {} already had sn {}", sequenceNumberedName.getFullName(), sequenceNumber);
+                LOG.debug("Had Update but {} already had sn {}", sequenceNumberedName.getFullName(), sequenceNumberValue);
             }
         }
+
     }
 
     private void doSendData(DataSend dataSend, long updateTimestamp) {
         Timer.Context context = dataSendTimer.time();
         SequenceNumberedName name = dataSend.getName();
-        name.setNextSequenceNumber(sequenceNumber);
+        name.setNextSequenceNumber(sequenceNumberValue);
+        if (name.getLatestSequenceNumberSeen() >= sequenceNumberValue) {
+            // TODO: This should hopefully be fixed
+            LOG.error("My got full name: {}", name.getFullName());
+            name.setNextSequenceNumber(sequenceNumberValue+10);
+        }
         name.setUpdateTimestamp(updateTimestamp);
         Data data = new Data(name.getFullName()).setContent(latestBlob);
         data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());

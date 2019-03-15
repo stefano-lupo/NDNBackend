@@ -47,6 +47,7 @@ enum AttackType {
     SWING = 0;
     CAST = 1;
     SHIELD = 2;
+    EXPLOSION = 3;
     DANCE = 4;
 }
 
