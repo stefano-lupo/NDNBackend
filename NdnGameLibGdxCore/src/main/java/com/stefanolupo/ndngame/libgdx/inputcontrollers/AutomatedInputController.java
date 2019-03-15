@@ -23,7 +23,7 @@ public class AutomatedInputController implements InputController {
     public static final long SEED = 10;
     private static final int WALK_TIME_MS = 400;
     private static final double WALK_RATE = 0;
-    private static final double PLACE_RATE = 0.95;
+    private static final double PLACE_RATE = 0.97;
     private static final double SHOOT_RATE = 0.75;
     private static final Random RANDOM = new Random(SEED);
 
@@ -147,7 +147,7 @@ public class AutomatedInputController implements InputController {
         if (!shouldShoot || random < SHOOT_RATE) return false;
 
         double shotType = SHOOT_RATE + ((1-SHOOT_RATE)/ 2);
-        System.out.println("Random " + random + ", shoot rate: " + shotType);
+
         if (random > shotType) {
             isMouse3Pressed = true;
         } else {

@@ -46,14 +46,14 @@ public class BlockSubscriber implements OnPlayersDiscovered {
     }
 
     public void addSubscription(BlocksSyncName blockSyncName) {
-        LOG.info("Adding subscription for {}", blockSyncName);
+        LOG.info("Adding subscription for {}", blockSyncName.getFullName().toUri());
         BaseSubscriber<Map<BlockName, Block>> subscriber = new BaseSubscriber<>(
                 faceManager,
                 blockSyncName,
                 this::typeFromData,
                 BlocksSyncName::new,
                 l -> waitTime.get(),
-                metricsFactory.forNameAndType(blockSyncName.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.BLOCK));
+                metricsFactory.forNameAndType(blockSyncName.getPlayerName(), BaseSubscriberMetricsNames.ObjectType.BLOCKS));
         subscribersList.add(subscriber);
     }
 

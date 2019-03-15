@@ -9,8 +9,8 @@ public class BaseSubscriberMetricsNames {
 
     public enum ObjectType {
         STATUS("status"),
-        PROJECTILE("projectile"),
-        BLOCK("block");
+        PROJECTILES("projectiles"),
+        BLOCKS("blocks");
 
         private String name;
 

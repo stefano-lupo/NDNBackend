@@ -80,13 +80,13 @@ public class ProjectileCollisionSystem
         }
 
         if (collidedWithType == Type.PLACABLE_OBJECT) {
-            LOG.debug("Projectile collided with block");
+//            LOG.debug("Projectile collided with block");
             if (projectileComponent.isRemote()) {
                 BlockComponent blockComponent = BLOCK_MAPPER.get(collidedWithEntity);
                 if (!blockComponent.isRemote()) {
-                    LOG.debug("Remote projectile hit my block");
+//                    LOG.debug("Remote projectile hit my block");
                     int previousHealth = blockComponent.getHealth();
-                    if (previousHealth > 2) {
+                    if (previousHealth >= 2) {
                         blockComponent.setHealth(previousHealth - 1);
                         blockPublisher.upsertBlock(blockComponent.getBlockName(), BlockConverter.protoFromEntity(collidedWithEntity));
                     } else {
@@ -95,7 +95,7 @@ public class ProjectileCollisionSystem
                     }
                 }
             } else {
-                LOG.debug("Local projectile collided with a block, ignoring, will be picked up by remote if it was remote block");
+//                LOG.debug("Local projectile collided with a block, ignoring, will be picked up by remote if it was remote block");
             }
 
             getEngine().removeEntity(entity);

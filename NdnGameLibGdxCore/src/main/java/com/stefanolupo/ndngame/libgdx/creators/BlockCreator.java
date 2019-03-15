@@ -72,7 +72,7 @@ public class BlockCreator {
 
     private Entity createBlockEntity(BlockName blockName, Block block, boolean isRemote) {
         GameObject gameObject = block.getGameObject();
-        LOG.debug("Creating a block at {}, {}, isRemote: {}", gameObject.getX(), gameObject.getY(), isRemote);
+//        LOG.debug("Creating a block at {}, {}, isRemote: {}", gameObject.getX(), gameObject.getY(), isRemote);
 
         Entity entity = engine.createEntity();
         Body body = bodyFactory.makeBoxBody(gameObject, Material.BLOCK);

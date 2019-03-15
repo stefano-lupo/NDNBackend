@@ -90,7 +90,7 @@ public abstract class ChronoSynced implements
 
     @Override
     public void onInitialized() {
-//        LOG.info("Initialized ChronoSyncedMap for {}", dataListenPrefix.toUri());
+        LOG.info("Initialized ChronoSyncedMap for {}", dataListenPrefix.toUri());
     }
 
     @Override
