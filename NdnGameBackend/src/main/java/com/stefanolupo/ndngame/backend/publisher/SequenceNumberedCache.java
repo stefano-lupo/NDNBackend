@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +28,13 @@ public class SequenceNumberedCache<T> {
     }
 
 
-    public void insert(T projectile) {
+    public void insert(T data) {
         if (maxVal >= listSize - 1) {
             minVal++;
         }
         int nextIndex = (++maxVal) % listSize;
         synchronized (list) {
-            list.set(nextIndex, projectile);
+            list.set(nextIndex, data);
         }
 
     }
@@ -48,20 +49,24 @@ public class SequenceNumberedCache<T> {
     }
 
     public List<T> getFrom(long index) {
+        Preconditions.checkArgument(index >= 0, "Index must be non negative");
         int i = Math.toIntExact(index);
-        if (i <= minVal) {
-            return getFrom(minVal % listSize, (maxVal % listSize)+1);
-        }
 
-        if (i > maxVal) {
-            return Collections.emptyList();
-        }
+        if (maxVal == -1) return Collections.emptyList();
 
-        return getFrom(i % listSize, (maxVal + 1) % listSize);
+        if (i <= minVal) return getFrom(minVal % listSize, (maxVal % listSize) + 1);
+
+        if (i > maxVal) return Collections.emptyList();
+
+        return getFrom(i % listSize, (maxVal % listSize) + 1);
     }
 
     public int getMaxVal() {
         return maxVal;
+    }
+
+    public int getMinVal() {
+        return minVal;
     }
 
     public static <T> SequenceNumberedCache<T> getInstance(int listSize) {
@@ -69,7 +74,7 @@ public class SequenceNumberedCache<T> {
     }
 
     private List<T> getFrom(int min, int max) {
-        if (min > max) {
+        if (min >= max) {
             List<T> list = new ArrayList<>();
             list.addAll(this.list.subList(min, this.list.size()));
             list.addAll(this.list.subList(0, max));

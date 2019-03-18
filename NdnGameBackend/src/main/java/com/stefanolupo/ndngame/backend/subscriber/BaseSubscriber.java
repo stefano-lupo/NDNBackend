@@ -81,7 +81,7 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
     }
 
     public long getLatestVersionSeen() {
-        return name.getLatestSequenceNumberSeen();
+        return name == null ? - 1 : name.getLatestSequenceNumberSeen();
     }
 
     @Override

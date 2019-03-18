@@ -153,7 +153,7 @@ public class BasePublisher implements OnInterestCallback {
         name.setNextSequenceNumber(sequenceNumberValue);
         if (name.getLatestSequenceNumberSeen() >= sequenceNumberValue) {
             // TODO: This should hopefully be fixed
-            LOG.error("My got full name: {}", name.getFullName());
+            LOG.error("Got name with sequence number ahead of my latest sequence number: {} {}", sequenceNumberValue, name);
             name.setNextSequenceNumber(sequenceNumberValue+10);
         }
         name.setUpdateTimestamp(updateTimestamp);

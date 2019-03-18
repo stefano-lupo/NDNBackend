@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum MotionState {
-    REST("DIE"),
+    REST("JUMP_RIGHT"),
     MOVE_UP("MOVE_UP"),
     MOVE_LEFT("MOVE_LEFT"),
     MOVE_DOWN("MOVE_DOWN"),

@@ -115,7 +115,7 @@ public abstract class ChronoSynced implements
 
     @Override
     public void onTimeout(Interest interest) {
-        LOG.error("Timeout for interest: {}", interest.toUri());
+        LOG.warn("Timeout for interest: {}", interest.toUri());
     }
 
     @Override

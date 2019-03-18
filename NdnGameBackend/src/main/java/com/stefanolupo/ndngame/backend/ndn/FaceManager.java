@@ -26,6 +26,7 @@ import java.util.concurrent.ThreadFactory;
 public class FaceManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(FaceManager.class);
+    private static final int MAX_REGISTER_PREFIX_ATTEMPTS = 5;
 
     private final Iterator<ThreadPoolFace> pubFaceIt;
     private final Iterator<ThreadPoolFace> subFaceIt;
@@ -129,6 +130,8 @@ public class FaceManager {
         final Name prefix;
         final OnInterestCallback onInterestCallback;
 
+        int attempt = 0;
+
         RegisterPrefixAttempt(ThreadPoolFace face,
                               Name prefix,
                               OnInterestCallback onInterestCallback) {
@@ -139,7 +142,12 @@ public class FaceManager {
 
         @Override
         public void onRegisterFailed(Name prefix) {
-            LOG.error("Failed to register prefix: {}, retrying..", prefix);
+            if (attempt == MAX_REGISTER_PREFIX_ATTEMPTS) {
+                throw new RuntimeException("Unable to register prefix " + prefix);
+            }
+
+            attempt++;
+            LOG.warn("Failed to register prefix: {}, retrying..", prefix);
             FaceManager.this.doRegisterPrefix(face, this);
         }
     }

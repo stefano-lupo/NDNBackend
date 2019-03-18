@@ -96,9 +96,10 @@ public class ProjectilePublisher {
             ProjectilesSyncName name = entry.getKey();
             Face face = entry.getValue();
 
-            List<Projectile> projectiles = projectileCache.getFrom(name.getLatestSequenceNumberSeen() + 1);
-            if (projectiles.isEmpty()) continue;
+            long sequenceNumber = name.getLatestSequenceNumberSeen();
+            if (sequenceNumber >= projectileCache.getMaxVal()) continue;
 
+            List<Projectile> projectiles = projectileCache.getFrom(sequenceNumber + 1);
             Blob blob = new Blob(Projectiles.newBuilder()
                     .addAllProjectiles(projectiles)
                     .build().toByteArray());

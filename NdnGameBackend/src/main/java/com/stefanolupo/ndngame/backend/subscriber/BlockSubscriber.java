@@ -21,7 +21,12 @@ import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Singleton
 public class BlockSubscriber implements OnPlayersDiscovered {
@@ -57,8 +62,8 @@ public class BlockSubscriber implements OnPlayersDiscovered {
         subscribersList.add(subscriber);
     }
 
-    public Map<BlockName, Block> getRemoteBlocks() {
-        Map<BlockName, Block> map = new HashMap<>();
+    public ConcurrentMap<BlockName, Block> getRemoteBlocks() {
+        ConcurrentMap<BlockName, Block> map = new ConcurrentHashMap<>();
 
         for (BaseSubscriber<Map<BlockName, Block>> subscriber : subscribersList) {
             // Can be null before first remote receipt of entity

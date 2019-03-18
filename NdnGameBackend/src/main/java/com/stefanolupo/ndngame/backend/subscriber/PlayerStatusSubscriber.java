@@ -72,11 +72,13 @@ public class PlayerStatusSubscriber implements OnPlayersDiscovered {
     // TODO: But the BaseSubscribers one will, so that is the one to check against!!
     // It kind of is okay since the map / engine are just using it to track the name!
     public long getLatestVersionForPlayer(PlayerStatusName playerStatusName) {
-        return subscriberMap.get(playerStatusName).getLatestVersionSeen();
+        BaseSubscriber<PlayerStatus> subscriber = subscriberMap.get(playerStatusName);
+        return subscriber == null ? -1 : subscriber.getLatestVersionSeen();
     }
 
     public PlayerStatus getLatestStatusForPlayer(PlayerStatusName playerStatusName) {
-        return subscriberMap.get(playerStatusName).getEntity();
+        BaseSubscriber<PlayerStatus> subscriber = subscriberMap.get(playerStatusName);
+        return subscriber == null ? PlayerStatus.getDefaultInstance() : subscriber.getEntity();
     }
 
     private PlayerStatus typeFromData(Data data) {

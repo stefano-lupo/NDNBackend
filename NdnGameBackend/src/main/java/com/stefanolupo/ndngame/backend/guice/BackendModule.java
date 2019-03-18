@@ -48,7 +48,7 @@ public class BackendModule extends AbstractModule {
 
     private static final String PROPERTIES_NAME = "backend.properties";
     private static final String METRICS_DIR_ENV_VARIABLE_NAME = "METRICS_DIR";
-    private static final Integer METRIC_LOG_RATE_INTERVAL_SEC = 30;
+    private static final Integer METRIC_LOG_RATE_INTERVAL_SEC = 60;
     private static final Integer METRIC_CSV_WRITE_RATE_INTERVAL_SEC = 10;
 
     private static final Collection<Class<? extends OnPlayersDiscovered>> PLAYER_DISCOVERY_CALLBACKS = Arrays.asList(
