@@ -112,16 +112,12 @@ public class ProjectilePublisher {
         dataSend.getName().setNextSequenceNumber(projectileCache.getMaxVal());
         long now = System.currentTimeMillis();
         dataSend.getName().setUpdateTimestamp(now);
-        Data data = new Data(dataSend.getName().getFullName());
-        MetaInfo metaInfo = new MetaInfo();
-        metaInfo.setFreshnessPeriod(freshnessPeriod.get());
-        data.setMetaInfo(metaInfo);
-
-        data.setContent(dataSend.getBlob());
-
+        Data data = new Data(dataSend.getName().getFullName()).setContent(dataSend.getBlob());
+        data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());
         try {
             dataSend.getFace().putData(data);
         } catch (IOException e) {
+            LOG.error("Got error sending projectile data {}", e);
             throw new RuntimeException(e);
         }
     }

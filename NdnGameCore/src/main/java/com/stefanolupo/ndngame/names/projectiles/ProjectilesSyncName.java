@@ -100,4 +100,18 @@ public class ProjectilesSyncName
             sentTimestamp = Long.valueOf(matcher.group(3));
         }
     }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode() * Long.hashCode(sequenceNumber) * Long.hashCode(nextSequenceNumber);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ProjectilesSyncName)) return false;
+
+        ProjectilesSyncName other = (ProjectilesSyncName) obj;
+
+        return super.equals(obj) && sequenceNumber == other.sequenceNumber && nextSequenceNumber == other.nextSequenceNumber;
+    }
 }
