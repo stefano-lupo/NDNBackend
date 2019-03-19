@@ -103,7 +103,8 @@ public class PlayerControlSystem
             attackComponent = buildAttackComponent(body, 1f, AttackType.EXPLOSION);
             stateComponent.updateAttackState(AttackState.EXPLOSION, deltaTime);
         } else {
-            LOG.error("Unknown attack command: {}", stateComponent.getAttackState());
+            LOG.error("Unknown attack command, skipping: {}", stateComponent.getAttackState());
+            return;
         }
 
         Entity entity = pooledEngine.createEntity();

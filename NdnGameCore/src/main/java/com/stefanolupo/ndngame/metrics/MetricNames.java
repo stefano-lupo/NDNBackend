@@ -6,10 +6,6 @@ import net.named_data.jndn.Name;
 
 public class MetricNames {
 
-    public static String basePublisherQueueTimer(Name listenName) {
-        return String.format("pub-queue-time-%s", trimAndSanitize(listenName));
-    }
-
     public static String basePublisherInterestRate(Name listenName) {
         return String.format("pub-interest-rate-%s", trimAndSanitize(listenName));
     }

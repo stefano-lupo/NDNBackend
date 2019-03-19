@@ -56,16 +56,6 @@ public class BaseSubscriber<D> implements OnData, OnTimeout {
         // Setup the name for the next data based on what came from publisher
         name = nameExtractor.apply(data);
 
-        long gameLatency = now - name.getUpdateTimestamp();
-        metrics.getLatency().update(gameLatency);
-
-        if (delta < gameLatency) {
-            metrics.getPercentageGauge().hit();
-//            LOG.debug("Delta was: {}, Latency was: {} - {}", delta, gameLatency, name.getFullName());
-        } else {
-            metrics.getPercentageGauge().miss();
-        }
-
         long targetSleepTime = sleepTimeFunction.apply(entity);
 
         long sleepTime = targetSleepTime - delta;

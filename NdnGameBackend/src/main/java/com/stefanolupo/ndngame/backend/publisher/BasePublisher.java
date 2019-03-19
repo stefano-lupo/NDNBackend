@@ -2,7 +2,6 @@ package com.stefanolupo.ndngame.backend.publisher;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.Timer;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -14,6 +13,7 @@ import com.stefanolupo.ndngame.backend.metrics.PercentageGauge;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.SequenceNumberedName;
+import com.stefanolupo.ndngame.util.MathUtils;
 import net.named_data.jndn.*;
 import net.named_data.jndn.util.Blob;
 import org.slf4j.Logger;
@@ -27,17 +27,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import static com.stefanolupo.ndngame.util.MathUtils.MICRO_SECONDS_PER_SEC;
+import java.util.stream.Collectors;
 
 public class BasePublisher implements OnInterestCallback {
 
     private static final Logger LOG = LoggerFactory.getLogger(BasePublisher.class);
 
     private final Supplier<Meter> interestMeterDelayedSupplier;
-    private final Timer dataSendTimer;
     private Meter interestMeter;
     private final PercentageGauge percentageGauge;
+    private final Map<Long, Integer> snHits = new ConcurrentHashMap<>();
 
     // Assisted
     private final Function<Interest, SequenceNumberedName> interestTFunction;
@@ -48,7 +47,6 @@ public class BasePublisher implements OnInterestCallback {
     private final BiConsumer<DataSend, Long> sendDataFunction;
     private Blob latestBlob;
     private long sequenceNumberValue = 0;
-
     private final AtomicReference<UpdateWithTimestamp> updateReference =
             new AtomicReference<>(UpdateWithTimestamp.withoutUpdate());
 
@@ -61,7 +59,6 @@ public class BasePublisher implements OnInterestCallback {
                          @Assisted Function<Interest, SequenceNumberedName> interestToSequenceNumberedName,
                          @Assisted Value<Double> freshnessPeriod) {
         this.interestMeterDelayedSupplier = () -> metrics.meter(MetricNames.basePublisherInterestRate(listenName));
-        this.dataSendTimer = metrics.timer(MetricNames.basePublisherQueueTimer(listenName));
         this.percentageGauge = metrics.register(MetricNames.basePublisherUpdatePercentage(listenName), PercentageGauge.getInstance());
 
         this.interestTFunction = interestToSequenceNumberedName;
@@ -86,8 +83,22 @@ public class BasePublisher implements OnInterestCallback {
         Executors.newSingleThreadScheduledExecutor(namedThreadFactory).scheduleAtFixedRate(
                 this::processQueue,
                 0,
-                MICRO_SECONDS_PER_SEC / queueProcessPerSec.get(),
+                MathUtils.MICRO_SECONDS_PER_SEC / queueProcessPerSec.get(),
                 TimeUnit.MICROSECONDS);
+
+        Executors.newSingleThreadScheduledExecutor(namedThreadFactory).scheduleAtFixedRate(
+                () ->  {
+                    Set<Map.Entry<Long, Integer>> entries = snHits.entrySet().stream()
+                            .filter(e -> e.getValue() > 1)
+                            .collect(Collectors.toSet());
+                    String name = listenName.toUri();
+                    if (entries.isEmpty()) {
+                        LOG.debug("{}: No duplicate SN requests seen", name);
+                    } else {
+                        LOG.warn("{}: Saw duplicate sn requests", name);
+                        LOG.warn("{}", entries);
+                    }
+                }, 20, 20, TimeUnit.SECONDS);
     }
 
     /**
@@ -108,6 +119,7 @@ public class BasePublisher implements OnInterestCallback {
     public void onInterest(Name prefix, Interest interest, Face face, long interestFilterId, InterestFilter filter) {
         SequenceNumberedName interestName = interestTFunction.apply(interest);
         outstandingInterests.put(interestName, face);
+        snHits.compute(interestName.getLatestSequenceNumberSeen(), (k, v) -> v == null ? 1 : ++v);
 
         // Fairly gross, but don't want to start meter until we get first interest
         if (interestMeter == null) {
@@ -144,11 +156,9 @@ public class BasePublisher implements OnInterestCallback {
                 LOG.debug("Had Update but {} already had sn {}", sequenceNumberedName.getFullName(), sequenceNumberValue);
             }
         }
-
     }
 
     private void doSendData(DataSend dataSend, long updateTimestamp) {
-        Timer.Context context = dataSendTimer.time();
         SequenceNumberedName name = dataSend.getName();
         name.setNextSequenceNumber(sequenceNumberValue);
         if (name.getLatestSequenceNumberSeen() >= sequenceNumberValue) {
@@ -164,7 +174,6 @@ public class BasePublisher implements OnInterestCallback {
         } catch (Exception e) {
             LOG.error("Unable to send data to satisfy interest " + name.getFullName(), e);
         }
-        context.stop();
     }
 
     private static final class UpdateWithTimestamp {

@@ -146,7 +146,7 @@ public class PlayerStatusName implements SequenceNumberedName {
 
         PlayerStatusName other = (PlayerStatusName) obj;
 
-        return other.playerName.equals(playerName);
+        return other.playerName.equals(playerName) && other.sequenceNumber == sequenceNumber && other.nextSequenceNumber == nextSequenceNumber;
     }
 
     /**

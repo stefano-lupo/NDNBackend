@@ -21,9 +21,7 @@ public class BaseSubscriberMetricsNames {
     }
 
     public enum MetricType {
-        LATENCY("latency"),
         RTT("rtt"),
-        CACHE_RATE("cacherate"),
         INTERESTS_EXPRESSED_COUNTER("interestscounter");
 
         private String name;
@@ -34,8 +32,6 @@ public class BaseSubscriberMetricsNames {
     }
 
     private String rttName;
-    private String latencyName;
-    private String cacheHitRateName;
     private String interestExpressedCounterName;
 
     private BaseSubscriberMetricsNames() {}
@@ -43,22 +39,12 @@ public class BaseSubscriberMetricsNames {
     public static BaseSubscriberMetricsNames forNameAndType(PlayerName playerName, ObjectType objectType) {
         BaseSubscriberMetricsNames names = new BaseSubscriberMetricsNames();
         names.rttName = String.format(FORMAT_STRING, objectType.name, MetricType.RTT.name, playerName.getName());
-        names.latencyName = String.format(FORMAT_STRING, objectType.name, MetricType.LATENCY.name, playerName.getName());
-        names.cacheHitRateName = String.format(FORMAT_STRING, objectType.name, MetricType.CACHE_RATE.name, playerName.getName());
         names.interestExpressedCounterName = String.format(FORMAT_STRING, objectType.name, MetricType.INTERESTS_EXPRESSED_COUNTER.name, playerName.getName());
         return names;
     }
 
     public String getRttName() {
         return rttName;
-    }
-
-    public String getLatencyName() {
-        return latencyName;
-    }
-
-    public String getCacheHitRateName() {
-        return cacheHitRateName;
     }
 
     public String getInterestExpressedCounterName() {
