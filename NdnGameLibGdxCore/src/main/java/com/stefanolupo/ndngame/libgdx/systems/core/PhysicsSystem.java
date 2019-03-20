@@ -10,6 +10,7 @@ import com.badlogic.gdx.utils.Array;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.libgdx.components.BodyComponent;
 import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
+import com.stefanolupo.ndngame.libgdx.creators.EntityManager;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,12 +31,15 @@ public class PhysicsSystem
     private static final Logger LOG = LoggerFactory.getLogger(PhysicsSystem.class);
 
     private final World world;
+    private final EntityManager entityManager;
     private final Array<Entity> bodiesQueue;
 
     @Inject
-    public PhysicsSystem(World world) {
+    public PhysicsSystem(World world,
+                         EntityManager entityManager) {
         super(Family.all(BodyComponent.class, RenderComponent.class).get());
         this.world = world;
+        this.entityManager = entityManager;
         bodiesQueue = new Array<>();
     }
 
@@ -51,6 +55,8 @@ public class PhysicsSystem
         // Updates positions of all of the bodies in the world
         // Also invokes contact listeners
         world.step(MAX_STEP_TIME, 6, 2);
+
+        entityManager.safelyHandleEntityUpdates();
 
         // Create RenderComponents for each of the renderable bodies
         for (Entity entity : bodiesQueue) {

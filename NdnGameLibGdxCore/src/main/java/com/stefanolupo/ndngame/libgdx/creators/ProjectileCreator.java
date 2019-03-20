@@ -1,13 +1,16 @@
 package com.stefanolupo.ndngame.libgdx.creators;
 
-import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.PooledEngine;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.publisher.ProjectilePublisher;
 import com.stefanolupo.ndngame.config.LocalConfig;
-import com.stefanolupo.ndngame.libgdx.components.*;
+import com.stefanolupo.ndngame.libgdx.components.CollisionComponent;
+import com.stefanolupo.ndngame.libgdx.components.ProjectileComponent;
+import com.stefanolupo.ndngame.libgdx.components.RenderComponent;
+import com.stefanolupo.ndngame.libgdx.components.TypeComponent;
 import com.stefanolupo.ndngame.libgdx.components.enums.Type;
 import com.stefanolupo.ndngame.names.projectiles.ProjectileName;
 import com.stefanolupo.ndngame.protos.GameObject;
@@ -15,7 +18,10 @@ import com.stefanolupo.ndngame.protos.Projectile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static com.stefanolupo.ndngame.libgdx.creators.PlayerCreator.PLAYER_HEIGHT;
 import static com.stefanolupo.ndngame.libgdx.creators.PlayerCreator.PLAYER_WIDTH;
@@ -32,16 +38,19 @@ public class ProjectileCreator {
     private final BodyFactory bodyFactory;
     private final PooledEngine engine;
     private final ProjectilePublisher projectilePublisher;
+    private final EntityManager entityManager;
 
     @Inject
     public ProjectileCreator(LocalConfig localConfig,
                              BodyFactory bodyFactory,
                              PooledEngine engine,
-                             ProjectilePublisher projectilePublisher) {
+                             ProjectilePublisher projectilePublisher,
+                             EntityManager entityManager) {
         this.localConfig = localConfig;
         this.bodyFactory = bodyFactory;
         this.engine = engine;
         this.projectilePublisher = projectilePublisher;
+        this.entityManager = entityManager;
     }
 
     public void createLocalProjectile(float x, float y, float targetX, float targetY) {
@@ -72,42 +81,37 @@ public class ProjectileCreator {
 
     private void createProjectileEntity(ProjectileName projectileName, Projectile projectile, boolean isRemote) {
         GameObject gameObject = projectile.getGameObject();
-        Entity entity = engine.createEntity();
 
-        Body body = bodyFactory.makeCircleBody(
+        Set<Component> components = new HashSet<>();
+
+        BodyCreationRequest bodyCreationRequest = bodyFactory.circleBody(
                 gameObject.getX(), gameObject.getY(),
                 gameObject.getWidth(),
                 Material.PROJECTILE, false);
 
-        body.applyLinearImpulse(gameObject.getVelX(), gameObject.getVelY(), gameObject.getX(), gameObject.getY(), true);
-
-        body.setUserData(entity);
-
-        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
-        bodyComponent.setBody(body);
-        entity.add(bodyComponent);
+        Consumer<Body> bodyCreationCallback = b ->
+            b.applyLinearImpulse(gameObject.getVelX(), gameObject.getVelY(), gameObject.getX(), gameObject.getY(), true);
 
         TypeComponent typeComponent = engine.createComponent(TypeComponent.class);
         typeComponent.setType(Type.PROJECTILE);
-        entity.add(typeComponent);
+        components.add(typeComponent);
 
         // TODO: Texture
 
-
         RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
         renderComponent.setGameObject(gameObject);
-        entity.add(renderComponent);
+        components.add(renderComponent);
 
         ProjectileComponent projectileComponent = engine.createComponent(ProjectileComponent.class);
         projectileComponent.setProjectileName(projectileName);
         projectileComponent.setDamage(projectile.getDamage());
         projectileComponent.setRemote(isRemote);
-        entity.add(projectileComponent);
+        components.add(projectileComponent);
 
         CollisionComponent collisionComponent = engine.createComponent(CollisionComponent.class);
-        entity.add(collisionComponent);
+        components.add(collisionComponent);
 
-        engine.addEntity(entity);
+        entityManager.addEntityCreationRequest(new EntityCreationRequest(components, bodyCreationRequest, bodyCreationCallback));
     }
 
     private GameObject buildGameObject(float x, float y, float targetX, float targetY) {

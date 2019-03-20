@@ -10,11 +10,11 @@ import com.badlogic.gdx.physics.box2d.World;
 import com.google.inject.Inject;
 import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.contactlisteners.GameContactListener;
+import com.stefanolupo.ndngame.libgdx.creators.EntityManager;
 import com.stefanolupo.ndngame.libgdx.creators.GameWorldCreator;
 import com.stefanolupo.ndngame.libgdx.creators.PlayerCreator;
 import com.stefanolupo.ndngame.libgdx.inputcontrollers.InputController;
 import com.stefanolupo.ndngame.libgdx.listeners.AttackListener;
-import com.stefanolupo.ndngame.libgdx.listeners.BodyRemovalListener;
 import com.stefanolupo.ndngame.libgdx.systems.BlockSystem;
 import com.stefanolupo.ndngame.libgdx.systems.PlayerControlSystem;
 import com.stefanolupo.ndngame.libgdx.systems.core.*;
@@ -55,7 +55,7 @@ public class MainScreen implements Screen {
 
     // Listeners
     private final AttackListener attackListener;
-    private final BodyRemovalListener bodyRemovalListener;
+    private final EntityManager entityManager;
 
     // These cant be initialized in the constructor
     private SpriteBatch spriteBatch = null;
@@ -86,7 +86,7 @@ public class MainScreen implements Screen {
 
                       // Listeners
                       AttackListener attackListener,
-                      BodyRemovalListener bodyRemovalListener) {
+                      EntityManager entityManager) {
 
         this.localConfig = localConfig;
         this.inputController = inputController;
@@ -113,7 +113,7 @@ public class MainScreen implements Screen {
 
         // Listeners
         this.attackListener = attackListener;
-        this.bodyRemovalListener = bodyRemovalListener;
+        this.entityManager = entityManager;
 
         world.setContactListener(gameContactListener);
     }
@@ -141,7 +141,6 @@ public class MainScreen implements Screen {
 
         // Core game systems
         engine.addSystem(playerControlSystem);
-//        engine.addSystem(attackSystem);
         engine.addSystem(movementSystem);
         engine.addSystem(blockSystem);
 
@@ -162,7 +161,8 @@ public class MainScreen implements Screen {
 
         // Listeners
         engine.addEntityListener(AttackListener.FAMILY, attackListener);
-        engine.addEntityListener(BodyRemovalListener.FAMILY, bodyRemovalListener);
+//        engine.addEntityListener(BodyRemovalListener.FAMILY, bodyRemovalListener);
+        engine.addEntityListener(EntityManager.FAMILY, entityManager);
 
         gameWorldCreator.createInitialWorld();
         playerCreator.createLocalPlayer();

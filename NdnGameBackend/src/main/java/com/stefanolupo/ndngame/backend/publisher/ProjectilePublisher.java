@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,12 @@ public class ProjectilePublisher {
                     .setNameFormat("projectile-publisher-sender")
                     .build();
             ExecutorService executorService = Executors.newCachedThreadPool(factory);
-            dataSendConsumer = (ds -> executorService.submit(() -> doSendData(ds)));
+            dataSendConsumer = (ds -> CompletableFuture.runAsync(() -> doSendData(ds), executorService)
+                        .exceptionally(e -> {
+                            LOG.error("Unable to send projectile update", e);
+                            return null;
+                        })
+            );
         } else {
             dataSendConsumer = this::doSendData;
         }
@@ -115,6 +121,7 @@ public class ProjectilePublisher {
         Data data = new Data(dataSend.getName().getFullName()).setContent(dataSend.getBlob());
         data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());
         try {
+            LOG.debug("Sending data {}", data.getName().toUri());
             dataSend.getFace().putData(data);
         } catch (IOException e) {
             LOG.error("Got error sending projectile data {}", e);
@@ -130,5 +137,14 @@ public class ProjectilePublisher {
         interestMeter.mark();
         ProjectilesSyncName syncName = new ProjectilesSyncName(interest);
         outstandingInterests.put(syncName, face);
+    }
+
+    public static void main(String[] args) {
+        Map<ProjectilesSyncName, Integer> map = new HashMap<>();
+        ProjectilesSyncName one = new ProjectilesSyncName(0, "one");
+        ProjectilesSyncName two = new ProjectilesSyncName(0, "two");
+
+        map.put(one, 1);
+        map.put(two, 2);
     }
 }

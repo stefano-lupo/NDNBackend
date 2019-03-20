@@ -1,8 +1,7 @@
 package com.stefanolupo.ndngame.libgdx.creators;
 
-import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.PooledEngine;
-import com.badlogic.gdx.physics.box2d.Body;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.backend.chronosynced.OnPlayersDiscovered;
@@ -18,6 +17,7 @@ import com.stefanolupo.ndngame.protos.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -39,16 +39,19 @@ public class PlayerCreator implements OnPlayersDiscovered {
     private final PooledEngine engine;
     private final SpriteSheetLoader spriteSheetLoader;
     private final BodyFactory bodyFactory;
+    private final EntityManager entityManager;
 
     @Inject
     public PlayerCreator(LocalConfig localConfig,
                          PooledEngine engine,
                          SpriteSheetLoader spriteSheetLoader,
-                         BodyFactory bodyFactory) {
+                         BodyFactory bodyFactory,
+                         EntityManager entityManager) {
         this.localConfig = localConfig;
         this.engine = engine;
         this.spriteSheetLoader = spriteSheetLoader;
         this.bodyFactory = bodyFactory;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -58,77 +61,71 @@ public class PlayerCreator implements OnPlayersDiscovered {
 
 
     public void createLocalPlayer() {
-
-        Entity entity = engine.createEntity();
+        Set<Component> components = new HashSet<>();
         LocalPlayerComponent player = engine.createComponent(LocalPlayerComponent.class);
-        entity.add(player);
+        components.add(player);
 
         if (!localConfig.isHeadless()) {
-            entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.PLAYER));
+            components.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.PLAYER));
         }
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.PLAYER);
-        entity.add(type);
+        components.add(type);
 
         StatusComponent statusComponent = engine.createComponent(StatusComponent.class);
         statusComponent.setStatus(buildStatus());
-        entity.add(statusComponent);
+        components.add(statusComponent);
 
-        createPlayer(entity);
+        createPlayer(components);
     }
 
     private void createRemotePlayer(Player player) {
         PlayerStatusName playerStatusName = new PlayerStatusName(localConfig.getGameId(), player.getName());
 
-        Entity entity = engine.createEntity();
+        Set<Component> components = new HashSet<>();
 
         RemotePlayerComponent remotePlayerComponent = engine.createComponent(RemotePlayerComponent.class);
         remotePlayerComponent.setPlayerStatusName(playerStatusName);
-        entity.add(remotePlayerComponent);
+        components.add(remotePlayerComponent);
 
         if (!localConfig.isHeadless()) {
-            entity.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));
+            components.add(spriteSheetLoader.buildAnimationComponent(SpriteSheet.ENEMY));
         }
 
         TypeComponent type = engine.createComponent(TypeComponent.class);
         type.setType(Type.REMOTE_PLAYER);
-        entity.add(type);
+        components.add(type);
 
         // We don't know their status just yet as this is just discovery
         StatusComponent statusComponent = engine.createComponent(StatusComponent.class);
         statusComponent.setStatus(buildStatus());
-        entity.add(statusComponent);
+        components.add(statusComponent);
 
-        createPlayer(entity);
+        createPlayer(components);
     }
 
-    private void createPlayer(Entity entity) {
+    private void createPlayer(Set<Component> components) {
         float x = ThreadLocalRandom.current().nextInt(MIN_EDGE_DISTANCE, (int) WORLD_WIDTH - MIN_EDGE_DISTANCE);
         float y = ThreadLocalRandom.current().nextInt(MIN_EDGE_DISTANCE, (int) WORLD_HEIGHT - MIN_EDGE_DISTANCE);
 
         GameObject gameObject = GameObjectFactory.buildBasicGameObject(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
-        Body body = bodyFactory.makeBoxBody(gameObject, Material.PLAYER);
-        body.setUserData(entity);
-
-        BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
-        bodyComponent.setBody(body);
-        entity.add(bodyComponent);
+        BodyCreationRequest bodyCreationRequest = bodyFactory.boxBody(gameObject, Material.PLAYER);
 
         RenderComponent renderComponent = engine.createComponent(RenderComponent.class);
         renderComponent.setGameObject(gameObject);
-        entity.add(renderComponent);
+        components.add(renderComponent);
 
         TextureComponent texture = engine.createComponent(TextureComponent.class);
-        entity.add(texture);
+        components.add(texture);
 
         StateComponent state = engine.createComponent(StateComponent.class);
-        entity.add(state);
+        components.add(state);
 
         CollisionComponent collision = engine.createComponent(CollisionComponent.class);
-        entity.add(collision);
+        components.add(collision);
 
-        engine.addEntity(entity);
+        entityManager.addEntityCreationRequest(new EntityCreationRequest(components, bodyCreationRequest));
     }
 
     private static Status buildStatus() {
@@ -139,5 +136,4 @@ public class PlayerCreator implements OnPlayersDiscovered {
                 .setXp(0)
                 .build();
     }
-
 }
