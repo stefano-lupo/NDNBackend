@@ -87,7 +87,6 @@ public class EntityManager implements EntityListener, HasComponentMappers {
 
     private void deleteBodies() {
         for (Iterator<Body> it = bodiesToRemove.iterator(); it.hasNext();) {
-            LOG.debug("Destroying body");
             world.destroyBody(it.next());
             it.remove();
         }
