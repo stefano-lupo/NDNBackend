@@ -3,15 +3,19 @@ package com.stefanolupo.ndngame.libgdx.systems.local;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IntervalSystem;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.annotations.LogScheduleExecutor;
 import com.stefanolupo.ndngame.backend.publisher.PlayerStatusPublisher;
 import com.stefanolupo.ndngame.config.LocalConfig;
 import com.stefanolupo.ndngame.libgdx.components.LocalPlayerComponent;
 import com.stefanolupo.ndngame.libgdx.converters.PlayerStatusConverter;
 import com.stefanolupo.ndngame.libgdx.systems.HasComponentMappers;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.protos.GameObject;
 import com.stefanolupo.ndngame.util.MathUtils;
 import org.slf4j.Logger;
@@ -31,10 +35,10 @@ public class LocalPlayerStatusSystem
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalPlayerStatusSystem.class);
 
-    private long nullUpdates = 0;
-    private long velUpdates = 0;
-    private long deadReckoningUpdates = 0;
-    private long deadReckoningNonUpdates = 0;
+    private final Counter nullCounter;
+    private final Counter velCounter;
+    private final Counter thresholdCounter;
+    private final Counter skipCounter;
 
     private final PlayerStatusPublisher playerStatusPublisher;
     private final float ticksPerMs;
@@ -44,6 +48,7 @@ public class LocalPlayerStatusSystem
     @Inject
     public LocalPlayerStatusSystem(PlayerStatusPublisher playerStatusPublisher,
                                    LocalConfig localConfig,
+                                   @BackendMetrics MetricRegistry metrics,
                                    @LogScheduleExecutor ScheduledExecutorService executorService,
                                    @Named("local.player.status.use.dead.reckoning") Value<Boolean> useDeadReckoning,
                                    @Named("local.player.dead.reckoning.max.error") Value<Float> maxDeadReckoningError,
@@ -53,6 +58,11 @@ public class LocalPlayerStatusSystem
         this.ticksPerMs = localConfig.getTargetFrameRate() / 1000f;
         this.useDeadReckoning = useDeadReckoning;
         this.maxDeadReckoningError = maxDeadReckoningError;
+
+        this.nullCounter = metrics.counter(MetricNames.deadReckoningCounter(MetricNames.DeadReckoningCounters.NULL));
+        this.velCounter = metrics.counter(MetricNames.deadReckoningCounter(MetricNames.DeadReckoningCounters.VELOCITY));
+        this.thresholdCounter = metrics.counter(MetricNames.deadReckoningCounter(MetricNames.DeadReckoningCounters.THRESHOLD));
+        this.skipCounter = metrics.counter(MetricNames.deadReckoningCounter(MetricNames.DeadReckoningCounters.SKIP));
 
         if (useDeadReckoning.get()) {
             executorService.scheduleAtFixedRate(this::logStats, 0, 10, TimeUnit.SECONDS);
@@ -90,7 +100,7 @@ public class LocalPlayerStatusSystem
             // will cause everyone to get more updates
             if (statusWithTime == null) {
                 updateLocalPlayer(playerEntity);
-                nullUpdates++;
+                nullCounter.inc();
                 return;
             }
 
@@ -100,17 +110,17 @@ public class LocalPlayerStatusSystem
             if (remoteVersion.getVelX() != playerCurrentGameObject.getVelX() ||
                     remoteVersion.getVelY() != playerCurrentGameObject.getVelY()) {
                 updateLocalPlayer(playerEntity);
-                velUpdates++;
+                velCounter.inc();
                 return;
             }
 
             // Finally, compute the approx dead reckoned position and publish update if its over the threshold
             double distanceBetween = computeDeadReckoningDistance(statusWithTime, playerCurrentGameObject);
             if (distanceBetween > maxDeadReckoningError.get()) {
-                deadReckoningUpdates++;
+                thresholdCounter.inc();
                 playerStatusPublisher.updateLocalPlayerStatus(PlayerStatusConverter.protoFromEntity(playerEntity));
             } else {
-                deadReckoningNonUpdates++;
+                skipCounter.inc();
             }
         }
     }
@@ -132,10 +142,14 @@ public class LocalPlayerStatusSystem
     }
 
     private void logStats() {
-        long total = nullUpdates + velUpdates + deadReckoningUpdates + deadReckoningNonUpdates;
+        long nullCount = nullCounter.getCount();
+        long velCount = velCounter.getCount();
+        long thresholdCount = thresholdCounter.getCount();
+        long skipCount = skipCounter.getCount();
+        long total = nullCount + velCount + thresholdCount + skipCount;
         LOG.debug("Null: {}, vel: {}, deadReckoning: {}, deadReckoningSkip: {}, actionable: {}",
-                nullUpdates, velUpdates, deadReckoningUpdates, deadReckoningNonUpdates,
-                (total - deadReckoningNonUpdates + 0f) / total);
+                nullCount, velCount, thresholdCount, skipCount,
+                (total - skipCount + 0f) / total);
     }
 
 

@@ -33,7 +33,7 @@ public class PlayerCreator implements OnPlayersDiscovered {
     public static final int MAX_AMMO = 100;
 
     private static final Logger LOG = LoggerFactory.getLogger(PlayerCreator.class);
-    private static final int MIN_EDGE_DISTANCE = 10;
+    private static final int MIN_EDGE_DISTANCE = (int) (0.1 * WORLD_WIDTH);
 
     private final LocalConfig localConfig;
     private final PooledEngine engine;

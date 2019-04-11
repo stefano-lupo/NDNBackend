@@ -40,7 +40,6 @@ message Status {
 message PlayerStatus {
     GameObject gameObject = 1;
     Status status = 2;
-    int64 sleepTime = 3;
 }
 
 enum AttackType {

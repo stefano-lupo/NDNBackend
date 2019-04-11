@@ -1,5 +1,6 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.codahale.metrics.Histogram;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -21,9 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -41,6 +40,7 @@ public class ProjectilePublisher {
     private final ConcurrentMap<ProjectilesSyncName, Face> outstandingInterests = new ConcurrentHashMap<>();
     private final SequenceNumberedCache<Projectile> projectileCache;
     private final Value<Double> freshnessPeriod;
+    private final Histogram projectilesPacketSizeHist;
 
     private final Consumer<DataSend> dataSendConsumer;
 
@@ -53,6 +53,7 @@ public class ProjectilePublisher {
                                @Named("projectile.cache.size") Value<Integer> cacheSize,
                                @Named("projectile.publisher.freshness.period.ms") Value<Double> freshnessPeriod) {
         this.freshnessPeriod = freshnessPeriod;
+        projectilesPacketSizeHist = metrics.histogram(MetricNames.packetSizeHistogram(MetricNames.PacketSizeType.PROJECTILE));
         projectileCache = SequenceNumberedCache.getInstance(cacheSize.get());
         if (queueProcMultithread.get()) {
             ThreadFactory factory = new ThreadFactoryBuilder()
@@ -105,10 +106,12 @@ public class ProjectilePublisher {
             long sequenceNumber = name.getLatestSequenceNumberSeen();
             if (sequenceNumber >= projectileCache.getMaxVal()) continue;
 
-            List<Projectile> projectiles = projectileCache.getFrom(sequenceNumber + 1);
-            Blob blob = new Blob(Projectiles.newBuilder()
-                    .addAllProjectiles(projectiles)
-                    .build().toByteArray());
+            Projectiles projectiles = Projectiles.newBuilder()
+                .addAllProjectiles(projectileCache.getFrom(sequenceNumber + 1))
+                .build();
+            projectilesPacketSizeHist.update(projectiles.getSerializedSize());
+            Blob blob = new Blob(projectiles.toByteArray());
+
             dataSendConsumer.accept(new DataSend(face, name, blob));
             it.remove();
         }
@@ -121,7 +124,6 @@ public class ProjectilePublisher {
         Data data = new Data(dataSend.getName().getFullName()).setContent(dataSend.getBlob());
         data.getMetaInfo().setFreshnessPeriod(freshnessPeriod.get());
         try {
-            LOG.debug("Sending data {}", data.getName().toUri());
             dataSend.getFace().putData(data);
         } catch (IOException e) {
             LOG.error("Got error sending projectile data {}", e);
@@ -137,14 +139,5 @@ public class ProjectilePublisher {
         interestMeter.mark();
         ProjectilesSyncName syncName = new ProjectilesSyncName(interest);
         outstandingInterests.put(syncName, face);
-    }
-
-    public static void main(String[] args) {
-        Map<ProjectilesSyncName, Integer> map = new HashMap<>();
-        ProjectilesSyncName one = new ProjectilesSyncName(0, "one");
-        ProjectilesSyncName two = new ProjectilesSyncName(0, "two");
-
-        map.put(one, 1);
-        map.put(two, 2);
     }
 }

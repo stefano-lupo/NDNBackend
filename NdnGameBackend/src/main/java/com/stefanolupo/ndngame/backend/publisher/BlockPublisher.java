@@ -1,12 +1,16 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
 import com.stefanolupo.ndngame.backend.ndn.FaceManager;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.blocks.BlockName;
 import com.stefanolupo.ndngame.names.blocks.BlocksSyncName;
 import com.stefanolupo.ndngame.protos.Block;
@@ -30,17 +34,20 @@ public class BlockPublisher {
 
     private final ConcurrentMap<BlockName, Block> localBlocksByName = new ConcurrentHashMap<>();
     private final BasePublisher publisher;
+    private final Histogram blockPacketSizeHist;
 
     @Inject
     public BlockPublisher(LocalConfig localConfig,
                           BasePublisherFactory factory,
                           FaceManager faceManager,
+                          @BackendMetrics MetricRegistry metrics,
                           @Named("block.publisher.freshness.period.ms") Value<Double> freshnessPeriod) {
         BlocksSyncName blockSyncName = new BlocksSyncName(localConfig.getGameId(), localConfig.getPlayerName());
         publisher = factory.create(blockSyncName.getAsPrefix(), BlocksSyncName::new, freshnessPeriod);
 
         BlockName blockName = new BlockName(localConfig.getGameId(), localConfig.getPlayerName());
         faceManager.registerBasicPrefix(blockName.getAsPrefix(), this::onInteractionInterest);
+        blockPacketSizeHist = metrics.histogram(MetricNames.packetSizeHistogram(MetricNames.PacketSizeType.BLOCK));
     }
 
     public void upsertBlock(BlockName blockName, Block block) {
@@ -64,6 +71,7 @@ public class BlockPublisher {
 
     private void updateBlob() {
         Blocks blocks = Blocks.newBuilder().addAllBlocks(localBlocksByName.values()).build();
+        blockPacketSizeHist.update(blocks.getSerializedSize());
         publisher.updateLatestBlob(new Blob(blocks.toByteArray()));
     }
 

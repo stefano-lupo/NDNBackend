@@ -59,7 +59,7 @@ public class ProjectileCollisionSystem
         TypeComponent collidedWithTypeComponent = collidedWithEntity.getComponent(TypeComponent.class);
 
         if (collidedWithTypeComponent == null) {
-            LOG.error("Type component was null for collision with {}", myType);
+            LOG.warn("Type component was null for collision with {}", myType);
             return;
         }
 
@@ -67,7 +67,7 @@ public class ProjectileCollisionSystem
 
 
         if (collidedWithType == null || myType == null) {
-            LOG.error("Null type in collision between {} and {}", myType, collidedWithTypeComponent);
+            LOG.warn("Null type in collision between {} and {}", myType, collidedWithTypeComponent);
             return;
         }
 

@@ -1,6 +1,5 @@
 package com.stefanolupo.ndngame.libgdx.creators;
 
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.stefanolupo.ndngame.protos.GameObject;
 
@@ -8,11 +7,6 @@ import com.stefanolupo.ndngame.protos.GameObject;
 public class GameObjectFactory {
 
     private static final float DEFAULT_SCALE = 1;
-
-    @Inject
-    public GameObjectFactory() {
-
-    }
 
     public static GameObject buildBasicGameObject(float x, float y, float width, float height) {
         return getBasicGameObjectBuilder(x, y, width, height).build();

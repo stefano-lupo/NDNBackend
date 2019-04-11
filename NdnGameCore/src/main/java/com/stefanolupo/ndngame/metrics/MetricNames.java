@@ -6,6 +6,19 @@ import net.named_data.jndn.Name;
 
 public class MetricNames {
 
+    public enum DeadReckoningCounters {
+        NULL,
+        VELOCITY,
+        THRESHOLD,
+        SKIP
+    }
+
+    public enum PacketSizeType {
+        STATUS,
+        BLOCK,
+        PROJECTILE
+    }
+
     public static String basePublisherInterestRate(Name listenName) {
         return String.format("pub-interest-rate-%s", trimAndSanitize(listenName));
     }
@@ -16,6 +29,14 @@ public class MetricNames {
 
     public static String playerStatusPositionDeltas(PlayerStatusName name) {
         return String.format("eng-status-delta-%s", name.getPlayerName().getName());
+    }
+
+    public static String deadReckoningCounter(DeadReckoningCounters counter) {
+        return String.format("dr-counter-%s", counter.name().toLowerCase());
+    }
+
+    public static String packetSizeHistogram(PacketSizeType packetSizeType) {
+        return String.format("packet-size-%s", packetSizeType.name().toLowerCase());
     }
 
     private static String trimAndSanitize(Name name) {

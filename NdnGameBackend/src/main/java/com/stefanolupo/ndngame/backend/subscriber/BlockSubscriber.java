@@ -21,7 +21,6 @@ import net.named_data.jndn.Interest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +32,7 @@ public class BlockSubscriber implements OnPlayersDiscovered {
 
     private static final Logger LOG = LoggerFactory.getLogger(BlockSubscriber.class);
 
-    private final List<BaseSubscriber<Map<BlockName, Block>>> subscribersList = new ArrayList<>();
+    private final Set<BaseSubscriber<Map<BlockName, Block>>> subscribersList = ConcurrentHashMap.newKeySet();
     private final LocalConfig localConfig;
     private final FaceManager faceManager;
     private final BaseSubscriberMetricsFactory metricsFactory;

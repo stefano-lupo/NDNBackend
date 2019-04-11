@@ -1,5 +1,7 @@
 package com.stefanolupo.ndngame.backend.publisher;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.inject.Inject;
@@ -7,8 +9,10 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.hubspot.liveconfig.value.Value;
 import com.stefanolupo.ndngame.backend.LocalPlayerReference;
+import com.stefanolupo.ndngame.backend.annotations.BackendMetrics;
 import com.stefanolupo.ndngame.backend.ndn.BasePublisherFactory;
 import com.stefanolupo.ndngame.config.LocalConfig;
+import com.stefanolupo.ndngame.metrics.MetricNames;
 import com.stefanolupo.ndngame.names.PlayerStatusName;
 import com.stefanolupo.ndngame.protos.PlayerStatus;
 import net.named_data.jndn.util.Blob;
@@ -22,6 +26,7 @@ import java.util.stream.Collectors;
 public class PlayerStatusPublisher {
     private static final Logger LOG = LoggerFactory.getLogger(PlayerStatusPublisher.class);
 
+    private final Histogram playerStatusPacketSizeHist;
     private final BasePublisher publisher;
     private final LocalPlayerReference localPlayerReference;
 
@@ -39,13 +44,16 @@ public class PlayerStatusPublisher {
     public PlayerStatusPublisher(LocalConfig localConfig,
                                  BasePublisherFactory factory,
                                  LocalPlayerReference localPlayerReference,
+                                 @BackendMetrics MetricRegistry metrics,
                                  @Named("player.status.publisher.freshness.period.ms") Value<Double> freshnessPeriod) {
         this.localPlayerReference = localPlayerReference;
         PlayerStatusName playerStatusName = new PlayerStatusName(localConfig.getGameId(), localConfig.getPlayerName());
         publisher = factory.create(playerStatusName.getListenName(), PlayerStatusName::new, freshnessPeriod);
+        playerStatusPacketSizeHist = metrics.histogram(MetricNames.packetSizeHistogram(MetricNames.PacketSizeType.STATUS));
     }
 
     public void updateLocalPlayerStatus(PlayerStatus playerStatus) {
+        playerStatusPacketSizeHist.update(playerStatus.getSerializedSize());
         long nextSequenceNumber = publisher.updateLatestBlob(new Blob(playerStatus.toByteArray()));
         localPlayerReference.setPlayerStatus(playerStatus);
         playerStatusBySequenceNumber.put(nextSequenceNumber, new PlayerStatusWithTime(playerStatus, System.currentTimeMillis()));

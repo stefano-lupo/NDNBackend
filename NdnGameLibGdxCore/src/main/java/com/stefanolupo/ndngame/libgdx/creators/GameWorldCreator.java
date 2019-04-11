@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class GameWorldCreator {
 
-    public static final float WORLD_WIDTH = 50;
-    public static final float WORLD_HEIGHT = 50;
+    public static final float WORLD_WIDTH = 200;
+    public static final float WORLD_HEIGHT = 200;
 
     private static final Logger LOG = LoggerFactory.getLogger(GameWorldCreator.class);
 
@@ -31,13 +31,12 @@ public class GameWorldCreator {
     }
 
     public void createInitialWorld() {
-        createWorldBoundary();
+        createBoundary(bodyFactory.makeGameWorldBoundary());
+        bodyFactory.makeQuadrants().forEach(this::createBoundary);
     }
 
-    private void createWorldBoundary() {
+    private void createBoundary(Body body) {
         Entity entity = engine.createEntity();
-
-        Body body = bodyFactory.makeBoundary();
         body.setUserData(entity);
         BodyComponent bodyComponent = engine.createComponent(BodyComponent.class);
         bodyComponent.setBody(body);
